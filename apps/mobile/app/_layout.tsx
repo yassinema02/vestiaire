@@ -14,7 +14,7 @@ export default function RootLayout() {
     const router = useRouter();
     const segments = useSegments();
     const { session, isLoading, isInitialized, initialize } = useAuthStore();
-    const [onboardingChecked, setOnboardingChecked] = useState(false);
+    const [hasCheckedInitialOnboarding, setHasCheckedInitialOnboarding] = useState(false);
 
     // Initialize auth on mount
     useEffect(() => {
@@ -28,6 +28,7 @@ export default function RootLayout() {
         const checkAndRoute = async () => {
             const inAuthGroup = segments[0] === '(auth)';
             const inOnboarding = segments[0] === 'onboarding';
+            const inAddFlow = segments[1] === 'add' || segments[1] === 'confirm-item';
             const isAuthenticated = !!session;
 
             if (!isAuthenticated && !inAuthGroup) {
@@ -41,9 +42,10 @@ export default function RootLayout() {
                 } else {
                     router.replace('/(tabs)');
                 }
-            } else if (isAuthenticated && !inOnboarding && !inAuthGroup && !onboardingChecked) {
-                // First load after auth - check onboarding status
-                setOnboardingChecked(true);
+                setHasCheckedInitialOnboarding(true);
+            } else if (isAuthenticated && !inOnboarding && !inAuthGroup && !inAddFlow && !hasCheckedInitialOnboarding) {
+                // First load after auth - check onboarding status (skip if in add flow)
+                setHasCheckedInitialOnboarding(true);
                 const shouldOnboard = await onboardingService.shouldShowOnboarding();
                 if (shouldOnboard) {
                     router.replace('/onboarding');

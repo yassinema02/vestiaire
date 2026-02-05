@@ -12,6 +12,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Using AsyncStorage instead of SecureStore because Supabase sessions can exceed
 // the 2048 byte limit of SecureStore on some devices.
 
+import Constants from 'expo-constants';
+
+// Get environment variables from Expo config
+const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+// Validate environment variables
+if (!supabaseUrl || !supabaseAnonKey) {
+    console.error(
+        'Missing Supabase environment variables. Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in your .env.local file.'
+    );
+}
+
 /**
  * Supabase client instance
  * Use this throughout the app for database, auth, and storage operations

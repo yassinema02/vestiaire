@@ -31,6 +31,7 @@ import {
     ClothingAnalysis,
 } from '../../services/aiCategorization';
 import { itemsService } from '../../services/items';
+import { onboardingService } from '../../services/onboarding';
 
 // Constants
 const SEASONS = ['Spring', 'Summer', 'Fall', 'Winter', 'All-Season'] as const;
@@ -147,7 +148,14 @@ export default function ConfirmItemScreen() {
                 status: 'complete',
             } as any);
             if (error) throw error;
-            router.replace('/(tabs)/wardrobe');
+
+            // Check if onboarding is still in progress
+            const shouldOnboard = await onboardingService.shouldShowOnboarding();
+            if (shouldOnboard) {
+                router.replace('/onboarding');
+            } else {
+                router.replace('/(tabs)/wardrobe');
+            }
         } catch (error) {
             console.error('Save error:', error);
             Alert.alert('Error', 'Failed to save item. Please try again.');
@@ -168,7 +176,14 @@ export default function ConfirmItemScreen() {
                 console.error('Skip save error:', error);
             }
         }
-        router.replace('/(tabs)/wardrobe');
+
+        // Check if onboarding is still in progress
+        const shouldOnboard = await onboardingService.shouldShowOnboarding();
+        if (shouldOnboard) {
+            router.replace('/onboarding');
+        } else {
+            router.replace('/(tabs)/wardrobe');
+        }
     };
 
     if (isLoading) {

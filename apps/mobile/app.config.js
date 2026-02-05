@@ -22,6 +22,8 @@ export default {
                 NSCameraUsageDescription: 'Allow Vestiaire to access your camera to photograph clothing items.',
                 NSPhotoLibraryUsageDescription: 'Allow Vestiaire to access your photos to add clothing items.',
                 NSPhotoLibraryAddUsageDescription: 'Allow Vestiaire to save photos to your library.',
+                NSLocationWhenInUseUsageDescription: 'Vestiaire uses your location to show local weather and provide weather-appropriate outfit recommendations.',
+                NSCalendarsUsageDescription: 'Vestiaire needs access to your calendar to show upcoming events and suggest appropriate outfits.',
             },
         },
         android: {
@@ -34,6 +36,8 @@ export default {
                 'android.permission.CAMERA',
                 'android.permission.READ_EXTERNAL_STORAGE',
                 'android.permission.WRITE_EXTERNAL_STORAGE',
+                'android.permission.ACCESS_COARSE_LOCATION',
+                'android.permission.ACCESS_FINE_LOCATION',
             ],
         },
         web: {
@@ -61,6 +65,20 @@ export default {
                     savePhotosPermission: 'Allow Vestiaire to save photos to your library.',
                 },
             ],
+            [
+                'expo-location',
+                {
+                    locationWhenInUsePermission: 'Vestiaire uses your location to show local weather and provide weather-appropriate outfit recommendations.',
+                },
+            ],
+            'expo-web-browser',
+            'expo-secure-store',
+            [
+                'expo-calendar',
+                {
+                    calendarPermission: 'Vestiaire needs access to your calendar to show upcoming events and suggest appropriate outfits.',
+                },
+            ],
         ],
         experiments: {
             typedRoutes: true,
@@ -70,6 +88,8 @@ export default {
             supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
             removeBgApiKey: process.env.EXPO_PUBLIC_REMOVE_BG_API_KEY,
             geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY,
+            googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+            googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
             router: {
                 origin: false,
             },
