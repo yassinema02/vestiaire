@@ -21,9 +21,26 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { itemsService, WardrobeItem } from '../../services/items';
+import { wearLogService } from '../../services/wearLogService';
+import { WearLog } from '../../types/wearLog';
 import { COLORS, CATEGORIES } from '../../services/aiCategorization';
+import { getCPWResult, formatCPWBreakdown } from '../../utils/cpwCalculator';
+import { isNeglected, formatNeglectedLabel } from '../../utils/neglectedItems';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+function formatRelativeDate(dateStr: string): string {
+    const date = new Date(dateStr + 'T00:00:00');
+    const now = new Date();
+    const diffTime = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'today';
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) !== 1 ? 's' : ''} ago`;
+    return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? 's' : ''} ago`;
+}
 
 const SEASONS = ['Spring', 'Summer', 'Fall', 'Winter', 'All-Season'];
 const OCCASIONS = ['Casual', 'Work', 'Formal', 'Sport', 'Night Out'];
@@ -37,6 +54,8 @@ export default function ItemDetailScreen() {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [showImageModal, setShowImageModal] = useState(false);
+    const [wearHistory, setWearHistory] = useState<WearLog[]>([]);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
     // Edit form state
     const [editName, setEditName] = useState('');
@@ -74,9 +93,42 @@ export default function ItemDetailScreen() {
         setIsLoading(false);
     }, [itemId]);
 
+    const loadWearHistory = useCallback(async () => {
+        if (!itemId) return;
+        setIsLoadingHistory(true);
+        const { logs } = await wearLogService.getWearHistoryForItem(itemId);
+        setWearHistory(logs);
+        setIsLoadingHistory(false);
+    }, [itemId]);
+
     useEffect(() => {
         loadItem();
-    }, [loadItem]);
+        loadWearHistory();
+    }, [loadItem, loadWearHistory]);
+
+    const handleDeleteWearLog = (logId: string) => {
+        Alert.alert(
+            'Delete Wear Log',
+            'Remove this wear log entry?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        const { error } = await wearLogService.deleteWearLog(logId);
+                        if (error) {
+                            Alert.alert('Error', 'Failed to delete wear log');
+                        } else {
+                            // Refresh both history and item (wear_count updated by trigger)
+                            loadWearHistory();
+                            loadItem();
+                        }
+                    },
+                },
+            ]
+        );
+    };
 
     const handleToggleFavorite = async () => {
         if (!item) return;
@@ -312,6 +364,126 @@ export default function ItemDetailScreen() {
                             <Text style={styles.statLabel}>Added</Text>
                         </View>
                     </View>
+                </View>
+
+                {/* Cost Per Wear Card */}
+                {(() => {
+                    const cpw = getCPWResult(item.purchase_price, item.wear_count);
+                    return (
+                        <View style={styles.cpwCard}>
+                            <Text style={styles.cardTitle}>Cost Per Wear</Text>
+                            {cpw.value !== null ? (
+                                <>
+                                    <View style={styles.cpwValueRow}>
+                                        <Text style={[styles.cpwValue, { color: cpw.color }]}>
+                                            {cpw.formatted}/wear
+                                        </Text>
+                                        <View style={[styles.cpwLabelBadge, { backgroundColor: cpw.color + '20' }]}>
+                                            <Text style={[styles.cpwLabelText, { color: cpw.color }]}>
+                                                {cpw.label}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    <Text style={styles.cpwBreakdown}>
+                                        {formatCPWBreakdown(item.purchase_price!, item.wear_count)}
+                                    </Text>
+                                    {cpw.colorName === 'red' && (
+                                        <Text style={styles.cpwHint}>Keep wearing to reduce your cost per wear!</Text>
+                                    )}
+                                    {cpw.colorName === 'green' && (
+                                        <Text style={styles.cpwCelebration}>This item is great value! 🎉</Text>
+                                    )}
+                                </>
+                            ) : (
+                                <View style={styles.cpwEmpty}>
+                                    <Ionicons name="pricetag-outline" size={20} color="#9ca3af" />
+                                    <Text style={styles.cpwEmptyText}>
+                                        Add a purchase price to track cost per wear
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                    );
+                })()}
+
+                {/* Neglected Item Actions */}
+                {isNeglected(item) && (
+                    <View style={styles.neglectedCard}>
+                        <View style={styles.neglectedHeader}>
+                            <Ionicons name="moon-outline" size={18} color="#f59e0b" />
+                            <Text style={styles.neglectedTitle}>
+                                {formatNeglectedLabel(item)}
+                            </Text>
+                        </View>
+                        <Text style={styles.neglectedHint}>
+                            Rediscover this item or consider letting it go
+                        </Text>
+                        <View style={styles.neglectedActions}>
+                            <TouchableOpacity
+                                style={styles.suggestOutfitButton}
+                                onPress={() => router.push({
+                                    pathname: '/(tabs)/outfits/builder',
+                                    params: { requiredItem: item.id },
+                                })}
+                            >
+                                <Ionicons name="sparkles-outline" size={16} color="#fff" />
+                                <Text style={styles.suggestOutfitText}>Suggest Outfit</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.resaleButton}
+                                onPress={() => Alert.alert(
+                                    'Coming Soon',
+                                    'Resale listings will be available in a future update!'
+                                )}
+                            >
+                                <Ionicons name="pricetag-outline" size={16} color="#9ca3af" />
+                                <Text style={styles.resaleButtonText}>Resell</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+
+                {/* Wear History Card */}
+                <View style={styles.wearHistoryCard}>
+                    <Text style={styles.cardTitle}>Wear History</Text>
+                    {isLoadingHistory ? (
+                        <ActivityIndicator size="small" color="#6366f1" style={{ paddingVertical: 16 }} />
+                    ) : wearHistory.length === 0 ? (
+                        <Text style={styles.noHistoryText}>No wear logs yet</Text>
+                    ) : (
+                        <>
+                            <Text style={styles.wearSummary}>
+                                Worn {wearHistory.length} time{wearHistory.length !== 1 ? 's' : ''}
+                                {wearHistory[0] && ` \u2022 Last worn ${formatRelativeDate(wearHistory[0].worn_date)}`}
+                            </Text>
+                            {wearHistory.slice(0, 10).map(log => (
+                                <View key={log.id} style={styles.wearLogRow}>
+                                    <View style={styles.wearLogInfo}>
+                                        <Ionicons name="calendar-outline" size={16} color="#6b7280" />
+                                        <Text style={styles.wearLogDate}>
+                                            {new Date(log.worn_date + 'T00:00:00').toLocaleDateString('en-US', {
+                                                weekday: 'short',
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                            })}
+                                        </Text>
+                                    </View>
+                                    <TouchableOpacity
+                                        onPress={() => handleDeleteWearLog(log.id)}
+                                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                    >
+                                        <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+                            {wearHistory.length > 10 && (
+                                <Text style={styles.moreLogsText}>
+                                    +{wearHistory.length - 10} more entries
+                                </Text>
+                            )}
+                        </>
+                    )}
                 </View>
 
                 {/* Details Card */}
@@ -826,5 +998,168 @@ const styles = StyleSheet.create({
     fullscreenImage: {
         width: SCREEN_WIDTH,
         height: SCREEN_WIDTH * 1.2
+    },
+    // Cost Per Wear
+    cpwCard: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+    },
+    cpwValueRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    cpwValue: {
+        fontSize: 24,
+        fontWeight: '700',
+    },
+    cpwLabelBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    cpwLabelText: {
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    cpwBreakdown: {
+        fontSize: 14,
+        color: '#6b7280',
+        marginBottom: 4,
+    },
+    cpwHint: {
+        fontSize: 13,
+        color: '#ef4444',
+        marginTop: 6,
+        fontStyle: 'italic',
+    },
+    cpwCelebration: {
+        fontSize: 13,
+        color: '#22c55e',
+        marginTop: 6,
+        fontWeight: '500',
+    },
+    cpwEmpty: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        paddingVertical: 8,
+    },
+    cpwEmptyText: {
+        fontSize: 14,
+        color: '#9ca3af',
+        flex: 1,
+    },
+    // Neglected Item Actions
+    neglectedCard: {
+        backgroundColor: '#fffbeb',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#fde68a',
+    },
+    neglectedHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 6,
+    },
+    neglectedTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#92400e',
+    },
+    neglectedHint: {
+        fontSize: 13,
+        color: '#b45309',
+        marginBottom: 14,
+    },
+    neglectedActions: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+    suggestOutfitButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        backgroundColor: '#6366f1',
+        paddingVertical: 12,
+        borderRadius: 10,
+    },
+    suggestOutfitText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#fff',
+    },
+    resaleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        backgroundColor: '#f3f4f6',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 10,
+    },
+    resaleButtonText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#9ca3af',
+    },
+    // Wear History
+    wearHistoryCard: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+    },
+    noHistoryText: {
+        fontSize: 14,
+        color: '#9ca3af',
+        textAlign: 'center',
+        paddingVertical: 12,
+    },
+    wearSummary: {
+        fontSize: 14,
+        color: '#6366f1',
+        fontWeight: '500',
+        marginBottom: 12,
+    },
+    wearLogRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f3f4f6',
+    },
+    wearLogInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    wearLogDate: {
+        fontSize: 14,
+        color: '#1f2937',
+    },
+    moreLogsText: {
+        fontSize: 13,
+        color: '#9ca3af',
+        textAlign: 'center',
+        paddingTop: 10,
     },
 });

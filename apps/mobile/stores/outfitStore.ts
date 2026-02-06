@@ -26,6 +26,7 @@ interface OutfitActions {
     createOutfit: (input: CreateOutfitInput) => Promise<{ success: boolean; outfit?: Outfit }>;
     updateOutfit: (id: string, input: UpdateOutfitInput) => Promise<{ success: boolean }>;
     deleteOutfit: (id: string) => Promise<{ success: boolean }>;
+    toggleFavorite: (id: string) => Promise<{ success: boolean }>;
 
     // State management
     setCurrentOutfit: (outfit: Outfit | null) => void;
@@ -203,6 +204,40 @@ export const useOutfitStore = create<OutfitStore>((set, get) => ({
             });
             return { success: false };
         }
+    },
+
+    // Toggle favorite
+    toggleFavorite: async (id) => {
+        const state = get();
+        const outfit = state.outfits.find(o => o.id === id);
+        if (!outfit) return { success: false };
+
+        const newValue = !outfit.is_favorite;
+
+        // Optimistic update
+        set(state => ({
+            outfits: state.outfits.map(o =>
+                o.id === id ? { ...o, is_favorite: newValue } : o
+            ),
+            currentOutfit: state.currentOutfit?.id === id
+                ? { ...state.currentOutfit, is_favorite: newValue }
+                : state.currentOutfit,
+        }));
+
+        const { error } = await outfitService.toggleFavorite(id, newValue);
+
+        if (error) {
+            // Rollback on failure
+            set(state => ({
+                outfits: state.outfits.map(o =>
+                    o.id === id ? { ...o, is_favorite: !newValue } : o
+                ),
+                error: error.message,
+            }));
+            return { success: false };
+        }
+
+        return { success: true };
     },
 
     // Set current outfit

@@ -243,6 +243,24 @@ export const outfitService = {
     },
 
     /**
+     * Toggle favorite status on an outfit
+     */
+    toggleFavorite: async (
+        id: string,
+        is_favorite: boolean
+    ): Promise<{ error: Error | null }> => {
+        try {
+            const { error } = await supabase
+                .from('outfits')
+                .update({ is_favorite })
+                .eq('id', id);
+            return { error };
+        } catch (error) {
+            return { error: error as Error };
+        }
+    },
+
+    /**
      * Get outfit count for user
      */
     getOutfitCount: async (): Promise<{ count: number; error: Error | null }> => {

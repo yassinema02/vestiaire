@@ -3,7 +3,7 @@
  * Main dashboard with weather and outfit suggestions
  */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -15,6 +15,8 @@ import { WeatherWidget } from '../../components/features/WeatherWidget';
 import { ForecastWidget } from '../../components/features/ForecastWidget';
 import { EventsWidget } from '../../components/features/EventsWidget';
 import { OutfitSuggestionWidget } from '../../components/features/OutfitSuggestionWidget';
+import { itemsService } from '../../services/items';
+import { countNeglected } from '../../utils/neglectedItems';
 
 function getGreeting(): string {
     const hour = new Date().getHours();
@@ -31,6 +33,7 @@ export default function HomeScreen() {
         initialize: initializeCalendar,
         refreshEvents,
     } = useCalendarStore();
+    const [neglectedCount, setNeglectedCount] = useState(0);
 
     // Initialize weather and calendar stores on mount
     useEffect(() => {
@@ -38,12 +41,15 @@ export default function HomeScreen() {
         initializeCalendar();
     }, []);
 
-    // Refresh weather, forecast, and events when screen comes into focus (respects cache)
+    // Refresh weather, forecast, events, and neglected count when screen comes into focus
     useFocusEffect(
         useCallback(() => {
             refreshWeather();
             refreshForecast();
             refreshEvents();
+            itemsService.getItems().then(({ items }) => {
+                setNeglectedCount(countNeglected(items));
+            });
         }, [])
     );
 
@@ -87,19 +93,77 @@ export default function HomeScreen() {
                 />
             </View>
 
+            {/* Log Today's Outfit */}
+            <View style={styles.section}>
+                <TouchableOpacity
+                    style={styles.logWearButton}
+                    onPress={() => router.push('/(tabs)/log-wear')}
+                    activeOpacity={0.8}
+                >
+                    <View style={styles.logWearIcon}>
+                        <Ionicons name="checkmark-done" size={24} color="#fff" />
+                    </View>
+                    <View style={styles.logWearContent}>
+                        <Text style={styles.logWearTitle}>Log Today's Outfit</Text>
+                        <Text style={styles.logWearSubtitle}>Track what you're wearing</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#7D9A78" />
+                </TouchableOpacity>
+            </View>
+
+            {/* Neglected Items Summary */}
+            {neglectedCount > 0 && (
+                <View style={styles.section}>
+                    <TouchableOpacity
+                        style={styles.neglectedCard}
+                        onPress={() => router.push('/(tabs)/wardrobe')}
+                        activeOpacity={0.8}
+                    >
+                        <View style={styles.neglectedIcon}>
+                            <Ionicons name="moon-outline" size={22} color="#fff" />
+                        </View>
+                        <View style={styles.neglectedContent}>
+                            <Text style={styles.neglectedTitle}>Forgotten Items</Text>
+                            <Text style={styles.neglectedSubtitle}>
+                                {neglectedCount} item{neglectedCount !== 1 ? 's' : ''} haven't been worn in 2+ months
+                            </Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#f59e0b" />
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            {/* Wardrobe Analytics */}
+            <View style={styles.section}>
+                <TouchableOpacity
+                    style={styles.analyticsButton}
+                    onPress={() => router.push('/(tabs)/analytics')}
+                    activeOpacity={0.8}
+                >
+                    <View style={styles.analyticsIcon}>
+                        <Ionicons name="trophy" size={24} color="#fff" />
+                    </View>
+                    <View style={styles.analyticsContent}>
+                        <Text style={styles.analyticsTitle}>Wardrobe Analytics</Text>
+                        <Text style={styles.analyticsSubtitle}>See your most-worn items</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#6366f1" />
+                </TouchableOpacity>
+            </View>
+
             {/* Quick Actions */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Quick Actions</Text>
                 <View style={styles.actionsRow}>
-                    <TouchableOpacity style={styles.actionCard}>
+                    <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(tabs)/add')}>
                         <Ionicons name="camera-outline" size={24} color="#6366f1" />
                         <Text style={styles.actionText}>Add Item</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionCard}>
+                    <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(tabs)/wardrobe')}>
                         <Ionicons name="grid-outline" size={24} color="#6366f1" />
                         <Text style={styles.actionText}>Wardrobe</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionCard}>
+                    <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(tabs)/outfits')}>
                         <Ionicons name="sparkles-outline" size={24} color="#6366f1" />
                         <Text style={styles.actionText}>Outfits</Text>
                     </TouchableOpacity>
@@ -208,6 +272,73 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: 20,
     },
+    neglectedCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fffbeb',
+        borderRadius: 16,
+        padding: 16,
+        gap: 14,
+        borderWidth: 1,
+        borderColor: '#fde68a',
+    },
+    neglectedIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        backgroundColor: '#f59e0b',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    neglectedContent: {
+        flex: 1,
+    },
+    neglectedTitle: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#92400e',
+        marginBottom: 2,
+    },
+    neglectedSubtitle: {
+        fontSize: 13,
+        color: '#b45309',
+    },
+    logWearButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 16,
+        gap: 14,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+    },
+    logWearIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 14,
+        backgroundColor: '#7D9A78',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    logWearContent: {
+        flex: 1,
+    },
+    logWearTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1f2937',
+        marginBottom: 2,
+    },
+    logWearSubtitle: {
+        fontSize: 13,
+        color: '#6b7280',
+    },
     actionsRow: {
         flexDirection: 'row',
         gap: 12,
@@ -244,5 +375,36 @@ const styles = StyleSheet.create({
     signOutText: {
         color: '#dc2626',
         fontWeight: '600',
+    },
+    analyticsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#eef2ff',
+        borderRadius: 16,
+        padding: 16,
+        gap: 14,
+        borderWidth: 1,
+        borderColor: '#c7d2fe',
+    },
+    analyticsIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 14,
+        backgroundColor: '#6366f1',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    analyticsContent: {
+        flex: 1,
+    },
+    analyticsTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1f2937',
+        marginBottom: 2,
+    },
+    analyticsSubtitle: {
+        fontSize: 13,
+        color: '#6366f1',
     },
 });

@@ -1,9 +1,9 @@
 /**
  * Outfits Tab
- * Shows saved outfits and discover button
+ * Shows saved outfits with filters, favorites section, and discover button
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
     View,
     Text,
@@ -18,14 +18,19 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useOutfitStore } from '../../stores/outfitStore';
 import { Outfit } from '../../types/outfit';
+import { OccasionType } from '../../utils/occasionDetector';
 import { itemsService, WardrobeItem } from '../../services/items';
+
+type SourceFilter = 'all' | 'ai' | 'manual';
+const OCCASION_OPTIONS: OccasionType[] = ['casual', 'work', 'formal', 'sport', 'social'];
 
 export default function OutfitsScreen() {
     const router = useRouter();
-    const { outfits, isLoading, fetchOutfits } = useOutfitStore();
+    const { outfits, isLoading, fetchOutfits, toggleFavorite } = useOutfitStore();
     const [wardrobeItems, setWardrobeItems] = useState<WardrobeItem[]>([]);
+    const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
+    const [occasionFilter, setOccasionFilter] = useState<OccasionType | null>(null);
 
-    // Load saved outfits and wardrobe items
     useFocusEffect(
         useCallback(() => {
             fetchOutfits({ refresh: true });
@@ -33,13 +38,47 @@ export default function OutfitsScreen() {
         }, [])
     );
 
+    // Apply filters
+    const filteredOutfits = useMemo(() => {
+        let result = outfits;
+
+        if (sourceFilter === 'ai') {
+            result = result.filter(o => o.is_ai_generated);
+        } else if (sourceFilter === 'manual') {
+            result = result.filter(o => !o.is_ai_generated);
+        }
+
+        if (occasionFilter) {
+            result = result.filter(o => o.occasion === occasionFilter);
+        }
+
+        return result;
+    }, [outfits, sourceFilter, occasionFilter]);
+
+    const favorites = useMemo(
+        () => filteredOutfits.filter(o => o.is_favorite),
+        [filteredOutfits]
+    );
+
+    const nonFavorites = useMemo(
+        () => filteredOutfits.filter(o => !o.is_favorite),
+        [filteredOutfits]
+    );
+
     const handleDiscover = () => {
         router.push('/(tabs)/outfits/swipe');
     };
 
     const handleCreateOutfit = () => {
-        // TODO: Navigate to manual outfit builder (Story 4.5)
-        router.push('/(tabs)/outfits/swipe');
+        router.push('/(tabs)/outfits/builder');
+    };
+
+    const handleOutfitPress = (outfitId: string) => {
+        router.push(`/(tabs)/outfits/detail?outfitId=${outfitId}`);
+    };
+
+    const handleToggleFavorite = (id: string) => {
+        toggleFavorite(id);
     };
 
     const getOutfitItemImages = (outfit: Outfit): string[] => {
@@ -52,6 +91,104 @@ export default function OutfitsScreen() {
             .filter((url): url is string => url !== undefined)
             .slice(0, 4);
     };
+
+    const renderOutfitCard = (outfit: Outfit) => {
+        const images = getOutfitItemImages(outfit);
+        return (
+            <TouchableOpacity
+                key={outfit.id}
+                style={styles.outfitCard}
+                onPress={() => handleOutfitPress(outfit.id)}
+                activeOpacity={0.7}
+            >
+                <View style={styles.outfitImages}>
+                    {images.slice(0, 4).map((imageUrl, idx) => (
+                        <Image
+                            key={idx}
+                            source={{ uri: imageUrl }}
+                            style={styles.outfitThumb}
+                        />
+                    ))}
+                    {images.length === 0 && (
+                        <View style={styles.noImagePlaceholder}>
+                            <Ionicons name="shirt-outline" size={24} color="#d1d5db" />
+                        </View>
+                    )}
+                </View>
+                <View style={styles.outfitInfo}>
+                    <Text style={styles.outfitName} numberOfLines={1}>
+                        {outfit.name || 'Untitled Outfit'}
+                    </Text>
+                    <View style={styles.outfitMeta}>
+                        {outfit.is_ai_generated && (
+                            <View style={styles.aiBadge}>
+                                <Ionicons name="sparkles" size={12} color="#6366f1" />
+                                <Text style={styles.aiBadgeText}>AI</Text>
+                            </View>
+                        )}
+                        {outfit.occasion && (
+                            <Text style={styles.occasionText}>
+                                {outfit.occasion}
+                            </Text>
+                        )}
+                    </View>
+                </View>
+                <TouchableOpacity
+                    style={styles.favoriteButton}
+                    onPress={() => handleToggleFavorite(outfit.id)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                    <Ionicons
+                        name={outfit.is_favorite ? 'heart' : 'heart-outline'}
+                        size={22}
+                        color={outfit.is_favorite ? '#ef4444' : '#9ca3af'}
+                    />
+                </TouchableOpacity>
+            </TouchableOpacity>
+        );
+    };
+
+    const renderFilterBar = () => (
+        <View style={styles.filterContainer}>
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filterScroll}
+            >
+                {/* Source filters */}
+                {([
+                    { key: 'all', label: 'All' },
+                    { key: 'ai', label: 'AI-Generated' },
+                    { key: 'manual', label: 'Manual' },
+                ] as const).map(({ key, label }) => (
+                    <TouchableOpacity
+                        key={key}
+                        style={[styles.filterChip, sourceFilter === key && styles.filterChipActive]}
+                        onPress={() => setSourceFilter(key)}
+                    >
+                        <Text style={[styles.filterChipText, sourceFilter === key && styles.filterChipTextActive]}>
+                            {label}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+
+                <View style={styles.filterDivider} />
+
+                {/* Occasion filters */}
+                {OCCASION_OPTIONS.map((occasion) => (
+                    <TouchableOpacity
+                        key={occasion}
+                        style={[styles.filterChip, occasionFilter === occasion && styles.filterChipActive]}
+                        onPress={() => setOccasionFilter(occasionFilter === occasion ? null : occasion)}
+                    >
+                        <Text style={[styles.filterChipText, occasionFilter === occasion && styles.filterChipTextActive]}>
+                            {occasion.charAt(0).toUpperCase() + occasion.slice(1)}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+        </View>
+    );
 
     return (
         <View style={styles.container}>
@@ -76,28 +213,29 @@ export default function OutfitsScreen() {
                 <Ionicons name="chevron-forward" size={24} color="#6366f1" />
             </TouchableOpacity>
 
-            {/* Saved Outfits */}
-            <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Saved Outfits</Text>
-                <Text style={styles.countBadge}>{outfits.length}</Text>
-            </View>
+            {/* Filter Bar */}
+            {renderFilterBar()}
 
             {isLoading ? (
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#6366f1" />
                 </View>
-            ) : outfits.length === 0 ? (
+            ) : filteredOutfits.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <View style={styles.emptyIcon}>
                         <Ionicons name="layers-outline" size={64} color="#d1d5db" />
                     </View>
                     <Text style={styles.emptyTitle}>No saved outfits</Text>
                     <Text style={styles.emptySubtitle}>
-                        Discover and save outfits you love
+                        {sourceFilter !== 'all' || occasionFilter
+                            ? 'Try adjusting your filters'
+                            : 'Discover and save outfits you love'}
                     </Text>
-                    <TouchableOpacity style={styles.emptyButton} onPress={handleDiscover}>
-                        <Text style={styles.emptyButtonText}>Start Discovering</Text>
-                    </TouchableOpacity>
+                    {sourceFilter === 'all' && !occasionFilter && (
+                        <TouchableOpacity style={styles.emptyButton} onPress={handleDiscover}>
+                            <Text style={styles.emptyButtonText}>Start Discovering</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             ) : (
                 <ScrollView
@@ -105,52 +243,26 @@ export default function OutfitsScreen() {
                     contentContainerStyle={styles.outfitsContent}
                     showsVerticalScrollIndicator={false}
                 >
-                    {outfits.map((outfit) => {
-                        const images = getOutfitItemImages(outfit);
-                        return (
-                            <TouchableOpacity
-                                key={outfit.id}
-                                style={styles.outfitCard}
-                                onPress={() => {
-                                    // TODO: Navigate to outfit detail
-                                }}
-                            >
-                                <View style={styles.outfitImages}>
-                                    {images.slice(0, 4).map((imageUrl, idx) => (
-                                        <Image
-                                            key={idx}
-                                            source={{ uri: imageUrl }}
-                                            style={styles.outfitThumb}
-                                        />
-                                    ))}
-                                    {images.length === 0 && (
-                                        <View style={styles.noImagePlaceholder}>
-                                            <Ionicons name="shirt-outline" size={24} color="#d1d5db" />
-                                        </View>
-                                    )}
-                                </View>
-                                <View style={styles.outfitInfo}>
-                                    <Text style={styles.outfitName} numberOfLines={1}>
-                                        {outfit.name || 'Untitled Outfit'}
-                                    </Text>
-                                    <View style={styles.outfitMeta}>
-                                        {outfit.is_ai_generated && (
-                                            <View style={styles.aiBadge}>
-                                                <Ionicons name="sparkles" size={12} color="#6366f1" />
-                                                <Text style={styles.aiBadgeText}>AI</Text>
-                                            </View>
-                                        )}
-                                        {outfit.occasion && (
-                                            <Text style={styles.occasionText}>
-                                                {outfit.occasion}
-                                            </Text>
-                                        )}
-                                    </View>
-                                </View>
-                                <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-                            </TouchableOpacity>
-                        );
-                    })}
+                    {/* Favorites Section */}
+                    {favorites.length > 0 && (
+                        <>
+                            <View style={styles.sectionHeader}>
+                                <Ionicons name="heart" size={16} color="#ef4444" />
+                                <Text style={styles.sectionTitle}>Favorites</Text>
+                                <Text style={styles.countBadge}>{favorites.length}</Text>
+                            </View>
+                            {favorites.map(renderOutfitCard)}
+                        </>
+                    )}
+
+                    {/* All Outfits Section */}
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>
+                            {favorites.length > 0 ? 'All Outfits' : 'Saved Outfits'}
+                        </Text>
+                        <Text style={styles.countBadge}>{nonFavorites.length}</Text>
+                    </View>
+                    {nonFavorites.map(renderOutfitCard)}
                 </ScrollView>
             )}
         </View>
@@ -195,7 +307,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 8,
         elevation: 2,
-        marginBottom: 24,
+        marginBottom: 16,
     },
     discoverIcon: {
         width: 48,
@@ -219,11 +331,49 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#6b7280',
     },
+
+    // Filters
+    filterContainer: {
+        marginBottom: 12,
+    },
+    filterScroll: {
+        paddingHorizontal: 24,
+        gap: 8,
+    },
+    filterChip: {
+        paddingHorizontal: 14,
+        paddingVertical: 7,
+        borderRadius: 20,
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+    },
+    filterChipActive: {
+        backgroundColor: '#5D4E37',
+        borderColor: '#5D4E37',
+    },
+    filterChipText: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#6b7280',
+    },
+    filterChipTextActive: {
+        color: '#fff',
+    },
+    filterDivider: {
+        width: 1,
+        height: 24,
+        backgroundColor: '#e5e7eb',
+        alignSelf: 'center',
+    },
+
+    // Sections
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 24,
         marginBottom: 12,
+        marginTop: 4,
+        gap: 6,
     },
     sectionTitle: {
         fontSize: 18,
@@ -238,9 +388,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 8,
-        marginLeft: 8,
         overflow: 'hidden',
     },
+
+    // Loading / Empty
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -284,6 +435,8 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '600',
     },
+
+    // Outfit list
     outfitsList: {
         flex: 1,
     },
@@ -291,6 +444,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingBottom: 100,
     },
+
+    // Outfit card
     outfitCard: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -358,5 +513,12 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#6b7280',
         textTransform: 'capitalize',
+    },
+    favoriteButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

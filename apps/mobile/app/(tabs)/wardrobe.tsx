@@ -22,6 +22,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { itemsService, WardrobeItem } from '../../services/items';
 import { CATEGORIES, COLORS } from '../../services/aiCategorization';
+import { getCPWResult } from '../../utils/cpwCalculator';
+import { isNeglected, countNeglected } from '../../utils/neglectedItems';
 
 // Filter constants
 const SORT_OPTIONS = [
@@ -29,6 +31,8 @@ const SORT_OPTIONS = [
     { value: 'oldest', label: 'Oldest First' },
     { value: 'most_worn', label: 'Most Worn' },
     { value: 'least_worn', label: 'Least Worn' },
+    { value: 'cpw_best', label: 'Best Cost/Wear' },
+    { value: 'cpw_worst', label: 'Worst Cost/Wear' },
 ] as const;
 
 const SEASONS = ['Spring', 'Summer', 'Fall', 'Winter', 'All-Season'];
@@ -50,6 +54,7 @@ export default function WardrobeScreen() {
     const [selectedSeasons, setSelectedSeasons] = useState<string[]>([]);
     const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
     const [sortBy, setSortBy] = useState<SortOption>('newest');
+    const [showNeglectedOnly, setShowNeglectedOnly] = useState(false);
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [showSortModal, setShowSortModal] = useState(false);
 
@@ -121,6 +126,11 @@ export default function WardrobeScreen() {
             );
         }
 
+        // Neglected filter
+        if (showNeglectedOnly) {
+            result = result.filter((item) => isNeglected(item));
+        }
+
         // Sort
         switch (sortBy) {
             case 'newest':
@@ -135,10 +145,22 @@ export default function WardrobeScreen() {
             case 'least_worn':
                 result.sort((a, b) => (a.wear_count || 0) - (b.wear_count || 0));
                 break;
+            case 'cpw_best': {
+                const cpwA = (a: WardrobeItem) => a.purchase_price && a.wear_count > 0 ? a.purchase_price / a.wear_count : Infinity;
+                result.sort((a, b) => cpwA(a) - cpwA(b));
+                break;
+            }
+            case 'cpw_worst': {
+                const cpwB = (a: WardrobeItem) => a.purchase_price && a.wear_count > 0 ? a.purchase_price / a.wear_count : -1;
+                result.sort((a, b) => cpwB(b) - cpwB(a));
+                break;
+            }
         }
 
         return result;
-    }, [items, searchQuery, selectedCategory, selectedColors, selectedSeasons, selectedOccasions, sortBy]);
+    }, [items, searchQuery, selectedCategory, selectedColors, selectedSeasons, selectedOccasions, showNeglectedOnly, sortBy]);
+
+    const neglectedCount = useMemo(() => countNeglected(items), [items]);
 
     const activeFilterCount = useMemo(() => {
         let count = 0;
@@ -146,14 +168,16 @@ export default function WardrobeScreen() {
         if (selectedColors.length > 0) count++;
         if (selectedSeasons.length > 0) count++;
         if (selectedOccasions.length > 0) count++;
+        if (showNeglectedOnly) count++;
         return count;
-    }, [selectedCategory, selectedColors, selectedSeasons, selectedOccasions]);
+    }, [selectedCategory, selectedColors, selectedSeasons, selectedOccasions, showNeglectedOnly]);
 
     const clearAllFilters = () => {
         setSelectedCategory(null);
         setSelectedColors([]);
         setSelectedSeasons([]);
         setSelectedOccasions([]);
+        setShowNeglectedOnly(false);
         setSearchQuery('');
     };
 
@@ -178,6 +202,8 @@ export default function WardrobeScreen() {
     const renderItem = ({ item }: { item: WardrobeItem }) => {
         const displayUrl = item.processed_image_url || item.image_url;
         const allItemIds = filteredItems.map(i => i.id);
+        const cpw = getCPWResult(item.purchase_price, item.wear_count);
+        const neglected = isNeglected(item);
         return (
             <TouchableOpacity
                 style={styles.itemCard}
@@ -187,6 +213,13 @@ export default function WardrobeScreen() {
                 })}
             >
                 <Image source={{ uri: displayUrl }} style={styles.itemImage} resizeMode="cover" />
+                {neglected && (
+                    <View style={styles.neglectedOverlay}>
+                        <View style={styles.neglectedBadge}>
+                            <Ionicons name="moon-outline" size={12} color="#fff" />
+                        </View>
+                    </View>
+                )}
                 {item.category && (
                     <View style={styles.categoryBadge}>
                         <Text style={styles.categoryText}>{item.category}</Text>
@@ -195,6 +228,15 @@ export default function WardrobeScreen() {
                 {item.is_favorite && (
                     <View style={styles.favoriteBadge}>
                         <Ionicons name="heart" size={14} color="#ef4444" />
+                    </View>
+                )}
+                {cpw.value !== null ? (
+                    <View style={[styles.cpwBadge, { backgroundColor: cpw.color }]}>
+                        <Text style={styles.cpwBadgeText}>{cpw.formatted}/w</Text>
+                    </View>
+                ) : item.purchase_price == null && (
+                    <View style={[styles.cpwBadge, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+                        <Text style={styles.cpwBadgeText}>+ price</Text>
                     </View>
                 )}
             </TouchableOpacity>
@@ -315,6 +357,25 @@ export default function WardrobeScreen() {
                     </TouchableOpacity>
                 ))}
             </ScrollView>
+
+            {/* Neglected Filter Chip */}
+            {neglectedCount > 0 && (
+                <View style={styles.neglectedFilterRow}>
+                    <TouchableOpacity
+                        style={[styles.neglectedChip, showNeglectedOnly && styles.neglectedChipActive]}
+                        onPress={() => setShowNeglectedOnly(!showNeglectedOnly)}
+                    >
+                        <Ionicons
+                            name="moon-outline"
+                            size={14}
+                            color={showNeglectedOnly ? '#fff' : '#f59e0b'}
+                        />
+                        <Text style={[styles.neglectedChipText, showNeglectedOnly && styles.neglectedChipTextActive]}>
+                            Neglected ({neglectedCount})
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {/* Content */}
             {isLoading ? (
@@ -454,6 +515,15 @@ const styles = StyleSheet.create({
     categoryBadge: { position: 'absolute', bottom: 8, left: 8, backgroundColor: 'rgba(0,0,0,0.65)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
     categoryText: { color: '#fff', fontSize: 10, fontWeight: '500', textTransform: 'capitalize' },
     favoriteBadge: { position: 'absolute', top: 8, right: 8, backgroundColor: '#fff', width: 26, height: 26, borderRadius: 13, justifyContent: 'center', alignItems: 'center' },
+    cpwBadge: { position: 'absolute', bottom: 8, right: 8, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6 },
+    cpwBadgeText: { color: '#fff', fontSize: 10, fontWeight: '600' },
+    neglectedOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.08)', zIndex: 1 },
+    neglectedBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: '#f59e0b', width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+    neglectedFilterRow: { paddingHorizontal: 20, marginBottom: 10 },
+    neglectedChip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#f59e0b' },
+    neglectedChipActive: { backgroundColor: '#f59e0b', borderColor: '#f59e0b' },
+    neglectedChipText: { fontSize: 13, fontWeight: '500', color: '#f59e0b' },
+    neglectedChipTextActive: { color: '#fff' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
     modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '70%' },
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },

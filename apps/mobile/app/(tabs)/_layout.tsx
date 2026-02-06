@@ -107,6 +107,34 @@ export default function TabsLayout() {
                     tabBarStyle: { display: 'none' },
                 }}
             />
+            <Tabs.Screen
+                name="outfits/builder"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
+                name="outfits/detail"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
+                name="log-wear"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
+                name="analytics"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
         </Tabs>
     );
 }

@@ -40,6 +40,7 @@ export interface Outfit {
     name: string | null;
     occasion: OccasionType | null;
     is_ai_generated: boolean;
+    is_favorite: boolean;
     weather_context: WeatherContextSnapshot | null;
     created_at: string;
     items?: OutfitItem[];  // Populated via join

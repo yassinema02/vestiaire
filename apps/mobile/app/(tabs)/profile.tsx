@@ -3,7 +3,7 @@
  * User profile and settings with location and calendar preferences
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -14,8 +14,12 @@ import {
     TextInput,
     ActivityIndicator,
     Alert,
+    Switch,
+    Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
@@ -23,11 +27,13 @@ import { useAuthStore } from '../../stores/authStore';
 import { useWeatherStore } from '../../stores/weatherStore';
 import { useCalendarStore, AppleCalendar } from '../../stores/calendarStore';
 import { CalendarSelector } from '../../components/features/CalendarSelector';
+import { eveningReminderService, EveningReminderPreferences } from '../../services/eveningReminderService';
 
 // Complete auth session for web browser redirect
 WebBrowser.maybeCompleteAuthSession();
 
 export default function ProfileScreen() {
+    const router = useRouter();
     const { user } = useAuthStore();
     const {
         location,
@@ -65,6 +71,12 @@ export default function ProfileScreen() {
     const [showCalendarSelector, setShowCalendarSelector] = useState(false);
     const [availableAppleCalendars, setAvailableAppleCalendars] = useState<AppleCalendar[]>([]);
 
+    // Evening reminder state
+    const [reminderEnabled, setReminderEnabled] = useState(true);
+    const [reminderTime, setReminderTime] = useState('20:00');
+    const [showTimePicker, setShowTimePicker] = useState(false);
+    const [isLoadingReminder, setIsLoadingReminder] = useState(true);
+
     // Google OAuth configuration
     const googleWebClientId = Constants.expoConfig?.extra?.googleWebClientId;
 
@@ -95,6 +107,57 @@ export default function ProfileScreen() {
     useEffect(() => {
         initializeCalendar();
     }, []);
+
+    // Load evening reminder preferences
+    useEffect(() => {
+        const loadReminderPrefs = async () => {
+            setIsLoadingReminder(true);
+            const { prefs } = await eveningReminderService.getPreferences();
+            setReminderEnabled(prefs.enabled);
+            setReminderTime(prefs.time);
+            setIsLoadingReminder(false);
+        };
+        loadReminderPrefs();
+    }, []);
+
+    const handleToggleReminder = useCallback(async (value: boolean) => {
+        setReminderEnabled(value);
+        const { error } = await eveningReminderService.updatePreferences({ enabled: value });
+        if (error) {
+            setReminderEnabled(!value); // revert
+            Alert.alert('Error', 'Failed to update reminder setting');
+        }
+    }, []);
+
+    const handleTimeChange = useCallback(async (_event: DateTimePickerEvent, selectedDate?: Date) => {
+        if (Platform.OS === 'android') {
+            setShowTimePicker(false);
+        }
+        if (selectedDate) {
+            const hours = selectedDate.getHours().toString().padStart(2, '0');
+            const minutes = selectedDate.getMinutes().toString().padStart(2, '0');
+            const newTime = `${hours}:${minutes}`;
+            setReminderTime(newTime);
+            const { error } = await eveningReminderService.updatePreferences({ time: newTime });
+            if (error) {
+                Alert.alert('Error', 'Failed to update reminder time');
+            }
+        }
+    }, []);
+
+    const getReminderTimeAsDate = (): Date => {
+        const [hours, minutes] = reminderTime.split(':').map(Number);
+        const date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+        return date;
+    };
+
+    const formatTime12h = (time: string): string => {
+        const [h, m] = time.split(':').map(Number);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const hour12 = h % 12 || 12;
+        return `${hour12}:${m.toString().padStart(2, '0')} ${ampm}`;
+    };
 
     // Handle Google OAuth response
     useEffect(() => {
@@ -429,8 +492,84 @@ export default function ProfileScreen() {
                 </Text>
             </View>
 
+            {/* Evening Reminder Settings */}
+            <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Evening Reminder</Text>
+                <View style={styles.reminderCard}>
+                    <View style={styles.reminderRow}>
+                        <View style={styles.reminderInfo}>
+                            <Ionicons name="notifications-outline" size={22} color="#6366f1" />
+                            <View style={styles.reminderTextContainer}>
+                                <Text style={styles.reminderLabel}>Log outfit reminder</Text>
+                                <Text style={styles.reminderDescription}>
+                                    Daily reminder to log what you wore
+                                </Text>
+                            </View>
+                        </View>
+                        {isLoadingReminder ? (
+                            <ActivityIndicator size="small" color="#6366f1" />
+                        ) : (
+                            <Switch
+                                value={reminderEnabled}
+                                onValueChange={handleToggleReminder}
+                                trackColor={{ false: '#d1d5db', true: '#a5b4fc' }}
+                                thumbColor={reminderEnabled ? '#6366f1' : '#f4f3f4'}
+                                ios_backgroundColor="#d1d5db"
+                            />
+                        )}
+                    </View>
+
+                    {reminderEnabled && (
+                        <View style={styles.timePickerRow}>
+                            <Text style={styles.timeLabel}>Reminder time</Text>
+                            {Platform.OS === 'ios' ? (
+                                <DateTimePicker
+                                    value={getReminderTimeAsDate()}
+                                    mode="time"
+                                    display="compact"
+                                    onChange={handleTimeChange}
+                                    style={styles.iosTimePicker}
+                                />
+                            ) : (
+                                <>
+                                    <TouchableOpacity
+                                        style={styles.timeButton}
+                                        onPress={() => setShowTimePicker(true)}
+                                    >
+                                        <Ionicons name="time-outline" size={16} color="#6366f1" />
+                                        <Text style={styles.timeButtonText}>
+                                            {formatTime12h(reminderTime)}
+                                        </Text>
+                                    </TouchableOpacity>
+                                    {showTimePicker && (
+                                        <DateTimePicker
+                                            value={getReminderTimeAsDate()}
+                                            mode="time"
+                                            display="spinner"
+                                            onChange={handleTimeChange}
+                                        />
+                                    )}
+                                </>
+                            )}
+                        </View>
+                    )}
+                </View>
+                <Text style={styles.reminderHint}>
+                    Skipped automatically if you've already logged an outfit today
+                </Text>
+            </View>
+
             {/* Menu Items */}
             <View style={styles.menuSection}>
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => router.push('/(tabs)/analytics')}
+                >
+                    <Ionicons name="stats-chart-outline" size={22} color="#6366f1" />
+                    <Text style={styles.menuText}>Wardrobe Analytics</Text>
+                    <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
+                </TouchableOpacity>
+
                 <TouchableOpacity style={styles.menuItem}>
                     <Ionicons name="person-outline" size={22} color="#6b7280" />
                     <Text style={styles.menuText}>Edit Profile</Text>
@@ -768,5 +907,76 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '500',
         color: '#007AFF',
+    },
+    // Evening Reminder styles
+    reminderCard: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    reminderRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    reminderInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        flex: 1,
+    },
+    reminderTextContainer: {
+        flex: 1,
+    },
+    reminderLabel: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#1f2937',
+        marginBottom: 2,
+    },
+    reminderDescription: {
+        fontSize: 13,
+        color: '#6b7280',
+    },
+    timePickerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 16,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: '#f3f4f6',
+    },
+    timeLabel: {
+        fontSize: 14,
+        color: '#6b7280',
+    },
+    iosTimePicker: {
+        width: 100,
+    },
+    timeButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: '#f3f4f6',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 8,
+    },
+    timeButtonText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#6366f1',
+    },
+    reminderHint: {
+        fontSize: 12,
+        color: '#9ca3af',
+        marginTop: 8,
+        paddingHorizontal: 4,
     },
 });

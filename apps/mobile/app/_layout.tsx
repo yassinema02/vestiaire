@@ -9,6 +9,7 @@ import { Slot, useRouter, useSegments } from 'expo-router';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 import { onboardingService } from '../services/onboarding';
+import { eveningReminderService } from '../services/eveningReminderService';
 
 export default function RootLayout() {
     const router = useRouter();
@@ -16,9 +17,10 @@ export default function RootLayout() {
     const { session, isLoading, isInitialized, initialize } = useAuthStore();
     const [hasCheckedInitialOnboarding, setHasCheckedInitialOnboarding] = useState(false);
 
-    // Initialize auth on mount
+    // Initialize auth on mount and record app open for smart reminder skip
     useEffect(() => {
         initialize();
+        eveningReminderService.recordAppOpen();
     }, []);
 
     // Handle auth state routing with onboarding check
