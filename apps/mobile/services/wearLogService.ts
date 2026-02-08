@@ -4,7 +4,7 @@
  */
 
 import { supabase } from './supabase';
-import { WearLog } from '../types/wearLog';
+import { WearLog, WearCalendarDay } from '../types/wearLog';
 import { WardrobeItem } from './items';
 
 export type DateRangeFilter = 'all_time' | 'this_month' | 'this_season';
@@ -264,6 +264,63 @@ export const wearLogService = {
         } catch (error) {
             console.error('Get wear history exception:', error);
             return { logs: [], error: error as Error };
+        }
+    },
+
+    /**
+     * Get wear logs for a given month, grouped by date.
+     * Returns WearCalendarDay[] with logs and item thumbnail URLs.
+     */
+    getWearLogsByMonth: async (
+        year: number,
+        month: number // 0-indexed (0 = January)
+    ): Promise<{ days: WearCalendarDay[]; error: Error | null }> => {
+        try {
+            const startDate = new Date(year, month, 1);
+            const endDate = new Date(year, month + 1, 0); // Last day of month
+            const startStr = startDate.toISOString().split('T')[0];
+            const endStr = endDate.toISOString().split('T')[0];
+
+            const { data, error } = await supabase
+                .from('wear_logs')
+                .select(`
+                    *,
+                    item:items(id, name, category, processed_image_url, image_url)
+                `)
+                .gte('worn_date', startStr)
+                .lte('worn_date', endStr)
+                .order('worn_date', { ascending: true });
+
+            if (error) {
+                console.error('Get wear logs by month error:', error);
+                return { days: [], error };
+            }
+
+            // Group by date
+            const dateMap = new Map<string, WearLog[]>();
+            for (const log of (data as WearLog[])) {
+                const existing = dateMap.get(log.worn_date);
+                if (existing) {
+                    existing.push(log);
+                } else {
+                    dateMap.set(log.worn_date, [log]);
+                }
+            }
+
+            const days: WearCalendarDay[] = Array.from(dateMap.entries()).map(
+                ([date, logs]) => ({
+                    date,
+                    logs,
+                    itemImages: logs
+                        .map(l => l.item?.processed_image_url || l.item?.image_url || '')
+                        .filter(Boolean),
+                })
+            );
+
+            return { days, error: null };
+        } catch (error) {
+            console.error('Get wear logs by month exception:', error);
+            return { days: [], error: error as Error };
         }
     },
 

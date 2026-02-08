@@ -1,7 +1,8 @@
 /**
  * Analytics Service
  * Story 5.6: Wardrobe Analytics Dashboard
- * Calculates wardrobe stats, category breakdown, wear frequency, and insights.
+ * Story 6.5: Sustainability Score
+ * Calculates wardrobe stats, category breakdown, wear frequency, insights, and sustainability score.
  */
 
 import { supabase } from './supabase';
@@ -40,6 +41,15 @@ export interface WardrobeStats {
     wearFrequency: DailyWearCount[];
     neglectedCount: number;
     insights: string[];
+}
+
+export interface SustainabilityScore {
+    score: number;
+    utilization: number;
+    wearDepth: number;
+    valueEfficiency: number;
+    tier: string;
+    tip: string;
 }
 
 export const analyticsService = {
@@ -141,6 +151,67 @@ export const analyticsService = {
             return { stats: emptyStats(), error: error as Error };
         }
     },
+
+    /**
+     * Story 6.5: Get sustainability score, using weekly cache.
+     */
+    getSustainabilityScore: async (): Promise<{ score: SustainabilityScore; error: Error | null }> => {
+        try {
+            const { data: userData } = await supabase.auth.getUser();
+            if (!userData.user) {
+                return { score: emptySustainability(), error: new Error('Not authenticated') };
+            }
+            const userId = userData.user.id;
+
+            // Check cache: read last_score_calc_date from user_stats
+            const { data: statsRow, error: statsError } = await supabase
+                .from('user_stats')
+                .select('sustainability_score, last_score_calc_date')
+                .eq('user_id', userId)
+                .single();
+
+            if (statsError && statsError.code !== 'PGRST116') {
+                // Table or column may not exist yet
+                if (statsError.code === 'PGRST205' || statsError.code === '42P01') {
+                    return { score: emptySustainability(), error: null };
+                }
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            const lastCalc = (statsRow as any)?.last_score_calc_date;
+            const cachedScore = (statsRow as any)?.sustainability_score ?? 0;
+
+            // If calculated within last 7 days, use cached
+            if (lastCalc) {
+                const daysSinceCalc = Math.round(
+                    (new Date(today).getTime() - new Date(lastCalc).getTime()) / (1000 * 60 * 60 * 24)
+                );
+                if (daysSinceCalc < 7) {
+                    return {
+                        score: buildSustainabilityResult(cachedScore, null),
+                        error: null,
+                    };
+                }
+            }
+
+            // Recalculate
+            const result = await calculateSustainabilityScore(userId);
+
+            // Persist to DB
+            await supabase
+                .from('user_stats')
+                .update({
+                    sustainability_score: result.score,
+                    last_score_calc_date: today,
+                })
+                .eq('user_id', userId);
+
+            return { score: result, error: null };
+        } catch (error) {
+            console.error('Get sustainability score exception:', error);
+            return { score: emptySustainability(), error: error as Error };
+        }
+    },
 };
 
 function generateInsights(
@@ -206,5 +277,109 @@ function emptyStats(): WardrobeStats {
         wearFrequency: [],
         neglectedCount: 0,
         insights: [],
+    };
+}
+
+function emptySustainability(): SustainabilityScore {
+    return { score: 0, utilization: 0, wearDepth: 0, valueEfficiency: 0, tier: 'Improving', tip: '' };
+}
+
+/**
+ * Calculate sustainability score (0-100).
+ * Weighted: Utilization 40%, Wear Depth 30%, Value Efficiency 30%.
+ */
+async function calculateSustainabilityScore(userId: string): Promise<SustainabilityScore> {
+    // Fetch all complete items
+    const { data: items } = await supabase
+        .from('items')
+        .select('id, wear_count, purchase_price')
+        .eq('status', 'complete');
+
+    const allItems = (items || []) as { id: string; wear_count: number; purchase_price: number | null }[];
+    const totalItems = allItems.length;
+
+    if (totalItems === 0) {
+        return emptySustainability();
+    }
+
+    // 1. Utilization (40%): % of items worn in last 90 days
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    const sinceDate = ninetyDaysAgo.toISOString().split('T')[0];
+
+    const { data: recentLogs } = await supabase
+        .from('wear_logs')
+        .select('item_id')
+        .gte('worn_date', sinceDate);
+
+    const activeItemIds = new Set((recentLogs || []).map((l: any) => l.item_id));
+    const activeCount = allItems.filter(i => activeItemIds.has(i.id)).length;
+    const utilizationRaw = (activeCount / totalItems) * 100;
+    const utilization = Math.min(utilizationRaw, 100);
+
+    // 2. Wear Depth (30%): avg wear count vs target of 30
+    const TARGET_WEAR = 30;
+    const avgWearCount = allItems.reduce((sum, i) => sum + (i.wear_count || 0), 0) / totalItems;
+    const wearDepthRaw = (avgWearCount / TARGET_WEAR) * 100;
+    const wearDepth = Math.min(wearDepthRaw, 100);
+
+    // 3. Value Efficiency (30%): target CPW £1 vs actual avg CPW
+    const TARGET_CPW = 1;
+    const itemsWithCPW = allItems.filter(i => i.purchase_price && i.wear_count > 0);
+    let valueEfficiency = 100; // default if no priced items
+    if (itemsWithCPW.length > 0) {
+        const avgCPW = itemsWithCPW.reduce(
+            (sum, i) => sum + (i.purchase_price! / i.wear_count),
+            0
+        ) / itemsWithCPW.length;
+        const valueRaw = (TARGET_CPW / Math.max(avgCPW, 0.01)) * 100;
+        valueEfficiency = Math.min(valueRaw, 100);
+    }
+
+    // Weighted score
+    const score = Math.round(
+        utilization * 0.4 + wearDepth * 0.3 + valueEfficiency * 0.3
+    );
+    const clampedScore = Math.max(0, Math.min(score, 100));
+
+    return buildSustainabilityResult(clampedScore, {
+        utilization: Math.round(utilization),
+        wearDepth: Math.round(wearDepth),
+        valueEfficiency: Math.round(valueEfficiency),
+    });
+}
+
+function buildSustainabilityResult(
+    score: number,
+    breakdown: { utilization: number; wearDepth: number; valueEfficiency: number } | null
+): SustainabilityScore {
+    // Tier
+    let tier: string;
+    if (score > 80) tier = 'Top 10% of Vestiaire users!';
+    else if (score > 60) tier = 'Top 25% of Vestiaire users!';
+    else if (score > 40) tier = 'Top 50% of Vestiaire users!';
+    else tier = 'Improving — keep going!';
+
+    // Tip
+    let tip = '';
+    if (breakdown) {
+        if (breakdown.utilization < 50) {
+            tip = 'Wear your neglected items to boost utilization!';
+        } else if (breakdown.valueEfficiency < 50) {
+            tip = 'Wear your expensive items more to improve cost per wear!';
+        } else if (breakdown.wearDepth < 50) {
+            tip = 'Keep rewearing favorites to deepen your wardrobe usage!';
+        } else {
+            tip = 'Great job! Keep up your sustainable fashion habits!';
+        }
+    }
+
+    return {
+        score,
+        utilization: breakdown?.utilization ?? 0,
+        wearDepth: breakdown?.wearDepth ?? 0,
+        valueEfficiency: breakdown?.valueEfficiency ?? 0,
+        tier,
+        tip,
     };
 }

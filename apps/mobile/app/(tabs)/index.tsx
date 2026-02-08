@@ -3,8 +3,8 @@
  * Main dashboard with weather and outfit suggestions
  */
 
-import { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { useCallback, useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -15,6 +15,10 @@ import { WeatherWidget } from '../../components/features/WeatherWidget';
 import { ForecastWidget } from '../../components/features/ForecastWidget';
 import { EventsWidget } from '../../components/features/EventsWidget';
 import { OutfitSuggestionWidget } from '../../components/features/OutfitSuggestionWidget';
+import StreakCard from '../../components/gamification/StreakCard';
+import ChallengeTrackerCard from '../../components/gamification/ChallengeTrackerCard';
+import { gamificationService, UserStats } from '../../services/gamificationService';
+import { challengeService, UserChallenge } from '../../services/challengeService';
 import { itemsService } from '../../services/items';
 import { countNeglected } from '../../utils/neglectedItems';
 
@@ -34,6 +38,9 @@ export default function HomeScreen() {
         refreshEvents,
     } = useCalendarStore();
     const [neglectedCount, setNeglectedCount] = useState(0);
+    const [userStats, setUserStats] = useState<UserStats | null>(null);
+    const [activeChallenge, setActiveChallenge] = useState<UserChallenge | null>(null);
+    const streakLostShown = useRef(false);
 
     // Initialize weather and calendar stores on mount
     useEffect(() => {
@@ -41,7 +48,7 @@ export default function HomeScreen() {
         initializeCalendar();
     }, []);
 
-    // Refresh weather, forecast, events, and neglected count when screen comes into focus
+    // Refresh weather, forecast, events, neglected count, and streak when screen comes into focus
     useFocusEffect(
         useCallback(() => {
             refreshWeather();
@@ -50,6 +57,28 @@ export default function HomeScreen() {
             itemsService.getItems().then(({ items }) => {
                 setNeglectedCount(countNeglected(items));
             });
+            // Load active challenge
+            challengeService.getChallenge().then(({ challenge }) => {
+                setActiveChallenge(challenge?.status === 'active' ? challenge : null);
+            });
+            // Load gamification stats + check streak status
+            const loadStats = async () => {
+                const { stats } = await gamificationService.getUserStats();
+                if (stats) setUserStats(stats);
+
+                // Check if streak was lost since last visit (show once per session)
+                if (!streakLostShown.current) {
+                    const status = await gamificationService.checkStreakStatus();
+                    if (status.wasLost) {
+                        streakLostShown.current = true;
+                        Alert.alert(
+                            'Streak Lost',
+                            'Oh no! You lost your streak. Start a new one today by logging an outfit!',
+                        );
+                    }
+                }
+            };
+            loadStats();
         }, [])
     );
 
@@ -70,6 +99,23 @@ export default function HomeScreen() {
                     <Ionicons name="notifications-outline" size={24} color="#1f2937" />
                 </TouchableOpacity>
             </View>
+
+            {/* Streak Card */}
+            {userStats && (
+                <View style={styles.streakSection}>
+                    <StreakCard stats={userStats} compact />
+                </View>
+            )}
+
+            {/* Challenge Tracker */}
+            {activeChallenge && (
+                <View style={styles.challengeSection}>
+                    <ChallengeTrackerCard
+                        challenge={activeChallenge}
+                        onPress={() => router.push('/(tabs)/add')}
+                    />
+                </View>
+            )}
 
             {/* Weather Widget */}
             <View style={styles.weatherSection}>
@@ -217,6 +263,14 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 4,
         elevation: 2,
+    },
+    streakSection: {
+        paddingHorizontal: 24,
+        marginBottom: 16,
+    },
+    challengeSection: {
+        paddingHorizontal: 24,
+        marginBottom: 16,
     },
     weatherSection: {
         paddingHorizontal: 24,

@@ -26,6 +26,7 @@ import { WearLog } from '../../types/wearLog';
 import { COLORS, CATEGORIES } from '../../services/aiCategorization';
 import { getCPWResult, formatCPWBreakdown } from '../../utils/cpwCalculator';
 import { isNeglected, formatNeglectedLabel } from '../../utils/neglectedItems';
+import ListingGeneratorModal from '../../components/features/ListingGeneratorModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -47,7 +48,7 @@ const OCCASIONS = ['Casual', 'Work', 'Formal', 'Sport', 'Night Out'];
 
 export default function ItemDetailScreen() {
     const router = useRouter();
-    const { itemId, itemIds } = useLocalSearchParams<{ itemId: string; itemIds?: string }>();
+    const { itemId, itemIds, openListing } = useLocalSearchParams<{ itemId: string; itemIds?: string; openListing?: string }>();
 
     const [item, setItem] = useState<WardrobeItem | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -56,6 +57,7 @@ export default function ItemDetailScreen() {
     const [showImageModal, setShowImageModal] = useState(false);
     const [wearHistory, setWearHistory] = useState<WearLog[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [showListingModal, setShowListingModal] = useState(false);
 
     // Edit form state
     const [editName, setEditName] = useState('');
@@ -105,6 +107,13 @@ export default function ItemDetailScreen() {
         loadItem();
         loadWearHistory();
     }, [loadItem, loadWearHistory]);
+
+    // Auto-open listing modal when navigated with openListing param
+    useEffect(() => {
+        if (openListing === '1' && item && !isLoading) {
+            setShowListingModal(true);
+        }
+    }, [openListing, item, isLoading]);
 
     const handleDeleteWearLog = (logId: string) => {
         Alert.alert(
@@ -431,13 +440,10 @@ export default function ItemDetailScreen() {
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={styles.resaleButton}
-                                onPress={() => Alert.alert(
-                                    'Coming Soon',
-                                    'Resale listings will be available in a future update!'
-                                )}
+                                onPress={() => setShowListingModal(true)}
                             >
-                                <Ionicons name="pricetag-outline" size={16} color="#9ca3af" />
-                                <Text style={styles.resaleButtonText}>Resell</Text>
+                                <Ionicons name="pricetag-outline" size={16} color="#22c55e" />
+                                <Text style={[styles.resaleButtonText, { color: '#22c55e' }]}>Generate Listing</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -633,6 +639,16 @@ export default function ItemDetailScreen() {
                     )}
                 </View>
 
+                {/* Generate Listing Button */}
+                <TouchableOpacity
+                    style={styles.generateListingButton}
+                    onPress={() => setShowListingModal(true)}
+                >
+                    <Ionicons name="pricetag" size={18} color="#22c55e" />
+                    <Text style={styles.generateListingText}>Generate Resale Listing</Text>
+                    <Ionicons name="chevron-forward" size={18} color="#86efac" />
+                </TouchableOpacity>
+
                 {/* Delete Button */}
                 <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
                     <Ionicons name="trash-outline" size={20} color="#ef4444" />
@@ -660,6 +676,13 @@ export default function ItemDetailScreen() {
                     )}
                 </View>
             </Modal>
+
+            {/* Listing Generator Modal */}
+            <ListingGeneratorModal
+                visible={showListingModal}
+                item={item}
+                onDismiss={() => setShowListingModal(false)}
+            />
         </View>
     );
 }
@@ -1113,8 +1136,27 @@ const styles = StyleSheet.create({
     },
     resaleButtonText: {
         fontSize: 14,
-        fontWeight: '500',
-        color: '#9ca3af',
+        fontWeight: '600',
+        color: '#22c55e',
+    },
+    // Generate Listing
+    generateListingButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 14,
+        borderRadius: 12,
+        backgroundColor: '#f0fdf4',
+        borderWidth: 1,
+        borderColor: '#bbf7d0',
+        marginBottom: 16,
+    },
+    generateListingText: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#16a34a',
+        flex: 1,
     },
     // Wear History
     wearHistoryCard: {

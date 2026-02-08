@@ -19,6 +19,8 @@ import { Link, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/authStore';
 import { validateEmail, validatePassword, passwordsMatch } from '../../utils/validation';
+import { challengeService } from '../../services/challengeService';
+import ChallengeInviteModal from '../../components/gamification/ChallengeInviteModal';
 
 export default function SignUpScreen() {
     const router = useRouter();
@@ -29,6 +31,7 @@ export default function SignUpScreen() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
+    const [showChallengeInvite, setShowChallengeInvite] = useState(false);
 
     const handleSignUp = async () => {
         clearError();
@@ -67,9 +70,27 @@ export default function SignUpScreen() {
                     params: { email },
                 });
             } else {
-                router.replace('/(tabs)');
+                // Check if user should see the challenge invite
+                const shouldInvite = await challengeService.shouldShowInvite();
+                if (shouldInvite) {
+                    setShowChallengeInvite(true);
+                } else {
+                    router.replace('/(tabs)');
+                }
             }
         }
+    };
+
+    const handleAcceptChallenge = async () => {
+        setShowChallengeInvite(false);
+        await challengeService.startChallenge();
+        router.replace('/(tabs)');
+    };
+
+    const handleSkipChallenge = async () => {
+        setShowChallengeInvite(false);
+        await challengeService.skipChallenge();
+        router.replace('/(tabs)');
     };
 
     // Password strength indicator
@@ -224,6 +245,11 @@ export default function SignUpScreen() {
                     </View>
                 </View>
             </ScrollView>
+            <ChallengeInviteModal
+                visible={showChallengeInvite}
+                onAccept={handleAcceptChallenge}
+                onSkip={handleSkipChallenge}
+            />
         </KeyboardAvoidingView>
     );
 }

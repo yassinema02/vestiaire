@@ -16,18 +16,26 @@ import {
     Alert,
     Switch,
     Platform,
+    Share,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
+import { LEVELS } from '@vestiaire/shared';
 import { useAuthStore } from '../../stores/authStore';
 import { useWeatherStore } from '../../stores/weatherStore';
 import { useCalendarStore, AppleCalendar } from '../../stores/calendarStore';
 import { CalendarSelector } from '../../components/features/CalendarSelector';
 import { eveningReminderService, EveningReminderPreferences } from '../../services/eveningReminderService';
+import { gamificationService, UserStats } from '../../services/gamificationService';
+import PointsHistorySheet from '../../components/gamification/PointsHistorySheet';
+import StreakCard from '../../components/gamification/StreakCard';
+import ActivityFeed from '../../components/gamification/ActivityFeed';
+import LeaderboardTeaser from '../../components/gamification/LeaderboardTeaser';
 
 // Complete auth session for web browser redirect
 WebBrowser.maybeCompleteAuthSession();
@@ -71,6 +79,11 @@ export default function ProfileScreen() {
     const [showCalendarSelector, setShowCalendarSelector] = useState(false);
     const [availableAppleCalendars, setAvailableAppleCalendars] = useState<AppleCalendar[]>([]);
 
+    // Gamification state
+    const [userStats, setUserStats] = useState<UserStats | null>(null);
+    const [showPointsHistory, setShowPointsHistory] = useState(false);
+    const [itemCount, setItemCount] = useState(0);
+
     // Evening reminder state
     const [reminderEnabled, setReminderEnabled] = useState(true);
     const [reminderTime, setReminderTime] = useState('20:00');
@@ -107,6 +120,31 @@ export default function ProfileScreen() {
     useEffect(() => {
         initializeCalendar();
     }, []);
+
+    const handleShareAchievements = async () => {
+        if (!userStats) return;
+        const currentLevel = LEVELS.find(l => l.level === userStats.level);
+        const title = currentLevel?.title ?? 'Closet Rookie';
+        const message = `I'm Level ${userStats.level} (${title}) on Vestiaire with ${userStats.style_points} points and a ${userStats.current_streak}-day streak! #VestiaireStyle`;
+        try {
+            await Share.share({ message });
+        } catch (error) {
+            // User cancelled or share failed — ignore
+        }
+    };
+
+    // Load gamification stats on focus
+    useFocusEffect(
+        useCallback(() => {
+            const loadStats = async () => {
+                const { stats } = await gamificationService.getUserStats();
+                if (stats) setUserStats(stats);
+                const { count } = await gamificationService.getItemCount();
+                setItemCount(count);
+            };
+            loadStats();
+        }, [])
+    );
 
     // Load evening reminder preferences
     useEffect(() => {
@@ -342,17 +380,134 @@ export default function ProfileScreen() {
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
             <View style={styles.header}>
                 <Text style={styles.title}>Profile</Text>
-                <TouchableOpacity style={styles.settingsButton}>
-                    <Ionicons name="settings-outline" size={22} color="#1f2937" />
-                </TouchableOpacity>
+                <View style={styles.headerButtons}>
+                    <TouchableOpacity style={styles.headerIconButton} onPress={handleShareAchievements}>
+                        <Ionicons name="share-outline" size={22} color="#6366f1" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.headerIconButton}>
+                        <Ionicons name="settings-outline" size={22} color="#1f2937" />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <View style={styles.profileSection}>
-                <View style={styles.avatarContainer}>
-                    <Ionicons name="person" size={48} color="#9ca3af" />
+                <View style={styles.avatarWrapper}>
+                    <View style={styles.avatarContainer}>
+                        <Ionicons name="person" size={48} color="#9ca3af" />
+                    </View>
+                    {userStats && (
+                        <View style={styles.levelBadgeAvatar}>
+                            <Text style={styles.levelBadgeAvatarText}>{userStats.level}</Text>
+                        </View>
+                    )}
                 </View>
                 <Text style={styles.email}>{user?.email}</Text>
                 <Text style={styles.memberSince}>Member since 2024</Text>
+            </View>
+
+            {/* Style Points Card */}
+            {userStats && (
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionTitle}>Style Points</Text>
+                    <View style={styles.pointsCard}>
+                        <View style={styles.pointsTopRow}>
+                            <View style={styles.pointsIconWrap}>
+                                <Ionicons name="star" size={22} color="#eab308" />
+                            </View>
+                            <View style={styles.pointsInfo}>
+                                <Text style={styles.pointsTotal}>{userStats.style_points}</Text>
+                                <Text style={styles.pointsLabel}>Style Points</Text>
+                            </View>
+                            {userStats.current_streak > 0 && (
+                                <View style={styles.streakBadge}>
+                                    <Ionicons name="flame" size={14} color="#f97316" />
+                                    <Text style={styles.streakText}>{userStats.current_streak}d</Text>
+                                </View>
+                            )}
+                        </View>
+
+                        {/* Level progress (item-count based) */}
+                        {(() => {
+                            const currentLevel = LEVELS.find(l => l.level === userStats.level);
+                            const nextLevel = LEVELS.find(l => l.level === userStats.level + 1);
+                            const currentThreshold = currentLevel?.threshold ?? 0;
+                            const nextThreshold = nextLevel?.threshold ?? currentThreshold;
+                            const progress = nextLevel
+                                ? (itemCount - currentThreshold) / (nextThreshold - currentThreshold)
+                                : 1;
+                            const remaining = nextLevel ? nextThreshold - itemCount : 0;
+
+                            return (
+                                <View style={styles.levelSection}>
+                                    <View style={styles.levelRow}>
+                                        <Text style={styles.levelTitle}>
+                                            Level {userStats.level} — {currentLevel?.title ?? 'Closet Rookie'}
+                                        </Text>
+                                        {nextLevel && (
+                                            <Text style={styles.levelNext}>
+                                                {remaining} more item{remaining !== 1 ? 's' : ''} to Level {nextLevel.level}
+                                            </Text>
+                                        )}
+                                    </View>
+                                    <View style={styles.progressBarBg}>
+                                        <View
+                                            style={[
+                                                styles.progressBarFill,
+                                                { width: `${Math.min(Math.max(progress, 0) * 100, 100)}%` },
+                                            ]}
+                                        />
+                                    </View>
+                                </View>
+                            );
+                        })()}
+
+                        <TouchableOpacity
+                            style={styles.historyButton}
+                            onPress={() => setShowPointsHistory(true)}
+                        >
+                            <Ionicons name="time-outline" size={16} color="#6366f1" />
+                            <Text style={styles.historyButtonText}>View History</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            )}
+
+            {/* Streak Card */}
+            {userStats && (
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionTitle}>Streak</Text>
+                    <StreakCard stats={userStats} />
+                </View>
+            )}
+
+            {/* Badges */}
+            <View style={styles.sectionContainer}>
+                <TouchableOpacity
+                    style={styles.badgesButton}
+                    onPress={() => router.push('/(tabs)/badges')}
+                    activeOpacity={0.8}
+                >
+                    <View style={styles.badgesIconWrap}>
+                        <Ionicons name="ribbon" size={22} color="#6366f1" />
+                    </View>
+                    <View style={styles.badgesButtonContent}>
+                        <Text style={styles.badgesButtonTitle}>Badges</Text>
+                        <Text style={styles.badgesButtonSubtitle}>View your collection</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#c7d2fe" />
+                </TouchableOpacity>
+            </View>
+
+            {/* Recent Activity */}
+            <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Recent Activity</Text>
+                <ActivityFeed />
+            </View>
+
+            {/* Leaderboard Teaser */}
+            <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Leaderboard</Text>
+                <LeaderboardTeaser />
             </View>
 
             {/* Location Settings */}
@@ -605,6 +760,12 @@ export default function ProfileScreen() {
                 selectedIds={appleSelectedCalendars.map(c => c.id)}
                 onSelectionChange={handleCalendarSelectionChange}
             />
+
+            {/* Points History Modal */}
+            <PointsHistorySheet
+                visible={showPointsHistory}
+                onClose={() => setShowPointsHistory(false)}
+            />
         </ScrollView>
     );
 }
@@ -630,7 +791,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#1f2937',
     },
-    settingsButton: {
+    headerButtons: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    headerIconButton: {
         width: 44,
         height: 44,
         borderRadius: 12,
@@ -648,6 +813,10 @@ const styles = StyleSheet.create({
         paddingVertical: 24,
         marginBottom: 8,
     },
+    avatarWrapper: {
+        position: 'relative',
+        marginBottom: 16,
+    },
     avatarContainer: {
         width: 100,
         height: 100,
@@ -655,7 +824,24 @@ const styles = StyleSheet.create({
         backgroundColor: '#e5e7eb',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 16,
+    },
+    levelBadgeAvatar: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: '#6366f1',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#F5F0E8',
+    },
+    levelBadgeAvatarText: {
+        fontSize: 13,
+        fontWeight: '800',
+        color: '#fff',
     },
     email: {
         fontSize: 18,
@@ -750,6 +936,141 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 16,
         color: '#374151',
+    },
+    // Style Points styles
+    pointsCard: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    pointsTopRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    pointsIconWrap: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        backgroundColor: '#fefce8',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    pointsInfo: {
+        flex: 1,
+    },
+    pointsTotal: {
+        fontSize: 24,
+        fontWeight: '800',
+        color: '#1f2937',
+    },
+    pointsLabel: {
+        fontSize: 12,
+        color: '#9ca3af',
+        marginTop: 1,
+    },
+    streakBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: '#fff7ed',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#fed7aa',
+    },
+    streakText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#f97316',
+    },
+    levelSection: {
+        marginTop: 16,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: '#f3f4f6',
+    },
+    levelRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    levelTitle: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#6366f1',
+    },
+    levelNext: {
+        fontSize: 11,
+        color: '#9ca3af',
+    },
+    progressBarBg: {
+        height: 8,
+        backgroundColor: '#f3f4f6',
+        borderRadius: 4,
+        overflow: 'hidden',
+    },
+    progressBarFill: {
+        height: 8,
+        backgroundColor: '#6366f1',
+        borderRadius: 4,
+    },
+    historyButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        marginTop: 14,
+        paddingVertical: 8,
+    },
+    historyButtonText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#6366f1',
+    },
+    // Badges button
+    badgesButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 16,
+        gap: 14,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+        borderWidth: 1,
+        borderColor: '#e0e7ff',
+    },
+    badgesIconWrap: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        backgroundColor: '#eef2ff',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    badgesButtonContent: {
+        flex: 1,
+    },
+    badgesButtonTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1f2937',
+        marginBottom: 2,
+    },
+    badgesButtonSubtitle: {
+        fontSize: 13,
+        color: '#6366f1',
     },
     // Modal styles
     modalOverlay: {

@@ -25,3 +25,12 @@ export interface WearStats {
     wear_count: number;
     last_worn_date: string | null;
 }
+
+/**
+ * Calendar day entry with wear logs and item thumbnails
+ */
+export interface WearCalendarDay {
+    date: string; // YYYY-MM-DD
+    logs: WearLog[];
+    itemImages: string[];
+}

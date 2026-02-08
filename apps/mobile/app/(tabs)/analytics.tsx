@@ -2,6 +2,7 @@
  * Analytics Screen
  * Story 5.5: Most Worn Items Leaderboard
  * Story 5.6: Wardrobe Analytics Dashboard
+ * Story 6.5: Sustainability Score
  */
 
 import React, { useState, useCallback } from 'react';
@@ -29,7 +30,12 @@ import {
     WardrobeStats,
     CategoryBreakdown,
     DailyWearCount,
+    SustainabilityScore,
 } from '../../services/analyticsService';
+import SustainabilityCard from '../../components/features/SustainabilityCard';
+import ResaleCandidatesCard from '../../components/features/ResaleCandidatesCard';
+import { resaleService, ResaleCandidate } from '../../services/resaleService';
+import { itemsService } from '../../services/items';
 
 const CATEGORIES = [
     { id: null, label: 'All' },
@@ -59,6 +65,8 @@ export default function AnalyticsScreen() {
     // Dashboard state
     const [stats, setStats] = useState<WardrobeStats | null>(null);
     const [isDashboardLoading, setIsDashboardLoading] = useState(true);
+    const [sustainability, setSustainability] = useState<SustainabilityScore | null>(null);
+    const [resaleCandidates, setResaleCandidates] = useState<ResaleCandidate[]>([]);
 
     // Leaderboard state
     const [mostWorn, setMostWorn] = useState<MostWornItem[]>([]);
@@ -68,8 +76,14 @@ export default function AnalyticsScreen() {
 
     const loadDashboard = useCallback(async () => {
         setIsDashboardLoading(true);
-        const { stats: s } = await analyticsService.getWardrobeStats();
-        setStats(s);
+        const [wardrobeResult, sustainResult, itemsResult] = await Promise.all([
+            analyticsService.getWardrobeStats(),
+            analyticsService.getSustainabilityScore(),
+            itemsService.getItems(),
+        ]);
+        setStats(wardrobeResult.stats);
+        setSustainability(sustainResult.score);
+        setResaleCandidates(resaleService.getResaleCandidates(itemsResult.items));
         setIsDashboardLoading(false);
     }, []);
 
@@ -172,6 +186,22 @@ export default function AnalyticsScreen() {
                             </View>
                         )}
 
+                        {/* Wear Calendar */}
+                        <TouchableOpacity
+                            style={styles.calendarCard}
+                            onPress={() => router.push('/(tabs)/wear-calendar')}
+                            activeOpacity={0.8}
+                        >
+                            <View style={styles.calendarIconWrap}>
+                                <Ionicons name="calendar-outline" size={20} color="#fff" />
+                            </View>
+                            <View style={styles.calendarContent}>
+                                <Text style={styles.calendarTitle}>Wear Calendar</Text>
+                                <Text style={styles.calendarSubtitle}>View your outfit history by day</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={16} color="#6366f1" />
+                        </TouchableOpacity>
+
                         {/* Neglected Items */}
                         {stats.neglectedCount > 0 && (
                             <TouchableOpacity
@@ -193,19 +223,19 @@ export default function AnalyticsScreen() {
                             </TouchableOpacity>
                         )}
 
-                        {/* Sustainability Placeholder */}
-                        <View style={styles.sustainabilityCard}>
-                            <View style={styles.sustainabilityIcon}>
-                                <Ionicons name="leaf-outline" size={22} color="#9ca3af" />
+                        {/* Sustainability Score */}
+                        {sustainability && (
+                            <View style={styles.sustainabilityWrap}>
+                                <SustainabilityCard data={sustainability} />
                             </View>
-                            <View style={styles.sustainabilityContent}>
-                                <Text style={styles.sustainabilityTitle}>Sustainability Score</Text>
-                                <Text style={styles.sustainabilitySubtitle}>Coming in Epic 6</Text>
+                        )}
+
+                        {/* Ready to Sell */}
+                        {resaleCandidates.length > 0 && (
+                            <View style={styles.resaleWrap}>
+                                <ResaleCandidatesCard candidates={resaleCandidates} />
                             </View>
-                            <View style={styles.sustainabilityBadge}>
-                                <Text style={styles.sustainabilityBadgeText}>Soon</Text>
-                            </View>
-                        </View>
+                        )}
 
                         {/* Divider */}
                         <View style={styles.divider} />
@@ -686,6 +716,41 @@ const styles = StyleSheet.create({
         flex: 1,
     },
 
+    // ── Wear Calendar ──
+    calendarCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginHorizontal: 16,
+        marginBottom: 16,
+        backgroundColor: '#eef2ff',
+        borderRadius: 14,
+        padding: 14,
+        gap: 10,
+        borderWidth: 1,
+        borderColor: '#c7d2fe',
+    },
+    calendarIconWrap: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        backgroundColor: '#6366f1',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    calendarContent: {
+        flex: 1,
+    },
+    calendarTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#312e81',
+    },
+    calendarSubtitle: {
+        fontSize: 12,
+        color: '#6366f1',
+        marginTop: 1,
+    },
+
     // ── Neglected ──
     neglectedCard: {
         flexDirection: 'row',
@@ -727,49 +792,15 @@ const styles = StyleSheet.create({
     },
 
     // ── Sustainability ──
-    sustainabilityCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    sustainabilityWrap: {
         marginHorizontal: 16,
         marginBottom: 16,
-        backgroundColor: '#f9fafb',
-        borderRadius: 14,
-        padding: 14,
-        gap: 10,
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
     },
-    sustainabilityIcon: {
-        width: 36,
-        height: 36,
-        borderRadius: 10,
-        backgroundColor: '#f3f4f6',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    sustainabilityContent: {
-        flex: 1,
-    },
-    sustainabilityTitle: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#9ca3af',
-    },
-    sustainabilitySubtitle: {
-        fontSize: 12,
-        color: '#d1d5db',
-        marginTop: 1,
-    },
-    sustainabilityBadge: {
-        backgroundColor: '#f3f4f6',
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-    },
-    sustainabilityBadgeText: {
-        fontSize: 11,
-        fontWeight: '600',
-        color: '#9ca3af',
+
+    // ── Resale ──
+    resaleWrap: {
+        marginHorizontal: 16,
+        marginBottom: 16,
     },
 
     // ── Divider ──

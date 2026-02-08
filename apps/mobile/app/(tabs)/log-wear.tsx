@@ -23,8 +23,12 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { itemsService, WardrobeItem } from '../../services/items';
 import { wearLogService } from '../../services/wearLogService';
+import { gamificationService } from '../../services/gamificationService';
 import { useOutfitStore } from '../../stores/outfitStore';
+import { useWeatherStore } from '../../stores/weatherStore';
 import { Outfit } from '../../types/outfit';
+import { BadgeDefinition } from '@vestiaire/shared';
+import BadgeUnlockModal from '../../components/gamification/BadgeUnlockModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ITEM_SIZE = (SCREEN_WIDTH - 60) / 3;
@@ -44,6 +48,7 @@ const CATEGORIES = [
 export default function LogWearScreen() {
     const router = useRouter();
     const { outfits, fetchOutfits } = useOutfitStore();
+    const { weather } = useWeatherStore();
 
     const [wardrobeItems, setWardrobeItems] = useState<WardrobeItem[]>([]);
     const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
@@ -54,6 +59,9 @@ export default function LogWearScreen() {
     const [isLogging, setIsLogging] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [alreadyWornIds, setAlreadyWornIds] = useState<string[]>([]);
+    const [showBadgeUnlock, setShowBadgeUnlock] = useState(false);
+    const [unlockedBadge, setUnlockedBadge] = useState<BadgeDefinition | null>(null);
+    const [pendingBadges, setPendingBadges] = useState<BadgeDefinition[]>([]);
 
     // Animation refs
     const successScale = useRef(new Animated.Value(0)).current;
@@ -147,6 +155,19 @@ export default function LogWearScreen() {
         });
     };
 
+    const handleBadgeDismiss = () => {
+        setShowBadgeUnlock(false);
+        setUnlockedBadge(null);
+        if (pendingBadges.length > 0) {
+            const [next, ...rest] = pendingBadges;
+            setPendingBadges(rest);
+            setUnlockedBadge(next);
+            setShowBadgeUnlock(true);
+        } else {
+            playSuccessAnimation();
+        }
+    };
+
     // Log the wear
     const handleLogWear = async () => {
         if (selectedItemIds.size === 0) return;
@@ -162,7 +183,27 @@ export default function LogWearScreen() {
             if (error) {
                 Alert.alert('Error', 'Failed to log wear. Please try again.');
             } else {
-                playSuccessAnimation();
+                // Award style points (fire-and-forget)
+                gamificationService.awardWearLog().catch(() => {});
+
+                // Check badges (wear_log + streak triggers)
+                const newBadges = await gamificationService.checkBadges('wear_log', {
+                    itemIds,
+                    outfitId: selectedOutfitId || undefined,
+                    weatherCondition: weather?.condition,
+                }).catch(() => [] as BadgeDefinition[]);
+
+                // Also check streak badges
+                const streakBadges = await gamificationService.checkBadges('streak').catch(() => [] as BadgeDefinition[]);
+                const allNewBadges = [...(newBadges || []), ...(streakBadges || [])];
+
+                if (allNewBadges.length > 0) {
+                    setUnlockedBadge(allNewBadges[0]);
+                    setPendingBadges(allNewBadges.slice(1));
+                    setShowBadgeUnlock(true);
+                } else {
+                    playSuccessAnimation();
+                }
             }
         } catch (error) {
             console.error('Log wear error:', error);
@@ -438,6 +479,12 @@ export default function LogWearScreen() {
                     </Animated.View>
                 </View>
             )}
+
+            <BadgeUnlockModal
+                visible={showBadgeUnlock}
+                badge={unlockedBadge}
+                onDismiss={handleBadgeDismiss}
+            />
         </View>
     );
 }

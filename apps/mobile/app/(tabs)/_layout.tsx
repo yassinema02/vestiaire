@@ -135,6 +135,20 @@ export default function TabsLayout() {
                     tabBarStyle: { display: 'none' },
                 }}
             />
+            <Tabs.Screen
+                name="wear-calendar"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
+                name="badges"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
         </Tabs>
     );
 }

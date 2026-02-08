@@ -32,6 +32,11 @@ import {
 } from '../../services/aiCategorization';
 import { itemsService } from '../../services/items';
 import { onboardingService } from '../../services/onboarding';
+import { gamificationService } from '../../services/gamificationService';
+import { challengeService } from '../../services/challengeService';
+import LevelUpModal from '../../components/gamification/LevelUpModal';
+import BadgeUnlockModal from '../../components/gamification/BadgeUnlockModal';
+import { BadgeDefinition } from '@vestiaire/shared';
 
 // Constants
 const SEASONS = ['Spring', 'Summer', 'Fall', 'Winter', 'All-Season'] as const;
@@ -52,6 +57,11 @@ export default function ConfirmItemScreen() {
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [showLevelUp, setShowLevelUp] = useState(false);
+    const [newLevel, setNewLevel] = useState(1);
+    const [showBadgeUnlock, setShowBadgeUnlock] = useState(false);
+    const [unlockedBadge, setUnlockedBadge] = useState<BadgeDefinition | null>(null);
+    const [pendingBadges, setPendingBadges] = useState<BadgeDefinition[]>([]);
 
     // Category/Color state
     const [selectedCategory, setSelectedCategory] = useState<Category>('tops');
@@ -67,6 +77,42 @@ export default function ConfirmItemScreen() {
     const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
     const [selectedSeasons, setSelectedSeasons] = useState<Season[]>([]);
     const [selectedOccasions, setSelectedOccasions] = useState<Occasion[]>([]);
+
+    const navigateAfterSave = async () => {
+        const shouldOnboard = await onboardingService.shouldShowOnboarding();
+        if (shouldOnboard) {
+            router.replace('/onboarding');
+        } else {
+            router.replace('/(tabs)/wardrobe');
+        }
+    };
+
+    const handleBadgeDismiss = () => {
+        setShowBadgeUnlock(false);
+        setUnlockedBadge(null);
+        // Show next pending badge or navigate
+        if (pendingBadges.length > 0) {
+            const [next, ...rest] = pendingBadges;
+            setPendingBadges(rest);
+            setUnlockedBadge(next);
+            setShowBadgeUnlock(true);
+        } else {
+            navigateAfterSave();
+        }
+    };
+
+    const handleLevelUpDismiss = () => {
+        setShowLevelUp(false);
+        // Show pending badges if any, otherwise navigate
+        if (pendingBadges.length > 0) {
+            const [next, ...rest] = pendingBadges;
+            setPendingBadges(rest);
+            setUnlockedBadge(next);
+            setShowBadgeUnlock(true);
+        } else {
+            navigateAfterSave();
+        }
+    };
 
     useEffect(() => {
         loadAnalysis();
@@ -149,13 +195,42 @@ export default function ConfirmItemScreen() {
             } as any);
             if (error) throw error;
 
-            // Check if onboarding is still in progress
-            const shouldOnboard = await onboardingService.shouldShowOnboarding();
-            if (shouldOnboard) {
-                router.replace('/onboarding');
-            } else {
-                router.replace('/(tabs)/wardrobe');
+            // Award style points (fire-and-forget)
+            gamificationService.awardUploadItem().catch(() => {});
+
+            // Update challenge progress (fire-and-forget)
+            challengeService.updateProgress().catch(() => {});
+
+            // Check badges (upload trigger)
+            const newBadges = await gamificationService.checkBadges('upload').catch(() => []);
+
+            // Check for level-up
+            const levelResult = await gamificationService.checkAndApplyLevelUp().catch(() => null);
+
+            // Queue badge modals
+            if (newBadges && newBadges.length > 0) {
+                setPendingBadges(newBadges.slice(1));
+                if (levelResult && levelResult.leveledUp) {
+                    // Show level-up first, then badges
+                    setPendingBadges(newBadges);
+                    setNewLevel(levelResult.newLevel);
+                    setShowLevelUp(true);
+                    return;
+                }
+                // Show first badge
+                setUnlockedBadge(newBadges[0]);
+                setPendingBadges(newBadges.slice(1));
+                setShowBadgeUnlock(true);
+                return;
             }
+
+            if (levelResult && levelResult.leveledUp) {
+                setNewLevel(levelResult.newLevel);
+                setShowLevelUp(true);
+                return;
+            }
+
+            await navigateAfterSave();
         } catch (error) {
             console.error('Save error:', error);
             Alert.alert('Error', 'Failed to save item. Please try again.');
@@ -402,6 +477,16 @@ export default function ConfirmItemScreen() {
                     )}
                 </TouchableOpacity>
             </View>
+            <LevelUpModal
+                visible={showLevelUp}
+                newLevel={newLevel}
+                onDismiss={handleLevelUpDismiss}
+            />
+            <BadgeUnlockModal
+                visible={showBadgeUnlock}
+                badge={unlockedBadge}
+                onDismiss={handleBadgeDismiss}
+            />
         </KeyboardAvoidingView>
     );
 }

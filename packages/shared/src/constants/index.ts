@@ -33,5 +33,11 @@ export const CPW_THRESHOLDS = {
     MEDIUM: 20,
 } as const;
 
+// Streak milestones (day thresholds that trigger bonus rewards)
+export const STREAK_MILESTONES = [7, 30, 100] as const;
+
 // Neglected item days
 export const NEGLECTED_DAYS = 60;
+
+// Badges
+export * from './badges';

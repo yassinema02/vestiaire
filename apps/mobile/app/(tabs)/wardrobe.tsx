@@ -24,6 +24,7 @@ import { itemsService, WardrobeItem } from '../../services/items';
 import { CATEGORIES, COLORS } from '../../services/aiCategorization';
 import { getCPWResult } from '../../utils/cpwCalculator';
 import { isNeglected, countNeglected } from '../../utils/neglectedItems';
+import { resaleService } from '../../services/resaleService';
 
 // Filter constants
 const SORT_OPTIONS = [
@@ -55,6 +56,7 @@ export default function WardrobeScreen() {
     const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
     const [sortBy, setSortBy] = useState<SortOption>('newest');
     const [showNeglectedOnly, setShowNeglectedOnly] = useState(false);
+    const [showResaleOnly, setShowResaleOnly] = useState(false);
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [showSortModal, setShowSortModal] = useState(false);
 
@@ -131,6 +133,11 @@ export default function WardrobeScreen() {
             result = result.filter((item) => isNeglected(item));
         }
 
+        // Resale candidates filter
+        if (showResaleOnly) {
+            result = result.filter((item) => resaleService.isResaleCandidate(item));
+        }
+
         // Sort
         switch (sortBy) {
             case 'newest':
@@ -158,9 +165,10 @@ export default function WardrobeScreen() {
         }
 
         return result;
-    }, [items, searchQuery, selectedCategory, selectedColors, selectedSeasons, selectedOccasions, showNeglectedOnly, sortBy]);
+    }, [items, searchQuery, selectedCategory, selectedColors, selectedSeasons, selectedOccasions, showNeglectedOnly, showResaleOnly, sortBy]);
 
     const neglectedCount = useMemo(() => countNeglected(items), [items]);
+    const resaleCount = useMemo(() => items.filter(i => resaleService.isResaleCandidate(i)).length, [items]);
 
     const activeFilterCount = useMemo(() => {
         let count = 0;
@@ -169,8 +177,9 @@ export default function WardrobeScreen() {
         if (selectedSeasons.length > 0) count++;
         if (selectedOccasions.length > 0) count++;
         if (showNeglectedOnly) count++;
+        if (showResaleOnly) count++;
         return count;
-    }, [selectedCategory, selectedColors, selectedSeasons, selectedOccasions, showNeglectedOnly]);
+    }, [selectedCategory, selectedColors, selectedSeasons, selectedOccasions, showNeglectedOnly, showResaleOnly]);
 
     const clearAllFilters = () => {
         setSelectedCategory(null);
@@ -178,6 +187,7 @@ export default function WardrobeScreen() {
         setSelectedSeasons([]);
         setSelectedOccasions([]);
         setShowNeglectedOnly(false);
+        setShowResaleOnly(false);
         setSearchQuery('');
     };
 
@@ -358,22 +368,39 @@ export default function WardrobeScreen() {
                 ))}
             </ScrollView>
 
-            {/* Neglected Filter Chip */}
-            {neglectedCount > 0 && (
-                <View style={styles.neglectedFilterRow}>
-                    <TouchableOpacity
-                        style={[styles.neglectedChip, showNeglectedOnly && styles.neglectedChipActive]}
-                        onPress={() => setShowNeglectedOnly(!showNeglectedOnly)}
-                    >
-                        <Ionicons
-                            name="moon-outline"
-                            size={14}
-                            color={showNeglectedOnly ? '#fff' : '#f59e0b'}
-                        />
-                        <Text style={[styles.neglectedChipText, showNeglectedOnly && styles.neglectedChipTextActive]}>
-                            Neglected ({neglectedCount})
-                        </Text>
-                    </TouchableOpacity>
+            {/* Special Filter Chips */}
+            {(neglectedCount > 0 || resaleCount > 0) && (
+                <View style={styles.specialFilterRow}>
+                    {neglectedCount > 0 && (
+                        <TouchableOpacity
+                            style={[styles.neglectedChip, showNeglectedOnly && styles.neglectedChipActive]}
+                            onPress={() => { setShowNeglectedOnly(!showNeglectedOnly); setShowResaleOnly(false); }}
+                        >
+                            <Ionicons
+                                name="moon-outline"
+                                size={14}
+                                color={showNeglectedOnly ? '#fff' : '#f59e0b'}
+                            />
+                            <Text style={[styles.neglectedChipText, showNeglectedOnly && styles.neglectedChipTextActive]}>
+                                Neglected ({neglectedCount})
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                    {resaleCount > 0 && (
+                        <TouchableOpacity
+                            style={[styles.resaleChip, showResaleOnly && styles.resaleChipActive]}
+                            onPress={() => { setShowResaleOnly(!showResaleOnly); setShowNeglectedOnly(false); }}
+                        >
+                            <Ionicons
+                                name="pricetag-outline"
+                                size={14}
+                                color={showResaleOnly ? '#fff' : '#22c55e'}
+                            />
+                            <Text style={[styles.resaleChipText, showResaleOnly && styles.resaleChipTextActive]}>
+                                Resale ({resaleCount})
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             )}
 
@@ -519,11 +546,15 @@ const styles = StyleSheet.create({
     cpwBadgeText: { color: '#fff', fontSize: 10, fontWeight: '600' },
     neglectedOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.08)', zIndex: 1 },
     neglectedBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: '#f59e0b', width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-    neglectedFilterRow: { paddingHorizontal: 20, marginBottom: 10 },
+    specialFilterRow: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 10, gap: 8 },
     neglectedChip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#f59e0b' },
     neglectedChipActive: { backgroundColor: '#f59e0b', borderColor: '#f59e0b' },
     neglectedChipText: { fontSize: 13, fontWeight: '500', color: '#f59e0b' },
     neglectedChipTextActive: { color: '#fff' },
+    resaleChip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#22c55e' },
+    resaleChipActive: { backgroundColor: '#22c55e', borderColor: '#22c55e' },
+    resaleChipText: { fontSize: 13, fontWeight: '500', color: '#22c55e' },
+    resaleChipTextActive: { color: '#fff' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
     modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '70%' },
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
