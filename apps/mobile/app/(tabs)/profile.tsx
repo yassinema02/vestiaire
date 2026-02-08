@@ -411,7 +411,10 @@ export default function ProfileScreen() {
                 {subStatus?.isPremium ? (
                     <View style={styles.premiumBadge}>
                         <Ionicons name="diamond" size={13} color="#6366f1" />
-                        <Text style={styles.premiumBadgeText}>Premium</Text>
+                        <Text style={styles.premiumBadgeText}>
+                            {subStatus.isTrial ? 'Premium Trial' : 'Premium'}
+                            {subStatus.daysRemaining ? ` · ${subStatus.daysRemaining}d left` : ''}
+                        </Text>
                     </View>
                 ) : (
                     <Text style={styles.memberSince}>Member since 2024</Text>

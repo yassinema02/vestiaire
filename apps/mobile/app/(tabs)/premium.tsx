@@ -145,11 +145,15 @@ export default function PremiumScreen() {
                     <Ionicons name="diamond" size={40} color="#6366f1" />
                 </View>
                 <Text style={styles.heroTitle}>
-                    {status?.isPremium ? 'You\'re Premium' : 'Upgrade to Premium'}
+                    {status?.isPremium
+                        ? (status.isTrial ? 'Premium Trial' : 'You\'re Premium')
+                        : 'Upgrade to Premium'}
                 </Text>
                 <Text style={styles.heroSubtitle}>
                     {status?.isPremium
-                        ? `Your subscription is active${status.daysRemaining ? ` (${status.daysRemaining} days remaining)` : ''}`
+                        ? (status.isTrial
+                            ? `Free trial active${status.daysRemaining ? ` — ${status.daysRemaining} days remaining` : ''}`
+                            : `Your subscription is active${status.daysRemaining ? ` (${status.daysRemaining} days remaining)` : ''}`)
                         : 'Unlock unlimited access to all features'}
                 </Text>
             </View>
@@ -200,14 +204,22 @@ export default function PremiumScreen() {
                 <View style={styles.activeSection}>
                     <View style={styles.activeBadge}>
                         <Ionicons name="checkmark-circle" size={20} color="#22c55e" />
-                        <Text style={styles.activeBadgeText}>Premium Active</Text>
+                        <Text style={styles.activeBadgeText}>
+                            {status.isTrial ? 'Free Trial Active' : 'Premium Active'}
+                        </Text>
                     </View>
-                    <TouchableOpacity
-                        style={styles.manageButton}
-                        onPress={handleManageSubscription}
-                    >
-                        <Text style={styles.manageButtonText}>Manage Subscription</Text>
-                    </TouchableOpacity>
+                    {status.isTrial ? (
+                        <Text style={styles.trialHint}>
+                            Subscribe before your trial ends to keep unlimited access
+                        </Text>
+                    ) : (
+                        <TouchableOpacity
+                            style={styles.manageButton}
+                            onPress={handleManageSubscription}
+                        >
+                            <Text style={styles.manageButtonText}>Manage Subscription</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             ) : (
                 <View style={styles.ctaSection}>
@@ -437,6 +449,13 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '500',
         color: '#6366f1',
+    },
+    trialHint: {
+        fontSize: 13,
+        color: '#6b7280',
+        textAlign: 'center',
+        marginTop: 8,
+        lineHeight: 19,
     },
     // CTA section
     ctaSection: {

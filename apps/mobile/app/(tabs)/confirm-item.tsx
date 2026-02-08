@@ -34,8 +34,10 @@ import { itemsService } from '../../services/items';
 import { onboardingService } from '../../services/onboarding';
 import { gamificationService } from '../../services/gamificationService';
 import { challengeService } from '../../services/challengeService';
+import { subscriptionService } from '../../services/subscriptionService';
 import LevelUpModal from '../../components/gamification/LevelUpModal';
 import BadgeUnlockModal from '../../components/gamification/BadgeUnlockModal';
+import TrialUnlockedModal from '../../components/TrialUnlockedModal';
 import { BadgeDefinition } from '@vestiaire/shared';
 
 // Constants
@@ -62,6 +64,7 @@ export default function ConfirmItemScreen() {
     const [showBadgeUnlock, setShowBadgeUnlock] = useState(false);
     const [unlockedBadge, setUnlockedBadge] = useState<BadgeDefinition | null>(null);
     const [pendingBadges, setPendingBadges] = useState<BadgeDefinition[]>([]);
+    const [showTrialUnlocked, setShowTrialUnlocked] = useState(false);
 
     // Category/Color state
     const [selectedCategory, setSelectedCategory] = useState<Category>('tops');
@@ -87,31 +90,42 @@ export default function ConfirmItemScreen() {
         }
     };
 
+    const proceedAfterModals = () => {
+        // Check if trial modal should be shown before navigating
+        if (showTrialUnlocked) return; // Trial modal is already visible
+        navigateAfterSave();
+    };
+
     const handleBadgeDismiss = () => {
         setShowBadgeUnlock(false);
         setUnlockedBadge(null);
-        // Show next pending badge or navigate
+        // Show next pending badge or proceed
         if (pendingBadges.length > 0) {
             const [next, ...rest] = pendingBadges;
             setPendingBadges(rest);
             setUnlockedBadge(next);
             setShowBadgeUnlock(true);
         } else {
-            navigateAfterSave();
+            proceedAfterModals();
         }
     };
 
     const handleLevelUpDismiss = () => {
         setShowLevelUp(false);
-        // Show pending badges if any, otherwise navigate
+        // Show pending badges if any, otherwise proceed
         if (pendingBadges.length > 0) {
             const [next, ...rest] = pendingBadges;
             setPendingBadges(rest);
             setUnlockedBadge(next);
             setShowBadgeUnlock(true);
         } else {
-            navigateAfterSave();
+            proceedAfterModals();
         }
+    };
+
+    const handleTrialDismiss = () => {
+        setShowTrialUnlocked(false);
+        navigateAfterSave();
     };
 
     useEffect(() => {
@@ -207,11 +221,23 @@ export default function ConfirmItemScreen() {
             // Check for level-up
             const levelResult = await gamificationService.checkAndApplyLevelUp().catch(() => null);
 
+            // Check for Closet Safari trial (25+ items, trial not yet granted)
+            let trialGranted = false;
+            const { count: currentItemCount } = await gamificationService.getItemCount();
+            if (currentItemCount >= 25) {
+                const alreadyUsed = await subscriptionService.hasUsedTrial();
+                if (!alreadyUsed) {
+                    const { granted } = await subscriptionService.grantPremiumTrial();
+                    trialGranted = granted;
+                }
+            }
+
             // Queue badge modals
             if (newBadges && newBadges.length > 0) {
                 setPendingBadges(newBadges.slice(1));
+                if (trialGranted) setShowTrialUnlocked(true);
                 if (levelResult && levelResult.leveledUp) {
-                    // Show level-up first, then badges
+                    // Show level-up first, then badges, then trial
                     setPendingBadges(newBadges);
                     setNewLevel(levelResult.newLevel);
                     setShowLevelUp(true);
@@ -225,8 +251,14 @@ export default function ConfirmItemScreen() {
             }
 
             if (levelResult && levelResult.leveledUp) {
+                if (trialGranted) setShowTrialUnlocked(true);
                 setNewLevel(levelResult.newLevel);
                 setShowLevelUp(true);
+                return;
+            }
+
+            if (trialGranted) {
+                setShowTrialUnlocked(true);
                 return;
             }
 
@@ -486,6 +518,10 @@ export default function ConfirmItemScreen() {
                 visible={showBadgeUnlock}
                 badge={unlockedBadge}
                 onDismiss={handleBadgeDismiss}
+            />
+            <TrialUnlockedModal
+                visible={showTrialUnlocked}
+                onDismiss={handleTrialDismiss}
             />
         </KeyboardAvoidingView>
     );
