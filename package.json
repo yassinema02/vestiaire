@@ -28,6 +28,7 @@
   "dependencies": {
     "expo": "~54.0.32",
     "expo-calendar": "~15.0.8",
+    "expo-clipboard": "~8.0.8",
     "react": "19.1.0",
     "react-native": "0.81.5",
     "supabase": "^2.74.5"

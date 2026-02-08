@@ -1,10 +1,10 @@
 /**
  * ListingGeneratorModal
- * Story 7.2: AI Listing Generator
- * Bottom sheet modal for generating and editing Vinted resale listings.
+ * Story 7.2 + 7.3: AI Listing Generator with Copy, Share & Image Save
+ * Bottom sheet modal for generating, editing, and sharing Vinted resale listings.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -14,15 +14,22 @@ import {
     TextInput,
     ScrollView,
     ActivityIndicator,
-    Clipboard,
     Alert,
     Linking,
+    Clipboard,
+    Share,
     KeyboardAvoidingView,
     Platform,
+    Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as MediaLibrary from 'expo-media-library';
+import { cacheDirectory, downloadAsync } from 'expo-file-system/legacy';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WardrobeItem } from '../../services/items';
 import { listingService, ListingTone, ListingData } from '../../services/listingService';
+
+const TOOLTIP_STORAGE_KEY = 'listing_tooltip_shown';
 
 interface ListingGeneratorModalProps {
     visible: boolean;
@@ -36,6 +43,32 @@ const TONES: { key: ListingTone; label: string; icon: string }[] = [
     { key: 'minimal', label: 'Minimal', icon: 'remove-outline' },
 ];
 
+function formatListingText(
+    title: string,
+    description: string,
+    item: WardrobeItem,
+    hashtags: string[]
+): string {
+    const lines = [title, '', description, ''];
+
+    if (item.category) lines.push(`Category: ${item.category}${item.sub_category ? ` / ${item.sub_category}` : ''}`);
+    if (item.brand) lines.push(`Brand: ${item.brand}`);
+
+    const condition =
+        item.wear_count === 0
+            ? 'New without tags'
+            : item.wear_count < 5
+                ? 'Like new'
+                : 'Good condition';
+    lines.push(`Condition: ${condition}`);
+
+    if (hashtags.length > 0) {
+        lines.push('', hashtags.join(' '));
+    }
+
+    return lines.join('\n');
+}
+
 export default function ListingGeneratorModal({ visible, item, onDismiss }: ListingGeneratorModalProps) {
     const [tone, setTone] = useState<ListingTone>('casual');
     const [isGenerating, setIsGenerating] = useState(false);
@@ -44,6 +77,10 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
     const [editDescription, setEditDescription] = useState('');
     const [fromAI, setFromAI] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [imageSaved, setImageSaved] = useState(false);
+    const [isSavingImage, setIsSavingImage] = useState(false);
+    const [showTooltip, setShowTooltip] = useState(false);
+    const [tooltipOpacity] = useState(new Animated.Value(0));
 
     useEffect(() => {
         if (visible) {
@@ -51,9 +88,36 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
             setEditTitle('');
             setEditDescription('');
             setCopied(false);
+            setImageSaved(false);
             handleGenerate('casual');
+            checkFirstUse();
         }
     }, [visible, item.id]);
+
+    const checkFirstUse = async () => {
+        try {
+            const shown = await AsyncStorage.getItem(TOOLTIP_STORAGE_KEY);
+            if (!shown) {
+                setShowTooltip(true);
+                Animated.timing(tooltipOpacity, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                }).start();
+            }
+        } catch {}
+    };
+
+    const dismissTooltip = async () => {
+        Animated.timing(tooltipOpacity, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+        }).start(() => setShowTooltip(false));
+        try {
+            await AsyncStorage.setItem(TOOLTIP_STORAGE_KEY, 'true');
+        } catch {}
+    };
 
     const handleGenerate = async (selectedTone: ListingTone) => {
         setTone(selectedTone);
@@ -72,18 +136,69 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
         setIsGenerating(false);
     };
 
+    const getFullListingText = useCallback(() => {
+        if (!listing) return '';
+        return formatListingText(editTitle, editDescription, item, listing.hashtags || []);
+    }, [editTitle, editDescription, item, listing]);
+
     const handleCopyAll = () => {
-        const hashtagStr = listing?.hashtags?.join(' ') || '';
-        const fullText = `${editTitle}\n\n${editDescription}${hashtagStr ? `\n\n${hashtagStr}` : ''}`;
+        const fullText = getFullListingText();
         Clipboard.setString(fullText);
         setCopied(true);
+        if (showTooltip) dismissTooltip();
         setTimeout(() => setCopied(false), 2500);
     };
 
+    const handleShare = async () => {
+        const fullText = getFullListingText();
+        try {
+            await Share.share({
+                message: fullText,
+                title: editTitle,
+            });
+        } catch {}
+    };
+
+    const handleSaveImage = async () => {
+        const imageUrl = item.processed_image_url || item.image_url;
+        if (!imageUrl) {
+            Alert.alert('No Image', 'This item does not have an image to save.');
+            return;
+        }
+
+        setIsSavingImage(true);
+        try {
+            const { status } = await MediaLibrary.requestPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert(
+                    'Permission Required',
+                    'Please allow access to your photo library to save listing images.',
+                    [{ text: 'OK' }]
+                );
+                setIsSavingImage(false);
+                return;
+            }
+
+            const fileUri = cacheDirectory + `listing_${item.id}.jpg`;
+            const result = await downloadAsync(imageUrl, fileUri);
+            await MediaLibrary.saveToLibraryAsync(result.uri);
+
+            setImageSaved(true);
+            setTimeout(() => setImageSaved(false), 2500);
+        } catch (err) {
+            console.error('Failed to save image:', err);
+            Alert.alert('Error', 'Failed to save image. Please try again.');
+        } finally {
+            setIsSavingImage(false);
+        }
+    };
+
     const handleOpenVinted = async () => {
-        // Try deep link first, then fall back to web
+        // Copy listing first so it's ready to paste
+        handleCopyAll();
+
         const vintedDeepLink = 'vinted://sell';
-        const vintedWeb = 'https://www.vinted.com/items/new';
+        const vintedWeb = 'https://www.vinted.co.uk/items/new';
 
         try {
             const canOpen = await Linking.canOpenURL(vintedDeepLink);
@@ -155,6 +270,21 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
                             </View>
                         ) : listing ? (
                             <>
+                                {/* First-use tutorial tooltip */}
+                                {showTooltip && (
+                                    <Animated.View style={[styles.tooltip, { opacity: tooltipOpacity }]}>
+                                        <View style={styles.tooltipContent}>
+                                            <Ionicons name="bulb-outline" size={18} color="#f59e0b" />
+                                            <Text style={styles.tooltipText}>
+                                                Tap "Copy & Open Vinted" to copy your listing, then paste it directly into Vinted's description field!
+                                            </Text>
+                                        </View>
+                                        <TouchableOpacity onPress={dismissTooltip} style={styles.tooltipDismiss}>
+                                            <Text style={styles.tooltipDismissText}>Got it</Text>
+                                        </TouchableOpacity>
+                                    </Animated.View>
+                                )}
+
                                 {/* AI badge */}
                                 {fromAI && (
                                     <View style={styles.aiBadge}>
@@ -210,7 +340,7 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
                                     </View>
                                 )}
 
-                                {/* Actions */}
+                                {/* Primary Actions */}
                                 <View style={styles.actionsRow}>
                                     <TouchableOpacity
                                         style={[styles.copyButton, copied && styles.copyButtonDone]}
@@ -228,9 +358,53 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
 
                                     <TouchableOpacity style={styles.vintedButton} onPress={handleOpenVinted}>
                                         <Ionicons name="open-outline" size={18} color="#09B1BA" />
-                                        <Text style={styles.vintedButtonText}>Open Vinted</Text>
+                                        <Text style={styles.vintedButtonText}>
+                                            {copied ? 'Open Vinted' : 'Copy & Open Vinted'}
+                                        </Text>
                                     </TouchableOpacity>
                                 </View>
+
+                                {/* Secondary Actions */}
+                                <View style={styles.secondaryActionsRow}>
+                                    <TouchableOpacity style={styles.secondaryButton} onPress={handleShare}>
+                                        <Ionicons name="share-outline" size={18} color="#6b7280" />
+                                        <Text style={styles.secondaryButtonText}>Share</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={styles.secondaryButton}
+                                        onPress={handleSaveImage}
+                                        disabled={isSavingImage}
+                                    >
+                                        {isSavingImage ? (
+                                            <ActivityIndicator size="small" color="#6b7280" />
+                                        ) : (
+                                            <Ionicons
+                                                name={imageSaved ? 'checkmark-circle' : 'image-outline'}
+                                                size={18}
+                                                color={imageSaved ? '#22c55e' : '#6b7280'}
+                                            />
+                                        )}
+                                        <Text
+                                            style={[
+                                                styles.secondaryButtonText,
+                                                imageSaved && { color: '#22c55e' },
+                                            ]}
+                                        >
+                                            {imageSaved ? 'Saved!' : 'Save Photo'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                {/* Success toast */}
+                                {copied && (
+                                    <View style={styles.successToast}>
+                                        <Ionicons name="checkmark-circle" size={16} color="#22c55e" />
+                                        <Text style={styles.successToastText}>
+                                            Copied! Ready to paste in Vinted
+                                        </Text>
+                                    </View>
+                                )}
 
                                 <View style={{ height: 24 }} />
                             </>
@@ -335,6 +509,39 @@ const styles = StyleSheet.create({
         color: '#9ca3af',
         marginTop: 4,
     },
+    // Tooltip
+    tooltip: {
+        backgroundColor: '#fffbeb',
+        borderRadius: 12,
+        padding: 14,
+        marginBottom: 14,
+        borderWidth: 1,
+        borderColor: '#fde68a',
+    },
+    tooltipContent: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 10,
+    },
+    tooltipText: {
+        flex: 1,
+        fontSize: 13,
+        color: '#92400e',
+        lineHeight: 19,
+    },
+    tooltipDismiss: {
+        alignSelf: 'flex-end',
+        marginTop: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        backgroundColor: '#fef3c7',
+        borderRadius: 8,
+    },
+    tooltipDismissText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#92400e',
+    },
     // AI badge
     aiBadge: {
         flexDirection: 'row',
@@ -431,7 +638,7 @@ const styles = StyleSheet.create({
         color: '#6366f1',
         fontWeight: '500',
     },
-    // Actions
+    // Primary actions
     actionsRow: {
         flexDirection: 'row',
         gap: 10,
@@ -468,8 +675,49 @@ const styles = StyleSheet.create({
         borderColor: '#99f6e4',
     },
     vintedButtonText: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '600',
         color: '#09B1BA',
+    },
+    // Secondary actions
+    secondaryActionsRow: {
+        flexDirection: 'row',
+        gap: 10,
+        marginTop: 10,
+    },
+    secondaryButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        backgroundColor: '#f9fafb',
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+    },
+    secondaryButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#6b7280',
+    },
+    // Success toast
+    successToast: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: '#f0fdf4',
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginTop: 12,
+        borderWidth: 1,
+        borderColor: '#bbf7d0',
+    },
+    successToastText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#16a34a',
     },
 });
