@@ -5,8 +5,7 @@
  */
 
 import { supabase } from './supabase';
-import { BADGES } from '@vestiaire/shared';
-import { POINTS } from '@vestiaire/shared';
+import { requireUserId } from './auth-helpers';
 
 export interface UserChallenge {
     id: string;
@@ -54,7 +53,8 @@ export const challengeService = {
                 await supabase
                     .from('user_challenges')
                     .update({ status: 'expired' })
-                    .eq('id', challenge.id);
+                    .eq('id', challenge.id)
+                    .eq('user_id', userData.user.id);
                 return { challenge: { ...challenge, status: 'expired' }, error: null };
             }
 
@@ -82,6 +82,7 @@ export const challengeService = {
             const { count } = await supabase
                 .from('items')
                 .select('*', { count: 'exact', head: true })
+                .eq('user_id', userData.user.id)
                 .eq('status', 'complete');
 
             const startingProgress = count || 0;
@@ -142,7 +143,8 @@ export const challengeService = {
             const { error } = await supabase
                 .from('user_challenges')
                 .update({ status: 'skipped' })
-                .eq('id', challenge.id);
+                .eq('id', challenge.id)
+                .eq('user_id', userData.user.id);
 
             return { error: error || null };
         } catch (error) {
@@ -154,9 +156,11 @@ export const challengeService = {
     /**
      * Update challenge progress after an item upload.
      * Returns whether the challenge was just completed.
+     * Rewards are granted server-side via award_challenge_rewards_safe (migration 016).
      */
     updateProgress: async (): Promise<{ completed: boolean; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { challenge } = await challengeService.getChallenge();
             if (!challenge || challenge.status !== 'active') {
                 return { completed: false, error: null };
@@ -166,31 +170,39 @@ export const challengeService = {
             const { count } = await supabase
                 .from('items')
                 .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId)
                 .eq('status', 'complete');
 
             const newProgress = count || 0;
 
             if (newProgress >= challenge.target) {
-                // Challenge completed!
+                // Update progress first
                 await supabase
                     .from('user_challenges')
-                    .update({
-                        progress: newProgress,
-                        status: 'completed',
-                        completed_at: new Date().toISOString(),
-                    })
-                    .eq('id', challenge.id);
+                    .update({ progress: newProgress })
+                    .eq('id', challenge.id)
+                    .eq('user_id', userId);
 
-                // Award rewards
-                await awardChallengeRewards();
-                return { completed: true, error: null };
+                // Award rewards server-side (validates completion atomically)
+                const { data, error: rpcError } = await supabase.rpc('award_challenge_rewards_safe', {
+                    p_challenge_id: challenge.id,
+                });
+
+                if (rpcError) {
+                    console.warn('Award challenge rewards RPC error:', rpcError);
+                    return { completed: false, error: rpcError };
+                }
+
+                const result = data as { success: boolean; reason?: string };
+                return { completed: result.success, error: null };
             }
 
             // Update progress
             await supabase
                 .from('user_challenges')
                 .update({ progress: newProgress })
-                .eq('id', challenge.id);
+                .eq('id', challenge.id)
+                .eq('user_id', userId);
 
             return { completed: false, error: null };
         } catch (error) {
@@ -213,53 +225,5 @@ export const challengeService = {
     },
 };
 
-/**
- * Award premium + badge on challenge completion.
- */
-async function awardChallengeRewards(): Promise<void> {
-    try {
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) return;
-
-        const userId = userData.user.id;
-
-        // 1. Grant 30 days premium
-        const premiumUntil = new Date();
-        premiumUntil.setDate(premiumUntil.getDate() + 30);
-
-        await supabase
-            .from('profiles')
-            .update({ premium_until: premiumUntil.toISOString() })
-            .eq('id', userId);
-
-        // 2. Award Safari Explorer badge
-        await supabase
-            .from('user_badges')
-            .insert({ user_id: userId, badge_id: 'safari_explorer' });
-
-        // 3. Award bonus points
-        await supabase
-            .from('point_history')
-            .insert({
-                user_id: userId,
-                points: POINTS.COMPLETE_CHALLENGE,
-                action_type: 'challenge_complete',
-            });
-
-        // Update total points
-        const { data: stats } = await supabase
-            .from('user_stats')
-            .select('style_points')
-            .eq('user_id', userId)
-            .single();
-
-        if (stats) {
-            await supabase
-                .from('user_stats')
-                .update({ style_points: (stats.style_points || 0) + POINTS.COMPLETE_CHALLENGE })
-                .eq('user_id', userId);
-        }
-    } catch (error) {
-        console.warn('Award challenge rewards error:', error);
-    }
-}
+// awardChallengeRewards is now handled server-side via
+// award_challenge_rewards_safe() stored procedure (migration 016).

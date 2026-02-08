@@ -6,6 +6,7 @@
  */
 
 import { supabase } from './supabase';
+import { requireUserId } from './auth-helpers';
 import { WardrobeItem } from './items';
 import { calculateCPW } from '../utils/cpwCalculator';
 import { countNeglected } from '../utils/neglectedItems';
@@ -55,10 +56,12 @@ export interface SustainabilityScore {
 export const analyticsService = {
     getWardrobeStats: async (): Promise<{ stats: WardrobeStats; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             // Fetch all items
             const { data: items, error: itemsError } = await supabase
                 .from('items')
-                .select('*');
+                .select('*')
+                .eq('user_id', userId);
 
             if (itemsError) {
                 return { stats: emptyStats(), error: itemsError };
@@ -108,6 +111,7 @@ export const analyticsService = {
             const { data: logs, error: logsError } = await supabase
                 .from('wear_logs')
                 .select('worn_date')
+                .eq('user_id', userId)
                 .gte('worn_date', sinceDateStr)
                 .order('worn_date', { ascending: true });
 
@@ -289,10 +293,11 @@ function emptySustainability(): SustainabilityScore {
  * Weighted: Utilization 40%, Wear Depth 30%, Value Efficiency 30%.
  */
 async function calculateSustainabilityScore(userId: string): Promise<SustainabilityScore> {
-    // Fetch all complete items
+    // Fetch all complete items for this user
     const { data: items } = await supabase
         .from('items')
         .select('id, wear_count, purchase_price')
+        .eq('user_id', userId)
         .eq('status', 'complete');
 
     const allItems = (items || []) as { id: string; wear_count: number; purchase_price: number | null }[];
@@ -310,6 +315,7 @@ async function calculateSustainabilityScore(userId: string): Promise<Sustainabil
     const { data: recentLogs } = await supabase
         .from('wear_logs')
         .select('item_id')
+        .eq('user_id', userId)
         .gte('worn_date', sinceDate);
 
     const activeItemIds = new Set((recentLogs || []).map((l: any) => l.item_id));

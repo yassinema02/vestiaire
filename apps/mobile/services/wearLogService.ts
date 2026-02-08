@@ -4,6 +4,7 @@
  */
 
 import { supabase } from './supabase';
+import { requireUserId } from './auth-helpers';
 import { WearLog, WearCalendarDay } from '../types/wearLog';
 import { WardrobeItem } from './items';
 
@@ -115,6 +116,7 @@ export const wearLogService = {
         date: Date
     ): Promise<{ logs: WearLog[]; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const dateStr = date.toISOString().split('T')[0];
 
             const { data, error } = await supabase
@@ -123,6 +125,7 @@ export const wearLogService = {
                     *,
                     item:items(*)
                 `)
+                .eq('user_id', userId)
                 .eq('worn_date', dateStr)
                 .order('created_at', { ascending: false });
 
@@ -145,9 +148,11 @@ export const wearLogService = {
         itemId: string
     ): Promise<{ count: number; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { count, error } = await supabase
                 .from('wear_logs')
                 .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId)
                 .eq('item_id', itemId);
 
             if (error) {
@@ -169,10 +174,12 @@ export const wearLogService = {
         logId: string
     ): Promise<{ error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { error } = await supabase
                 .from('wear_logs')
                 .delete()
-                .eq('id', logId);
+                .eq('id', logId)
+                .eq('user_id', userId);
 
             if (error) {
                 console.error('Delete wear log error:', error);
@@ -192,6 +199,7 @@ export const wearLogService = {
         days: number = 30
     ): Promise<{ logs: WearLog[]; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const sinceDate = new Date();
             sinceDate.setDate(sinceDate.getDate() - days);
             const sinceDateStr = sinceDate.toISOString().split('T')[0];
@@ -202,6 +210,7 @@ export const wearLogService = {
                     *,
                     item:items(*)
                 `)
+                .eq('user_id', userId)
                 .gte('worn_date', sinceDateStr)
                 .order('worn_date', { ascending: false });
 
@@ -222,11 +231,13 @@ export const wearLogService = {
      */
     getItemsWornToday: async (): Promise<{ itemIds: string[]; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const todayStr = new Date().toISOString().split('T')[0];
 
             const { data, error } = await supabase
                 .from('wear_logs')
                 .select('item_id')
+                .eq('user_id', userId)
                 .eq('worn_date', todayStr);
 
             if (error) {
@@ -249,9 +260,11 @@ export const wearLogService = {
         itemId: string
     ): Promise<{ logs: WearLog[]; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { data, error } = await supabase
                 .from('wear_logs')
                 .select('*')
+                .eq('user_id', userId)
                 .eq('item_id', itemId)
                 .order('worn_date', { ascending: false });
 
@@ -281,12 +294,14 @@ export const wearLogService = {
             const startStr = startDate.toISOString().split('T')[0];
             const endStr = endDate.toISOString().split('T')[0];
 
+            const userId = await requireUserId();
             const { data, error } = await supabase
                 .from('wear_logs')
                 .select(`
                     *,
                     item:items(id, name, category, processed_image_url, image_url)
                 `)
+                .eq('user_id', userId)
                 .gte('worn_date', startStr)
                 .lte('worn_date', endStr)
                 .order('worn_date', { ascending: true });
@@ -340,11 +355,13 @@ export const wearLogService = {
             const dateRange = options?.dateRange || 'all_time';
             const range = getDateRangeForFilter(dateRange);
 
+            const userId = await requireUserId();
             if (!range) {
                 // All-time: query items table directly
                 let query = supabase
                     .from('items')
                     .select('*')
+                    .eq('user_id', userId)
                     .gt('wear_count', 0)
                     .order('wear_count', { ascending: false })
                     .limit(limit);
@@ -372,6 +389,7 @@ export const wearLogService = {
             let query = supabase
                 .from('wear_logs')
                 .select('item_id, item:items(*)')
+                .eq('user_id', userId)
                 .gte('worn_date', range.start)
                 .lte('worn_date', range.end);
 

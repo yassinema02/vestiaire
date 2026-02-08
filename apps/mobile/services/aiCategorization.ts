@@ -3,10 +3,7 @@
  * Uses Google Gemini Vision to analyze clothing and extract metadata
  */
 
-import Constants from 'expo-constants';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
+import { callGeminiProxy } from './aiProxy';
 
 // Category taxonomy
 export const CATEGORIES = {
@@ -78,7 +75,7 @@ export interface ClothingAnalysis {
  * Check if AI categorization is configured
  */
 export const isCategorizationConfigured = (): boolean => {
-    return !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
+    return true; // API key is now server-side (Edge Function)
 };
 
 /**
@@ -97,9 +94,6 @@ export const analyzeClothing = async (
 
     try {
         console.log('Analyzing clothing image:', imageUrl);
-
-        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
         const prompt = `You are a fashion expert. Analyze this clothing item image and provide:
 
@@ -121,11 +115,10 @@ Respond ONLY with valid JSON in this exact format, no other text:
   "confidence": 0.95
 }`;
 
-        // Fetch image and convert to base64 for Gemini
+        // Fetch image and convert to base64
         const imageResponse = await fetch(imageUrl);
         const imageBlob = await imageResponse.blob();
 
-        // Convert blob to base64
         const base64 = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -137,19 +130,8 @@ Respond ONLY with valid JSON in this exact format, no other text:
             reader.readAsDataURL(imageBlob);
         });
 
-        const result = await model.generateContent([
-            prompt,
-            {
-                inlineData: {
-                    mimeType: 'image/jpeg',
-                    data: base64,
-                },
-            },
-        ]);
-
-        const response = await result.response;
-        const text = response.text();
-        console.log('Gemini response:', text);
+        // Call Gemini through Edge Function proxy
+        const text = await callGeminiProxy(prompt, base64);
 
         // Parse JSON response
         const jsonMatch = text.match(/\{[\s\S]*\}/);

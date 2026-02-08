@@ -6,12 +6,10 @@
  * and manages listing history for resale tracking.
  */
 
-import Constants from 'expo-constants';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { WardrobeItem } from './items';
 import { supabase } from './supabase';
-
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
+import { requireUserId } from './auth-helpers';
+import { callGeminiProxy } from './aiProxy';
 
 export type ListingTone = 'casual' | 'detailed' | 'minimal';
 export type ListingStatus = 'listed' | 'sold' | 'cancelled';
@@ -41,7 +39,7 @@ export interface ResaleListing {
 }
 
 const isConfigured = (): boolean => {
-    return !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
+    return true; // API key is now server-side (Edge Function)
 };
 
 const TONE_INSTRUCTIONS: Record<ListingTone, string> = {
@@ -149,12 +147,8 @@ export const listingService = {
         try {
             const prompt = buildListingPrompt(item, tone);
 
-            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-            const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
+            // Call Gemini through Edge Function proxy
+            const text = await callGeminiProxy(prompt);
 
             const jsonMatch = text.match(/\{[\s\S]*\}/);
             if (!jsonMatch) {
@@ -226,9 +220,11 @@ export const listingService = {
         statusFilter?: ListingStatus
     ): Promise<{ listings: ResaleListing[]; error: string | null }> => {
         try {
+            const userId = await requireUserId();
             let query = supabase
                 .from('resale_listings')
                 .select('*, item:items(*)')
+                .eq('user_id', userId)
                 .order('created_at', { ascending: false });
 
             if (statusFilter) {
@@ -254,6 +250,7 @@ export const listingService = {
         soldPrice?: number
     ): Promise<{ error: string | null }> => {
         try {
+            const userId = await requireUserId();
             const updates: Record<string, unknown> = { status };
             if (status === 'sold') {
                 updates.sold_at = new Date().toISOString();
@@ -263,7 +260,8 @@ export const listingService = {
             const { error } = await supabase
                 .from('resale_listings')
                 .update(updates)
-                .eq('id', listingId);
+                .eq('id', listingId)
+                .eq('user_id', userId);
 
             if (error) return { error: error.message };
 
@@ -307,9 +305,11 @@ export const listingService = {
         error: string | null;
     }> => {
         try {
+            const userId = await requireUserId();
             const { data, error } = await supabase
                 .from('resale_listings')
-                .select('status, sold_price');
+                .select('status, sold_price')
+                .eq('user_id', userId);
 
             if (error) return { totalListed: 0, totalSold: 0, totalRevenue: 0, error: error.message };
 

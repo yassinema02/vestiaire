@@ -156,50 +156,16 @@ export const subscriptionService = {
 
     /**
      * Grant a 30-day premium trial for completing Closet Safari (25+ items).
-     * Only grants once per user (checks trial_granted flag).
+     * Only grants once per user. Enforced atomically server-side (migration 016).
      */
     grantPremiumTrial: async (): Promise<{ granted: boolean; error: string | null }> => {
         try {
-            const { data: userData } = await supabase.auth.getUser();
-            if (!userData.user) {
-                return { granted: false, error: 'Not authenticated' };
+            const { data, error } = await supabase.rpc('grant_premium_trial_safe');
+            if (error) {
+                return { granted: false, error: error.message };
             }
-
-            const userId = userData.user.id;
-
-            // Check if trial was already granted
-            const { data: stats } = await supabase
-                .from('user_stats')
-                .select('trial_granted')
-                .eq('user_id', userId)
-                .single();
-
-            if (stats?.trial_granted) {
-                return { granted: false, error: 'Trial already used' };
-            }
-
-            // Set expiry to 30 days from now
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + 30);
-            const expiresIso = expiresAt.toISOString();
-
-            // Update user_stats with trial info
-            await supabase
-                .from('user_stats')
-                .update({
-                    trial_granted: true,
-                    trial_started_at: new Date().toISOString(),
-                    trial_expires_at: expiresIso,
-                })
-                .eq('user_id', userId);
-
-            // Set premium_until on profiles
-            await supabase
-                .from('profiles')
-                .update({ premium_until: expiresIso })
-                .eq('id', userId);
-
-            return { granted: true, error: null };
+            const result = data as { granted: boolean; error?: string; expires_at?: string };
+            return { granted: result.granted, error: result.error || null };
         } catch (err) {
             return { granted: false, error: 'Failed to grant trial' };
         }

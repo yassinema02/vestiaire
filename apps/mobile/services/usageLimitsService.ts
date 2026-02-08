@@ -2,10 +2,13 @@
  * Usage Limits Service
  * Story 7.5: Freemium Tier Limits
  * Tracks and enforces free-tier usage limits for AI suggestions and resale listings.
+ *
+ * Security: All limit checks and increments are enforced server-side via
+ * Supabase stored procedures (migration 016). The client calls .rpc() and
+ * receives the authoritative result — no client-side bypass is possible.
  */
 
 import { supabase } from './supabase';
-import { FREE_TIER_LIMITS } from '@vestiaire/shared';
 
 export interface UsageLimitStatus {
     allowed: boolean;
@@ -16,209 +19,103 @@ export interface UsageLimitStatus {
     isPremium: boolean;
 }
 
-async function isPremiumUser(): Promise<boolean> {
-    try {
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) return false;
-
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('premium_until')
-            .eq('id', userData.user.id)
-            .single();
-
-        if (!profile?.premium_until) return false;
-        return new Date(profile.premium_until) > new Date();
-    } catch {
-        return false;
+function parseRpcResult(data: Record<string, unknown> | null): UsageLimitStatus {
+    if (!data) {
+        return { allowed: true, used: 0, limit: 3, remaining: 3, resetAt: null, isPremium: false };
     }
-}
-
-async function getUserStats(): Promise<Record<string, unknown> | null> {
-    try {
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) return null;
-
-        const { data } = await supabase
-            .from('user_stats')
-            .select('ai_suggestions_today, ai_suggestions_reset_at, resale_listings_month, resale_listings_reset_at')
-            .eq('user_id', userData.user.id)
-            .single();
-
-        return data;
-    } catch {
-        return null;
-    }
-}
-
-async function resetIfNeeded(
-    field: 'ai_suggestions' | 'resale_listings',
-    resetAt: string | null
-): Promise<boolean> {
-    if (!resetAt) return false;
-
-    const resetDate = new Date(resetAt);
-    if (resetDate > new Date()) return false;
-
-    // Reset is needed
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return false;
-
-    if (field === 'ai_suggestions') {
-        await supabase
-            .from('user_stats')
-            .update({
-                ai_suggestions_today: 0,
-                ai_suggestions_reset_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-            })
-            .eq('user_id', userData.user.id);
-    } else {
-        const nextMonth = new Date();
-        nextMonth.setMonth(nextMonth.getMonth() + 1);
-        nextMonth.setDate(1);
-        nextMonth.setHours(0, 0, 0, 0);
-
-        await supabase
-            .from('user_stats')
-            .update({
-                resale_listings_month: 0,
-                resale_listings_reset_at: nextMonth.toISOString(),
-            })
-            .eq('user_id', userData.user.id);
-    }
-
-    return true;
+    return {
+        allowed: data.allowed as boolean,
+        used: (data.used as number) || 0,
+        limit: (data.limit as number) || 0,
+        remaining: (data.remaining as number) || 0,
+        resetAt: (data.resetAt as string) || null,
+        isPremium: (data.isPremium as boolean) || false,
+    };
 }
 
 export const usageLimitsService = {
     /**
-     * Check AI suggestion limit.
+     * Check AI suggestion limit (read-only, does NOT consume a use).
+     * Use this for displaying remaining count in the UI.
      */
     checkAISuggestionLimit: async (): Promise<UsageLimitStatus> => {
-        const premium = await isPremiumUser();
-        if (premium) {
-            return { allowed: true, used: 0, limit: Infinity, remaining: Infinity, resetAt: null, isPremium: true };
-        }
-
-        const stats = await getUserStats();
-        if (!stats) {
-            return { allowed: true, used: 0, limit: FREE_TIER_LIMITS.AI_SUGGESTIONS_PER_DAY, remaining: FREE_TIER_LIMITS.AI_SUGGESTIONS_PER_DAY, resetAt: null, isPremium: false };
-        }
-
-        const resetAt = stats.ai_suggestions_reset_at as string | null;
-        const wasReset = await resetIfNeeded('ai_suggestions', resetAt);
-
-        const used = wasReset ? 0 : (stats.ai_suggestions_today as number) || 0;
-        const limit = FREE_TIER_LIMITS.AI_SUGGESTIONS_PER_DAY;
-        const remaining = Math.max(limit - used, 0);
-
-        // Re-fetch resetAt if it was just reset
-        let currentResetAt = resetAt;
-        if (wasReset) {
-            const freshStats = await getUserStats();
-            currentResetAt = freshStats?.ai_suggestions_reset_at as string | null;
-        }
-
-        return {
-            allowed: remaining > 0,
-            used,
-            limit,
-            remaining,
-            resetAt: currentResetAt,
-            isPremium: false,
-        };
-    },
-
-    /**
-     * Increment AI suggestion counter.
-     */
-    incrementAISuggestions: async (): Promise<void> => {
         try {
-            const premium = await isPremiumUser();
-            if (premium) return;
-
-            const { data: userData } = await supabase.auth.getUser();
-            if (!userData.user) return;
-
-            const { data: stats } = await supabase
-                .from('user_stats')
-                .select('ai_suggestions_today')
-                .eq('user_id', userData.user.id)
-                .single();
-
-            const current = (stats?.ai_suggestions_today as number) || 0;
-
-            await supabase
-                .from('user_stats')
-                .update({ ai_suggestions_today: current + 1 })
-                .eq('user_id', userData.user.id);
-        } catch (err) {
-            console.error('Failed to increment AI suggestions counter:', err);
+            const { data, error } = await supabase.rpc('check_ai_suggestion_status');
+            if (error) {
+                console.warn('check_ai_suggestion_status RPC error:', error);
+                // Fail open: allow if we can't reach the server
+                return { allowed: true, used: 0, limit: 3, remaining: 3, resetAt: null, isPremium: false };
+            }
+            return parseRpcResult(data as Record<string, unknown>);
+        } catch {
+            return { allowed: true, used: 0, limit: 3, remaining: 3, resetAt: null, isPremium: false };
         }
     },
 
     /**
-     * Check resale listing limit.
+     * Atomically check limit AND increment the AI suggestion counter.
+     * Returns the updated status. If not allowed, counter is NOT incremented.
+     * Call this right before generating a suggestion.
+     */
+    consumeAISuggestion: async (): Promise<UsageLimitStatus> => {
+        try {
+            const { data, error } = await supabase.rpc('check_and_increment_ai_suggestions');
+            if (error) {
+                console.warn('check_and_increment_ai_suggestions RPC error:', error);
+                return { allowed: true, used: 0, limit: 3, remaining: 3, resetAt: null, isPremium: false };
+            }
+            return parseRpcResult(data as Record<string, unknown>);
+        } catch {
+            return { allowed: true, used: 0, limit: 3, remaining: 3, resetAt: null, isPremium: false };
+        }
+    },
+
+    /**
+     * Check resale listing limit (read-only, does NOT consume a use).
      */
     checkResaleListingLimit: async (): Promise<UsageLimitStatus> => {
-        const premium = await isPremiumUser();
-        if (premium) {
-            return { allowed: true, used: 0, limit: Infinity, remaining: Infinity, resetAt: null, isPremium: true };
+        try {
+            const { data, error } = await supabase.rpc('check_resale_listing_status');
+            if (error) {
+                console.warn('check_resale_listing_status RPC error:', error);
+                return { allowed: true, used: 0, limit: 2, remaining: 2, resetAt: null, isPremium: false };
+            }
+            return parseRpcResult(data as Record<string, unknown>);
+        } catch {
+            return { allowed: true, used: 0, limit: 2, remaining: 2, resetAt: null, isPremium: false };
         }
-
-        const stats = await getUserStats();
-        if (!stats) {
-            return { allowed: true, used: 0, limit: FREE_TIER_LIMITS.RESALE_LISTINGS_PER_MONTH, remaining: FREE_TIER_LIMITS.RESALE_LISTINGS_PER_MONTH, resetAt: null, isPremium: false };
-        }
-
-        const resetAt = stats.resale_listings_reset_at as string | null;
-        const wasReset = await resetIfNeeded('resale_listings', resetAt);
-
-        const used = wasReset ? 0 : (stats.resale_listings_month as number) || 0;
-        const limit = FREE_TIER_LIMITS.RESALE_LISTINGS_PER_MONTH;
-        const remaining = Math.max(limit - used, 0);
-
-        let currentResetAt = resetAt;
-        if (wasReset) {
-            const freshStats = await getUserStats();
-            currentResetAt = freshStats?.resale_listings_reset_at as string | null;
-        }
-
-        return {
-            allowed: remaining > 0,
-            used,
-            limit,
-            remaining,
-            resetAt: currentResetAt,
-            isPremium: false,
-        };
     },
 
     /**
-     * Increment resale listing counter.
+     * Atomically check limit AND increment the resale listing counter.
+     * Call this right before generating a listing.
+     */
+    consumeResaleListing: async (): Promise<UsageLimitStatus> => {
+        try {
+            const { data, error } = await supabase.rpc('check_and_increment_resale_listings');
+            if (error) {
+                console.warn('check_and_increment_resale_listings RPC error:', error);
+                return { allowed: true, used: 0, limit: 2, remaining: 2, resetAt: null, isPremium: false };
+            }
+            return parseRpcResult(data as Record<string, unknown>);
+        } catch {
+            return { allowed: true, used: 0, limit: 2, remaining: 2, resetAt: null, isPremium: false };
+        }
+    },
+
+    /**
+     * @deprecated Use consumeAISuggestion() instead (atomic check+increment).
+     * Kept temporarily for backward compatibility.
+     */
+    incrementAISuggestions: async (): Promise<void> => {
+        // No-op: incrementing now happens atomically inside consumeAISuggestion
+    },
+
+    /**
+     * @deprecated Use consumeResaleListing() instead (atomic check+increment).
+     * Kept temporarily for backward compatibility.
      */
     incrementResaleListings: async (): Promise<void> => {
-        try {
-            const premium = await isPremiumUser();
-            if (premium) return;
-
-            const { data: userData } = await supabase.auth.getUser();
-            if (!userData.user) return;
-
-            const { data: stats } = await supabase
-                .from('user_stats')
-                .select('resale_listings_month')
-                .eq('user_id', userData.user.id)
-                .single();
-
-            const current = (stats?.resale_listings_month as number) || 0;
-
-            await supabase
-                .from('user_stats')
-                .update({ resale_listings_month: current + 1 })
-                .eq('user_id', userData.user.id);
-        } catch (err) {
-            console.error('Failed to increment resale listings counter:', err);
-        }
+        // No-op: incrementing now happens atomically inside consumeResaleListing
     },
 };

@@ -7,10 +7,7 @@
 
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-// AsyncStorage adapter for Supabase Auth
-// Using AsyncStorage instead of SecureStore because Supabase sessions can exceed
-// the 2048 byte limit of SecureStore on some devices.
+import { secureStorageAdapter } from './secureStorage';
 
 import Constants from 'expo-constants';
 
@@ -34,7 +31,7 @@ export const supabase = createClient(
     supabaseAnonKey || '',
     {
         auth: {
-            storage: AsyncStorage,
+            storage: secureStorageAdapter,
             autoRefreshToken: true,
             persistSession: true,
             detectSessionInUrl: false,

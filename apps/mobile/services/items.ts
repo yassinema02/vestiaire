@@ -4,6 +4,7 @@
  */
 
 import { supabase } from './supabase';
+import { requireUserId } from './auth-helpers';
 
 export interface WardrobeItem {
     id: string;
@@ -92,9 +93,11 @@ export const itemsService = {
      */
     getItems: async (): Promise<{ items: WardrobeItem[]; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { data, error } = await supabase
                 .from('items')
                 .select('*')
+                .eq('user_id', userId)
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -116,10 +119,12 @@ export const itemsService = {
         id: string
     ): Promise<{ item: WardrobeItem | null; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { data, error } = await supabase
                 .from('items')
                 .select('*')
                 .eq('id', id)
+                .eq('user_id', userId)
                 .single();
 
             if (error) {
@@ -142,10 +147,12 @@ export const itemsService = {
         updates: Partial<CreateItemInput>
     ): Promise<{ item: WardrobeItem | null; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { data, error } = await supabase
                 .from('items')
                 .update(updates)
                 .eq('id', id)
+                .eq('user_id', userId)
                 .select()
                 .single();
 
@@ -166,7 +173,8 @@ export const itemsService = {
      */
     deleteItem: async (id: string): Promise<{ error: Error | null }> => {
         try {
-            const { error } = await supabase.from('items').delete().eq('id', id);
+            const userId = await requireUserId();
+            const { error } = await supabase.from('items').delete().eq('id', id).eq('user_id', userId);
             return { error };
         } catch (error) {
             return { error: error as Error };
@@ -181,10 +189,12 @@ export const itemsService = {
         isFavorite: boolean
     ): Promise<{ error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { error } = await supabase
                 .from('items')
                 .update({ is_favorite: isFavorite })
-                .eq('id', id);
+                .eq('id', id)
+                .eq('user_id', userId);
             return { error };
         } catch (error) {
             return { error: error as Error };
@@ -196,11 +206,13 @@ export const itemsService = {
      */
     incrementWearCount: async (id: string): Promise<{ error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             // Get current count
             const { data: item } = await supabase
                 .from('items')
                 .select('wear_count')
                 .eq('id', id)
+                .eq('user_id', userId)
                 .single();
 
             const currentCount = item?.wear_count || 0;
@@ -211,7 +223,8 @@ export const itemsService = {
                     wear_count: currentCount + 1,
                     last_worn_at: new Date().toISOString(),
                 })
-                .eq('id', id);
+                .eq('id', id)
+                .eq('user_id', userId);
 
             return { error };
         } catch (error) {

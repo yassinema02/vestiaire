@@ -10,6 +10,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
+import { requireUserId } from './auth-helpers';
 import { wearLogService } from './wearLogService';
 
 const LAST_APP_OPEN_KEY = '@vestiaire/last_app_open';
@@ -28,9 +29,11 @@ export const eveningReminderService = {
         error: Error | null;
     }> => {
         try {
+            const userId = await requireUserId();
             const { data, error } = await supabase
                 .from('profiles')
                 .select('evening_reminder_enabled, evening_reminder_time')
+                .eq('id', userId)
                 .single();
 
             if (error) {

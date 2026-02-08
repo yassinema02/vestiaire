@@ -8,6 +8,7 @@
  */
 
 import { supabase } from './supabase';
+import { requireUserId } from './auth-helpers';
 import { POINTS, LEVELS, STREAK_MILESTONES, BADGES, BadgeDefinition } from '@vestiaire/shared';
 
 export interface UserStats {
@@ -153,9 +154,11 @@ export const gamificationService = {
         limit: number = 30
     ): Promise<{ entries: PointHistoryEntry[]; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { data, error } = await supabase
                 .from('point_history')
                 .select('*')
+                .eq('user_id', userId)
                 .order('created_at', { ascending: false })
                 .limit(limit);
 
@@ -382,9 +385,11 @@ export const gamificationService = {
      */
     getItemCount: async (): Promise<{ count: number; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { count, error } = await supabase
                 .from('items')
                 .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId)
                 .eq('status', 'complete');
 
             if (error) {
@@ -455,9 +460,11 @@ export const gamificationService = {
 
             // Check if this is the first log of the day for bonus
             const today = todayStr();
+            const userId = await requireUserId();
             const { data: todayLogs } = await supabase
                 .from('point_history')
                 .select('id')
+                .eq('user_id', userId)
                 .eq('action_type', 'wear_log')
                 .gte('created_at', `${today}T00:00:00`)
                 .lte('created_at', `${today}T23:59:59`);
@@ -490,9 +497,11 @@ export const gamificationService = {
      */
     getUserBadges: async (): Promise<{ badges: UserBadge[]; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { data, error } = await supabase
                 .from('user_badges')
                 .select('*')
+                .eq('user_id', userId)
                 .order('earned_at', { ascending: false });
 
             if (error) {
@@ -561,11 +570,13 @@ export const gamificationService = {
         featured: boolean
     ): Promise<{ error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             if (featured) {
-                // Count current featured badges
+                // Count current featured badges for this user
                 const { data: featuredBadges } = await supabase
                     .from('user_badges')
                     .select('id')
+                    .eq('user_id', userId)
                     .eq('is_featured', true);
 
                 if (featuredBadges && featuredBadges.length >= 3) {
@@ -576,7 +587,8 @@ export const gamificationService = {
             const { error } = await supabase
                 .from('user_badges')
                 .update({ is_featured: featured })
-                .eq('id', userBadgeId);
+                .eq('id', userBadgeId)
+                .eq('user_id', userId);
 
             if (error) {
                 console.warn('Toggle featured badge error:', error);
@@ -643,6 +655,7 @@ async function checkBadgeCondition(
                 const { data: items } = await supabase
                     .from('items')
                     .select('wear_count')
+                    .eq('user_id', userId)
                     .in('id', context.itemIds);
                 return (items || []).some((i: any) => (i.wear_count ?? 0) >= 10);
             }
@@ -658,6 +671,7 @@ async function checkBadgeCondition(
                 const { data: items } = await supabase
                     .from('items')
                     .select('colors')
+                    .eq('user_id', userId)
                     .in('id', context.itemIds);
                 if (!items || items.length === 0) return false;
                 // Every item must only have "Black" in its colors
@@ -670,6 +684,7 @@ async function checkBadgeCondition(
                 const { data: allItems } = await supabase
                     .from('items')
                     .select('colors')
+                    .eq('user_id', userId)
                     .eq('status', 'complete');
                 if (!allItems) return false;
                 const uniqueColors = new Set<string>();

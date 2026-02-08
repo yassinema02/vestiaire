@@ -4,6 +4,7 @@
  */
 
 import { supabase } from './supabase';
+import { requireUserId } from './auth-helpers';
 import {
     Outfit,
     OutfitItem,
@@ -84,6 +85,7 @@ export const outfitService = {
         aiGeneratedOnly?: boolean;
     }): Promise<{ outfits: Outfit[]; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             let query = supabase
                 .from('outfits')
                 .select(`
@@ -96,6 +98,7 @@ export const outfitService = {
                         item:items(*)
                     )
                 `)
+                .eq('user_id', userId)
                 .order('created_at', { ascending: false });
 
             if (options?.aiGeneratedOnly) {
@@ -131,6 +134,7 @@ export const outfitService = {
         id: string
     ): Promise<{ outfit: Outfit | null; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { data, error } = await supabase
                 .from('outfits')
                 .select(`
@@ -144,6 +148,7 @@ export const outfitService = {
                     )
                 `)
                 .eq('id', id)
+                .eq('user_id', userId)
                 .single();
 
             if (error) {
@@ -179,11 +184,13 @@ export const outfitService = {
             if (input.name !== undefined) updateData.name = input.name;
             if (input.occasion !== undefined) updateData.occasion = input.occasion;
 
+            const userId = await requireUserId();
             if (Object.keys(updateData).length > 0) {
                 const { error: updateError } = await supabase
                     .from('outfits')
                     .update(updateData)
-                    .eq('id', id);
+                    .eq('id', id)
+                    .eq('user_id', userId);
 
                 if (updateError) {
                     console.error('Update outfit error:', updateError);
@@ -234,8 +241,9 @@ export const outfitService = {
      */
     deleteOutfit: async (id: string): Promise<{ error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             // outfit_items will be cascade deleted
-            const { error } = await supabase.from('outfits').delete().eq('id', id);
+            const { error } = await supabase.from('outfits').delete().eq('id', id).eq('user_id', userId);
             return { error };
         } catch (error) {
             return { error: error as Error };
@@ -250,10 +258,12 @@ export const outfitService = {
         is_favorite: boolean
     ): Promise<{ error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { error } = await supabase
                 .from('outfits')
                 .update({ is_favorite })
-                .eq('id', id);
+                .eq('id', id)
+                .eq('user_id', userId);
             return { error };
         } catch (error) {
             return { error: error as Error };
@@ -265,9 +275,11 @@ export const outfitService = {
      */
     getOutfitCount: async (): Promise<{ count: number; error: Error | null }> => {
         try {
+            const userId = await requireUserId();
             const { count, error } = await supabase
                 .from('outfits')
-                .select('*', { count: 'exact', head: true });
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId);
 
             if (error) {
                 return { count: 0, error };

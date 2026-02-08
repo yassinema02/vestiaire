@@ -50,8 +50,8 @@ export const useOutfitGeneration = (): UseOutfitGenerationResult => {
         setError(null);
 
         try {
-            // Check usage limit before generating
-            const status = await usageLimitsService.checkAISuggestionLimit();
+            // Atomically check limit AND consume a use (server-side)
+            const status = await usageLimitsService.consumeAISuggestion();
             setLimitStatus(status);
 
             if (!status.allowed) {
@@ -76,12 +76,6 @@ export const useOutfitGeneration = (): UseOutfitGenerationResult => {
 
             if (result.suggestions.length === 0) {
                 setError('Could not generate outfit suggestions. Try adding more items to your wardrobe.');
-            } else {
-                // Increment counter after successful generation
-                await usageLimitsService.incrementAISuggestions();
-                // Refresh status to reflect new count
-                const updated = await usageLimitsService.checkAISuggestionLimit();
-                setLimitStatus(updated);
             }
         } catch (err) {
             console.error('Outfit generation error:', err);

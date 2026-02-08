@@ -128,9 +128,9 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
         setIsGenerating(true);
         setCopied(false);
 
-        // Check usage limit before generating
+        // Atomically check limit AND consume a use (server-side)
         try {
-            const status = await usageLimitsService.checkResaleListingLimit();
+            const status = await usageLimitsService.consumeResaleListing();
             setLimitStatus(status);
 
             if (!status.allowed) {
@@ -151,12 +151,6 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
             setFromAI(ai);
             // Save to listing history
             listingService.saveToHistory(item, result).catch(() => {});
-            // Increment counter after successful generation
-            try {
-                await usageLimitsService.incrementResaleListings();
-                const updated = await usageLimitsService.checkResaleListingLimit();
-                setLimitStatus(updated);
-            } catch {}
         }
 
         setIsGenerating(false);

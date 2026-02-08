@@ -10,6 +10,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 import { onboardingService } from '../services/onboarding';
 import { eveningReminderService } from '../services/eveningReminderService';
+import { migrateSessionStorage } from '../services/sessionMigration';
 
 export default function RootLayout() {
     const router = useRouter();
@@ -17,9 +18,9 @@ export default function RootLayout() {
     const { session, isLoading, isInitialized, initialize } = useAuthStore();
     const [hasCheckedInitialOnboarding, setHasCheckedInitialOnboarding] = useState(false);
 
-    // Initialize auth on mount and record app open for smart reminder skip
+    // Migrate session storage then initialize auth
     useEffect(() => {
-        initialize();
+        migrateSessionStorage().then(() => initialize());
         eveningReminderService.recordAppOpen();
     }, []);
 
