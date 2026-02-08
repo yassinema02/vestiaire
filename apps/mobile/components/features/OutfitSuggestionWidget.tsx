@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { OutfitCard } from './OutfitCard';
 import { useOutfitGeneration } from '../../hooks/useOutfitGeneration';
 import { itemsService, WardrobeItem } from '../../services/items';
+import PaywallModal from '../PaywallModal';
 
 interface OutfitSuggestionWidgetProps {
     onAddItemsPress?: () => void;
@@ -32,9 +33,11 @@ export const OutfitSuggestionWidget: React.FC<OutfitSuggestionWidgetProps> = ({
         isLoading,
         error,
         isFromAI,
+        limitStatus,
         generate,
         regenerate,
         saveSuggestion,
+        refreshLimitStatus,
     } = useOutfitGeneration();
 
     const [wardrobeItems, setWardrobeItems] = useState<WardrobeItem[]>([]);
@@ -42,6 +45,7 @@ export const OutfitSuggestionWidget: React.FC<OutfitSuggestionWidgetProps> = ({
     const [savingIndex, setSavingIndex] = useState<number | null>(null);
     const [savedIndices, setSavedIndices] = useState<Set<number>>(new Set());
     const [hasGenerated, setHasGenerated] = useState(false);
+    const [showPaywall, setShowPaywall] = useState(false);
 
     // Load wardrobe items and check count
     useEffect(() => {
@@ -64,6 +68,18 @@ export const OutfitSuggestionWidget: React.FC<OutfitSuggestionWidgetProps> = ({
             generate();
         }
     }, [hasEnoughItems, hasGenerated, suggestions.length, isLoading]);
+
+    // Show paywall when limit is reached after a generate attempt
+    useEffect(() => {
+        if (limitStatus && !limitStatus.allowed && !limitStatus.isPremium) {
+            setShowPaywall(true);
+        }
+    }, [limitStatus]);
+
+    // Refresh limit status on mount
+    useEffect(() => {
+        refreshLimitStatus();
+    }, []);
 
     const handleRegenerate = useCallback(() => {
         setSavedIndices(new Set());
@@ -182,23 +198,33 @@ export const OutfitSuggestionWidget: React.FC<OutfitSuggestionWidgetProps> = ({
         <View style={styles.container}>
             <View style={styles.headerRow}>
                 <Text style={styles.sectionTitle}>Today's Outfit</Text>
-                <TouchableOpacity
-                    style={styles.regenerateButton}
-                    onPress={handleRegenerate}
-                    disabled={isLoading}
-                >
-                    <Ionicons
-                        name="refresh"
-                        size={18}
-                        color={isLoading ? '#9ca3af' : '#6366f1'}
-                    />
-                    <Text style={[
-                        styles.regenerateText,
-                        isLoading && styles.regenerateTextDisabled,
-                    ]}>
-                        {isLoading ? 'Generating...' : 'Regenerate'}
-                    </Text>
-                </TouchableOpacity>
+                <View style={styles.headerRight}>
+                    {limitStatus && !limitStatus.isPremium && (
+                        <View style={styles.usageCounter}>
+                            <Ionicons name="sparkles" size={12} color="#6366f1" />
+                            <Text style={styles.usageCounterText}>
+                                {limitStatus.used}/{limitStatus.limit}
+                            </Text>
+                        </View>
+                    )}
+                    <TouchableOpacity
+                        style={styles.regenerateButton}
+                        onPress={handleRegenerate}
+                        disabled={isLoading}
+                    >
+                        <Ionicons
+                            name="refresh"
+                            size={18}
+                            color={isLoading ? '#9ca3af' : '#6366f1'}
+                        />
+                        <Text style={[
+                            styles.regenerateText,
+                            isLoading && styles.regenerateTextDisabled,
+                        ]}>
+                            {isLoading ? 'Generating...' : 'Regenerate'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {!isFromAI && (
@@ -224,6 +250,15 @@ export const OutfitSuggestionWidget: React.FC<OutfitSuggestionWidgetProps> = ({
                     +{suggestions.length - 1} more suggestion{suggestions.length > 2 ? 's' : ''} available
                 </Text>
             )}
+
+            <PaywallModal
+                visible={showPaywall}
+                onDismiss={() => setShowPaywall(false)}
+                feature="ai_suggestions"
+                used={limitStatus?.used ?? 0}
+                limit={limitStatus?.limit ?? 3}
+                resetAt={limitStatus?.resetAt ?? null}
+            />
         </View>
     );
 };
@@ -243,6 +278,25 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 12,
+    },
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    usageCounter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: '#eef2ff',
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+        borderRadius: 12,
+    },
+    usageCounterText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#6366f1',
     },
     regenerateButton: {
         flexDirection: 'row',

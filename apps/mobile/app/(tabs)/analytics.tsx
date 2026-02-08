@@ -237,6 +237,22 @@ export default function AnalyticsScreen() {
                             </View>
                         )}
 
+                        {/* Listing History */}
+                        <TouchableOpacity
+                            style={styles.listingsCard}
+                            onPress={() => router.push('/(tabs)/listing-history')}
+                            activeOpacity={0.8}
+                        >
+                            <View style={styles.listingsIconWrap}>
+                                <Ionicons name="pricetags-outline" size={20} color="#fff" />
+                            </View>
+                            <View style={styles.listingsContent}>
+                                <Text style={styles.listingsTitle}>My Listings</Text>
+                                <Text style={styles.listingsSubtitle}>Track your resale activity</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={16} color="#22c55e" />
+                        </TouchableOpacity>
+
                         {/* Divider */}
                         <View style={styles.divider} />
                     </>
@@ -801,6 +817,41 @@ const styles = StyleSheet.create({
     resaleWrap: {
         marginHorizontal: 16,
         marginBottom: 16,
+    },
+
+    // ── Listings ──
+    listingsCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginHorizontal: 16,
+        marginBottom: 16,
+        backgroundColor: '#f0fdf4',
+        borderRadius: 14,
+        padding: 14,
+        gap: 10,
+        borderWidth: 1,
+        borderColor: '#bbf7d0',
+    },
+    listingsIconWrap: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        backgroundColor: '#22c55e',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    listingsContent: {
+        flex: 1,
+    },
+    listingsTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#14532d',
+    },
+    listingsSubtitle: {
+        fontSize: 12,
+        color: '#16a34a',
+        marginTop: 1,
     },
 
     // ── Divider ──

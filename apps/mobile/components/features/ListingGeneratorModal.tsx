@@ -28,6 +28,8 @@ import { cacheDirectory, downloadAsync } from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WardrobeItem } from '../../services/items';
 import { listingService, ListingTone, ListingData } from '../../services/listingService';
+import { usageLimitsService, UsageLimitStatus } from '../../services/usageLimitsService';
+import PaywallModal from '../PaywallModal';
 
 const TOOLTIP_STORAGE_KEY = 'listing_tooltip_shown';
 
@@ -81,6 +83,8 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
     const [isSavingImage, setIsSavingImage] = useState(false);
     const [showTooltip, setShowTooltip] = useState(false);
     const [tooltipOpacity] = useState(new Animated.Value(0));
+    const [limitStatus, setLimitStatus] = useState<UsageLimitStatus | null>(null);
+    const [showPaywall, setShowPaywall] = useState(false);
 
     useEffect(() => {
         if (visible) {
@@ -124,6 +128,20 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
         setIsGenerating(true);
         setCopied(false);
 
+        // Check usage limit before generating
+        try {
+            const status = await usageLimitsService.checkResaleListingLimit();
+            setLimitStatus(status);
+
+            if (!status.allowed) {
+                setShowPaywall(true);
+                setIsGenerating(false);
+                return;
+            }
+        } catch {
+            // Fail silently — don't block generation
+        }
+
         const { listing: result, fromAI: ai } = await listingService.generateListing(item, selectedTone);
 
         if (result) {
@@ -131,6 +149,14 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
             setEditTitle(result.title);
             setEditDescription(result.description);
             setFromAI(ai);
+            // Save to listing history
+            listingService.saveToHistory(item, result).catch(() => {});
+            // Increment counter after successful generation
+            try {
+                await usageLimitsService.incrementResaleListings();
+                const updated = await usageLimitsService.checkResaleListingLimit();
+                setLimitStatus(updated);
+            } catch {}
         }
 
         setIsGenerating(false);
@@ -229,6 +255,13 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
                         <View style={styles.headerLeft}>
                             <Ionicons name="pricetag" size={20} color="#22c55e" />
                             <Text style={styles.headerTitle}>Generate Listing</Text>
+                            {limitStatus && !limitStatus.isPremium && (
+                                <View style={styles.usageCounter}>
+                                    <Text style={styles.usageCounterText}>
+                                        {limitStatus.used}/{limitStatus.limit}
+                                    </Text>
+                                </View>
+                            )}
                         </View>
                         <TouchableOpacity onPress={onDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                             <Ionicons name="close" size={24} color="#6b7280" />
@@ -412,6 +445,15 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
                     </ScrollView>
                 </View>
             </KeyboardAvoidingView>
+
+            <PaywallModal
+                visible={showPaywall}
+                onDismiss={() => setShowPaywall(false)}
+                feature="resale_listings"
+                used={limitStatus?.used ?? 0}
+                limit={limitStatus?.limit ?? 2}
+                resetAt={limitStatus?.resetAt ?? null}
+            />
         </Modal>
     );
 }
@@ -457,6 +499,17 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         color: '#1f2937',
+    },
+    usageCounter: {
+        backgroundColor: '#eef2ff',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 10,
+    },
+    usageCounterText: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#6366f1',
     },
     // Tone selector
     toneRow: {

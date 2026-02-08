@@ -32,6 +32,7 @@ import { useCalendarStore, AppleCalendar } from '../../stores/calendarStore';
 import { CalendarSelector } from '../../components/features/CalendarSelector';
 import { eveningReminderService, EveningReminderPreferences } from '../../services/eveningReminderService';
 import { gamificationService, UserStats } from '../../services/gamificationService';
+import { subscriptionService, SubscriptionStatus } from '../../services/subscriptionService';
 import PointsHistorySheet from '../../components/gamification/PointsHistorySheet';
 import StreakCard from '../../components/gamification/StreakCard';
 import ActivityFeed from '../../components/gamification/ActivityFeed';
@@ -84,6 +85,9 @@ export default function ProfileScreen() {
     const [showPointsHistory, setShowPointsHistory] = useState(false);
     const [itemCount, setItemCount] = useState(0);
 
+    // Subscription state
+    const [subStatus, setSubStatus] = useState<SubscriptionStatus | null>(null);
+
     // Evening reminder state
     const [reminderEnabled, setReminderEnabled] = useState(true);
     const [reminderTime, setReminderTime] = useState('20:00');
@@ -133,7 +137,7 @@ export default function ProfileScreen() {
         }
     };
 
-    // Load gamification stats on focus
+    // Load gamification stats and subscription status on focus
     useFocusEffect(
         useCallback(() => {
             const loadStats = async () => {
@@ -141,6 +145,8 @@ export default function ProfileScreen() {
                 if (stats) setUserStats(stats);
                 const { count } = await gamificationService.getItemCount();
                 setItemCount(count);
+                const { status } = await subscriptionService.getStatus();
+                setSubStatus(status);
             };
             loadStats();
         }, [])
@@ -402,7 +408,14 @@ export default function ProfileScreen() {
                     )}
                 </View>
                 <Text style={styles.email}>{user?.email}</Text>
-                <Text style={styles.memberSince}>Member since 2024</Text>
+                {subStatus?.isPremium ? (
+                    <View style={styles.premiumBadge}>
+                        <Ionicons name="diamond" size={13} color="#6366f1" />
+                        <Text style={styles.premiumBadgeText}>Premium</Text>
+                    </View>
+                ) : (
+                    <Text style={styles.memberSince}>Member since 2024</Text>
+                )}
             </View>
 
             {/* Style Points Card */}
@@ -714,14 +727,56 @@ export default function ProfileScreen() {
                 </Text>
             </View>
 
+            {/* Premium Upgrade Banner (free users only) */}
+            {subStatus && !subStatus.isPremium && (
+                <View style={styles.sectionContainer}>
+                    <TouchableOpacity
+                        style={styles.premiumBanner}
+                        onPress={() => router.push('/(tabs)/premium')}
+                        activeOpacity={0.8}
+                    >
+                        <View style={styles.premiumBannerIcon}>
+                            <Ionicons name="diamond" size={22} color="#6366f1" />
+                        </View>
+                        <View style={styles.premiumBannerContent}>
+                            <Text style={styles.premiumBannerTitle}>Upgrade to Premium</Text>
+                            <Text style={styles.premiumBannerSubtitle}>Unlimited suggestions & listings</Text>
+                        </View>
+                        <View style={styles.premiumBannerCta}>
+                            <Text style={styles.premiumBannerCtaText}>£4.99/mo</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            )}
+
             {/* Menu Items */}
             <View style={styles.menuSection}>
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => router.push('/(tabs)/premium')}
+                >
+                    <Ionicons name="diamond-outline" size={22} color="#6366f1" />
+                    <Text style={styles.menuText}>
+                        {subStatus?.isPremium ? 'Premium Subscription' : 'Upgrade to Premium'}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
+                </TouchableOpacity>
+
                 <TouchableOpacity
                     style={styles.menuItem}
                     onPress={() => router.push('/(tabs)/analytics')}
                 >
                     <Ionicons name="stats-chart-outline" size={22} color="#6366f1" />
                     <Text style={styles.menuText}>Wardrobe Analytics</Text>
+                    <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => router.push('/(tabs)/listing-history')}
+                >
+                    <Ionicons name="pricetags-outline" size={22} color="#22c55e" />
+                    <Text style={styles.menuText}>My Listings</Text>
                     <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
                 </TouchableOpacity>
 
@@ -853,6 +908,23 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#6b7280',
     },
+    premiumBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        backgroundColor: '#eef2ff',
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderRadius: 12,
+        marginTop: 6,
+        borderWidth: 1,
+        borderColor: '#c7d2fe',
+    },
+    premiumBadgeText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#6366f1',
+    },
     sectionContainer: {
         paddingHorizontal: 24,
         marginBottom: 24,
@@ -919,6 +991,54 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#6366f1',
         fontWeight: '500',
+    },
+    // Premium banner
+    premiumBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderRadius: 14,
+        padding: 16,
+        gap: 14,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+        borderWidth: 1,
+        borderColor: '#e0e7ff',
+    },
+    premiumBannerIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        backgroundColor: '#eef2ff',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    premiumBannerContent: {
+        flex: 1,
+    },
+    premiumBannerTitle: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#1f2937',
+        marginBottom: 2,
+    },
+    premiumBannerSubtitle: {
+        fontSize: 12,
+        color: '#6366f1',
+    },
+    premiumBannerCta: {
+        backgroundColor: '#6366f1',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+    },
+    premiumBannerCtaText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#fff',
     },
     menuSection: {
         paddingHorizontal: 24,

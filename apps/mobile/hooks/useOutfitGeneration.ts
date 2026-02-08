@@ -8,16 +8,19 @@ import { OutfitSuggestion, aiOutfitService } from '../services/aiOutfitService';
 import { itemsService, WardrobeItem } from '../services/items';
 import { useOutfitStore } from '../stores/outfitStore';
 import { buildCurrentContext } from '../services/contextService';
+import { usageLimitsService, UsageLimitStatus } from '../services/usageLimitsService';
 
 interface UseOutfitGenerationResult {
     suggestions: OutfitSuggestion[];
     isLoading: boolean;
     error: string | null;
     isFromAI: boolean;
+    limitStatus: UsageLimitStatus | null;
     generate: () => Promise<void>;
     regenerate: () => Promise<void>;
     saveSuggestion: (suggestion: OutfitSuggestion) => Promise<boolean>;
     clearSuggestions: () => void;
+    refreshLimitStatus: () => Promise<void>;
 }
 
 export const useOutfitGeneration = (): UseOutfitGenerationResult => {
@@ -26,8 +29,18 @@ export const useOutfitGeneration = (): UseOutfitGenerationResult => {
     const [error, setError] = useState<string | null>(null);
     const [isFromAI, setIsFromAI] = useState(false);
     const [wardrobeItems, setWardrobeItems] = useState<WardrobeItem[]>([]);
+    const [limitStatus, setLimitStatus] = useState<UsageLimitStatus | null>(null);
 
     const { createOutfit } = useOutfitStore();
+
+    const refreshLimitStatus = useCallback(async () => {
+        try {
+            const status = await usageLimitsService.checkAISuggestionLimit();
+            setLimitStatus(status);
+        } catch {
+            // Fail silently — don't block generation
+        }
+    }, []);
 
     /**
      * Generate new outfit suggestions
@@ -37,6 +50,15 @@ export const useOutfitGeneration = (): UseOutfitGenerationResult => {
         setError(null);
 
         try {
+            // Check usage limit before generating
+            const status = await usageLimitsService.checkAISuggestionLimit();
+            setLimitStatus(status);
+
+            if (!status.allowed) {
+                setIsLoading(false);
+                return; // Widget will show paywall based on limitStatus
+            }
+
             // Fetch current wardrobe items
             const { items, error: itemsError } = await itemsService.getItems();
 
@@ -54,6 +76,12 @@ export const useOutfitGeneration = (): UseOutfitGenerationResult => {
 
             if (result.suggestions.length === 0) {
                 setError('Could not generate outfit suggestions. Try adding more items to your wardrobe.');
+            } else {
+                // Increment counter after successful generation
+                await usageLimitsService.incrementAISuggestions();
+                // Refresh status to reflect new count
+                const updated = await usageLimitsService.checkAISuggestionLimit();
+                setLimitStatus(updated);
             }
         } catch (err) {
             console.error('Outfit generation error:', err);
@@ -123,10 +151,12 @@ export const useOutfitGeneration = (): UseOutfitGenerationResult => {
         isLoading,
         error,
         isFromAI,
+        limitStatus,
         generate,
         regenerate,
         saveSuggestion,
         clearSuggestions,
+        refreshLimitStatus,
     };
 };
 

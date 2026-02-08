@@ -1,22 +1,43 @@
 /**
  * Listing Service
  * Story 7.2: AI Listing Generator
- * Generates Vinted-optimized resale listing descriptions using Gemini AI.
+ * Story 7.4: Listing History Tracking
+ * Generates Vinted-optimized resale listing descriptions using Gemini AI,
+ * and manages listing history for resale tracking.
  */
 
 import Constants from 'expo-constants';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { WardrobeItem } from './items';
+import { supabase } from './supabase';
 
 const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 
 export type ListingTone = 'casual' | 'detailed' | 'minimal';
+export type ListingStatus = 'listed' | 'sold' | 'cancelled';
 
 export interface ListingData {
     title: string;
     description: string;
     suggested_price_range: string;
     hashtags: string[];
+}
+
+export interface ResaleListing {
+    id: string;
+    user_id: string;
+    item_id: string;
+    title: string;
+    description: string;
+    category: string | null;
+    condition: string | null;
+    status: ListingStatus;
+    sold_price: number | null;
+    created_at: string;
+    updated_at: string;
+    sold_at: string | null;
+    // Joined item data
+    item?: WardrobeItem;
 }
 
 const isConfigured = (): boolean => {
@@ -107,6 +128,12 @@ function generateFallbackListing(item: WardrobeItem, tone: ListingTone): Listing
     return { title, description, suggested_price_range: priceRange, hashtags };
 }
 
+function getConditionLabel(item: WardrobeItem): string {
+    if (item.wear_count === 0) return 'New without tags';
+    if (item.wear_count < 5) return 'Like new';
+    return 'Good condition';
+}
+
 export const listingService = {
     isConfigured,
 
@@ -155,6 +182,147 @@ export const listingService = {
             console.error('AI listing generation failed, using fallback:', err);
             const fallback = generateFallbackListing(item, tone);
             return { listing: fallback, error: null, fromAI: false };
+        }
+    },
+
+    // ─── History Methods (Story 7.4) ──────────────────────────────
+
+    /**
+     * Save a listing to history when generated.
+     */
+    saveToHistory: async (
+        item: WardrobeItem,
+        listing: ListingData
+    ): Promise<{ listing: ResaleListing | null; error: string | null }> => {
+        try {
+            const { data: userData } = await supabase.auth.getUser();
+            if (!userData.user) return { listing: null, error: 'Not authenticated' };
+
+            const { data, error } = await supabase
+                .from('resale_listings')
+                .insert({
+                    user_id: userData.user.id,
+                    item_id: item.id,
+                    title: listing.title,
+                    description: listing.description,
+                    category: item.category || null,
+                    condition: getConditionLabel(item),
+                })
+                .select()
+                .single();
+
+            if (error) return { listing: null, error: error.message };
+            return { listing: data as ResaleListing, error: null };
+        } catch (err) {
+            console.error('Save listing to history error:', err);
+            return { listing: null, error: 'Failed to save listing' };
+        }
+    },
+
+    /**
+     * Get listing history for current user.
+     */
+    getHistory: async (
+        statusFilter?: ListingStatus
+    ): Promise<{ listings: ResaleListing[]; error: string | null }> => {
+        try {
+            let query = supabase
+                .from('resale_listings')
+                .select('*, item:items(*)')
+                .order('created_at', { ascending: false });
+
+            if (statusFilter) {
+                query = query.eq('status', statusFilter);
+            }
+
+            const { data, error } = await query;
+
+            if (error) return { listings: [], error: error.message };
+            return { listings: (data || []) as ResaleListing[], error: null };
+        } catch (err) {
+            console.error('Get listing history error:', err);
+            return { listings: [], error: 'Failed to load listings' };
+        }
+    },
+
+    /**
+     * Update listing status (listed -> sold / cancelled).
+     */
+    updateStatus: async (
+        listingId: string,
+        status: ListingStatus,
+        soldPrice?: number
+    ): Promise<{ error: string | null }> => {
+        try {
+            const updates: Record<string, unknown> = { status };
+            if (status === 'sold') {
+                updates.sold_at = new Date().toISOString();
+                if (soldPrice !== undefined) updates.sold_price = soldPrice;
+            }
+
+            const { error } = await supabase
+                .from('resale_listings')
+                .update(updates)
+                .eq('id', listingId);
+
+            if (error) return { error: error.message };
+
+            // If sold, update user stats
+            if (status === 'sold') {
+                const { data: userData } = await supabase.auth.getUser();
+                if (userData.user) {
+                    // Increment sold count and add revenue
+                    const { data: stats } = await supabase
+                        .from('user_stats')
+                        .select('total_items_sold, total_revenue')
+                        .eq('user_id', userData.user.id)
+                        .single();
+
+                    if (stats) {
+                        await supabase
+                            .from('user_stats')
+                            .update({
+                                total_items_sold: (stats.total_items_sold || 0) + 1,
+                                total_revenue: (stats.total_revenue || 0) + (soldPrice || 0),
+                            })
+                            .eq('user_id', userData.user.id);
+                    }
+                }
+            }
+
+            return { error: null };
+        } catch (err) {
+            console.error('Update listing status error:', err);
+            return { error: 'Failed to update listing' };
+        }
+    },
+
+    /**
+     * Get resale stats for current user.
+     */
+    getResaleStats: async (): Promise<{
+        totalListed: number;
+        totalSold: number;
+        totalRevenue: number;
+        error: string | null;
+    }> => {
+        try {
+            const { data, error } = await supabase
+                .from('resale_listings')
+                .select('status, sold_price');
+
+            if (error) return { totalListed: 0, totalSold: 0, totalRevenue: 0, error: error.message };
+
+            const listings = data || [];
+            const totalListed = listings.filter(l => l.status === 'listed').length;
+            const sold = listings.filter(l => l.status === 'sold');
+            const totalSold = sold.length;
+            const totalRevenue = sold.reduce((sum, l) => sum + (l.sold_price || 0), 0);
+
+            return { totalListed, totalSold, totalRevenue, error: null };
+        } catch (err) {
+            console.error('Get resale stats error:', err);
+            return { totalListed: 0, totalSold: 0, totalRevenue: 0, error: 'Failed to load stats' };
         }
     },
 };
