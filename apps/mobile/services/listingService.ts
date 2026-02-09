@@ -6,10 +6,13 @@
  * and manages listing history for resale tracking.
  */
 
+import Constants from 'expo-constants';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { WardrobeItem } from './items';
 import { supabase } from './supabase';
 import { requireUserId } from './auth-helpers';
-import { callGeminiProxy } from './aiProxy';
+
+const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 
 export type ListingTone = 'casual' | 'detailed' | 'minimal';
 export type ListingStatus = 'listed' | 'sold' | 'cancelled';
@@ -39,7 +42,7 @@ export interface ResaleListing {
 }
 
 const isConfigured = (): boolean => {
-    return true; // API key is now server-side (Edge Function)
+    return !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
 };
 
 const TONE_INSTRUCTIONS: Record<ListingTone, string> = {
@@ -147,8 +150,12 @@ export const listingService = {
         try {
             const prompt = buildListingPrompt(item, tone);
 
-            // Call Gemini through Edge Function proxy
-            const text = await callGeminiProxy(prompt);
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
 
             const jsonMatch = text.match(/\{[\s\S]*\}/);
             if (!jsonMatch) {

@@ -3,7 +3,10 @@
  * Uses Google Gemini Vision to analyze clothing and extract metadata
  */
 
-import { callGeminiProxy } from './aiProxy';
+import Constants from 'expo-constants';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 
 // Category taxonomy
 export const CATEGORIES = {
@@ -75,7 +78,7 @@ export interface ClothingAnalysis {
  * Check if AI categorization is configured
  */
 export const isCategorizationConfigured = (): boolean => {
-    return true; // API key is now server-side (Edge Function)
+    return !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
 };
 
 /**
@@ -130,8 +133,21 @@ Respond ONLY with valid JSON in this exact format, no other text:
             reader.readAsDataURL(imageBlob);
         });
 
-        // Call Gemini through Edge Function proxy
-        const text = await callGeminiProxy(prompt, base64);
+        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+        const result = await model.generateContent([
+            prompt,
+            {
+                inlineData: {
+                    mimeType: 'image/jpeg',
+                    data: base64,
+                },
+            },
+        ]);
+
+        const response = await result.response;
+        const text = response.text();
 
         // Parse JSON response
         const jsonMatch = text.match(/\{[\s\S]*\}/);

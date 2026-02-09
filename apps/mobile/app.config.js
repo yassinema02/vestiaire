@@ -86,6 +86,8 @@ export default {
         extra: {
             supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
             supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+            removeBgApiKey: process.env.EXPO_PUBLIC_REMOVE_BG_API_KEY,
+            geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY,
             googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
             googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
             router: {

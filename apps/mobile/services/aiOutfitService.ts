@@ -3,11 +3,14 @@
  * Generates outfit suggestions using Gemini AI with wardrobe, weather, and calendar context
  */
 
+import Constants from 'expo-constants';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { WardrobeItem } from './items';
 import { buildCurrentContext, formatContextForPrompt } from './contextService';
 import { Outfit, OutfitPosition } from '../types/outfit';
 import { OccasionType } from '../utils/occasionDetector';
-import { callGeminiProxy } from './aiProxy';
+
+const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 
 /**
  * AI-generated outfit suggestion
@@ -42,7 +45,7 @@ interface ItemSummary {
  * Check if AI outfit generation is configured
  */
 export const isOutfitGenerationConfigured = (): boolean => {
-    return true; // API key is now server-side (Edge Function)
+    return !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
 };
 
 /**
@@ -142,8 +145,13 @@ export const generateOutfitSuggestions = async (
         // Build prompt
         const prompt = buildOutfitPrompt(itemSummaries, contextText);
 
-        // Call Gemini through Edge Function proxy
-        const text = await callGeminiProxy(prompt);
+        // Call Gemini
+        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
 
         // Parse JSON response
         const jsonMatch = text.match(/\{[\s\S]*\}/);
