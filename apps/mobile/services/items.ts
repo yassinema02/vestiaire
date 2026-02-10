@@ -202,29 +202,15 @@ export const itemsService = {
     },
 
     /**
-     * Increment wear count
+     * Increment wear count (atomic — no read-modify-write race)
      */
     incrementWearCount: async (id: string): Promise<{ error: Error | null }> => {
         try {
             const userId = await requireUserId();
-            // Get current count
-            const { data: item } = await supabase
-                .from('items')
-                .select('wear_count')
-                .eq('id', id)
-                .eq('user_id', userId)
-                .single();
-
-            const currentCount = item?.wear_count || 0;
-
-            const { error } = await supabase
-                .from('items')
-                .update({
-                    wear_count: currentCount + 1,
-                    last_worn_at: new Date().toISOString(),
-                })
-                .eq('id', id)
-                .eq('user_id', userId);
+            const { error } = await supabase.rpc('increment_wear_count', {
+                p_item_id: id,
+                p_user_id: userId,
+            });
 
             return { error };
         } catch (error) {

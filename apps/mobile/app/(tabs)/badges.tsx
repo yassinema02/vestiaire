@@ -31,7 +31,7 @@ export default function BadgesScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/profile')}>
                     <Ionicons name="chevron-back" size={24} color="#1f2937" />
                 </TouchableOpacity>
                 <Text style={styles.title}>Badges</Text>

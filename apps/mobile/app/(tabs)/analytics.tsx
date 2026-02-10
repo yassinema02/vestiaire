@@ -114,7 +114,7 @@ export default function AnalyticsScreen() {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/profile')}>
                     <Ionicons name="arrow-back" size={24} color="#1f2937" />
                 </TouchableOpacity>
                 <Text style={styles.title}>Wardrobe Analytics</Text>

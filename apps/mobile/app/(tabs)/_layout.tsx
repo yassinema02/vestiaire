@@ -163,6 +163,34 @@ export default function TabsLayout() {
                     tabBarStyle: { display: 'none' },
                 }}
             />
+            <Tabs.Screen
+                name="edit-profile"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
+                name="notifications"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
+                name="privacy"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
+                name="help"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
         </Tabs>
     );
 }

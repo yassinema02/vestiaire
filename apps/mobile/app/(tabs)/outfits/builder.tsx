@@ -161,7 +161,7 @@ export default function OutfitBuilderScreen() {
                 });
                 if (error) throw error;
                 Alert.alert('Success', 'Outfit updated!', [
-                    { text: 'OK', onPress: () => router.back() }
+                    { text: 'OK', onPress: () => router.push('/(tabs)/outfits') }
                 ]);
             } else {
                 const input: CreateOutfitInput = {
@@ -173,7 +173,7 @@ export default function OutfitBuilderScreen() {
                 const { error } = await outfitService.createOutfit(input);
                 if (error) throw error;
                 Alert.alert('Success', 'Outfit created!', [
-                    { text: 'OK', onPress: () => router.back() }
+                    { text: 'OK', onPress: () => router.push('/(tabs)/outfits') }
                 ]);
             }
         } catch (error) {
@@ -185,7 +185,7 @@ export default function OutfitBuilderScreen() {
     };
 
     const handleBack = () => {
-        router.back();
+        router.push('/(tabs)/outfits');
     };
 
     if (isLoading) {

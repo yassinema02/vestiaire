@@ -102,20 +102,4 @@ export const usageLimitsService = {
             return { allowed: true, used: 0, limit: 2, remaining: 2, resetAt: null, isPremium: false };
         }
     },
-
-    /**
-     * @deprecated Use consumeAISuggestion() instead (atomic check+increment).
-     * Kept temporarily for backward compatibility.
-     */
-    incrementAISuggestions: async (): Promise<void> => {
-        // No-op: incrementing now happens atomically inside consumeAISuggestion
-    },
-
-    /**
-     * @deprecated Use consumeResaleListing() instead (atomic check+increment).
-     * Kept temporarily for backward compatibility.
-     */
-    incrementResaleListings: async (): Promise<void> => {
-        // No-op: incrementing now happens atomically inside consumeResaleListing
-    },
 };

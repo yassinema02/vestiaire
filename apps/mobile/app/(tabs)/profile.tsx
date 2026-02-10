@@ -390,7 +390,7 @@ export default function ProfileScreen() {
                     <TouchableOpacity style={styles.headerIconButton} onPress={handleShareAchievements}>
                         <Ionicons name="share-outline" size={22} color="#6366f1" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.headerIconButton}>
+                    <TouchableOpacity style={styles.headerIconButton} onPress={() => router.push('/(tabs)/edit-profile')}>
                         <Ionicons name="settings-outline" size={22} color="#1f2937" />
                     </TouchableOpacity>
                 </View>
@@ -783,25 +783,25 @@ export default function ProfileScreen() {
                     <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem}>
+                <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)/edit-profile')}>
                     <Ionicons name="person-outline" size={22} color="#6b7280" />
                     <Text style={styles.menuText}>Edit Profile</Text>
                     <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem}>
+                <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)/notifications')}>
                     <Ionicons name="notifications-outline" size={22} color="#6b7280" />
                     <Text style={styles.menuText}>Notifications</Text>
                     <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem}>
+                <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)/privacy')}>
                     <Ionicons name="shield-outline" size={22} color="#6b7280" />
                     <Text style={styles.menuText}>Privacy</Text>
                     <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem}>
+                <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)/help')}>
                     <Ionicons name="help-circle-outline" size={22} color="#6b7280" />
                     <Text style={styles.menuText}>Help & Support</Text>
                     <Ionicons name="chevron-forward" size={20} color="#d1d5db" />

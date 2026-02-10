@@ -21,17 +21,3 @@ export async function callGeminiProxy(prompt: string, imageBase64?: string): Pro
     return data.text;
 }
 
-/**
- * Call Remove.bg through the server-side proxy.
- * @param imageUrl - Public URL of the image to process
- * @returns Base64-encoded processed image
- */
-export async function callRemoveBgProxy(imageUrl: string): Promise<string> {
-    const { data, error } = await supabase.functions.invoke('remove-bg', {
-        body: { image_url: imageUrl },
-    });
-
-    if (error) throw new Error(error.message || 'Remove.bg proxy request failed');
-    if (!data?.base64) throw new Error('No image data from Remove.bg');
-    return data.base64;
-}

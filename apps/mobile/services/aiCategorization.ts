@@ -4,7 +4,7 @@
  */
 
 import Constants from 'expo-constants';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 
@@ -133,21 +133,23 @@ Respond ONLY with valid JSON in this exact format, no other text:
             reader.readAsDataURL(imageBlob);
         });
 
-        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-        const result = await model.generateContent([
-            prompt,
-            {
-                inlineData: {
-                    mimeType: 'image/jpeg',
-                    data: base64,
-                },
-            },
-        ]);
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: [{
+                role: 'user',
+                parts: [
+                    { text: prompt },
+                    { inlineData: { mimeType: 'image/jpeg', data: base64 } },
+                ],
+            }],
+        });
 
-        const response = await result.response;
-        const text = response.text();
+        const text = result.text;
+        if (!text) {
+            throw new Error('No text response from Gemini');
+        }
 
         // Parse JSON response
         const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -164,7 +166,7 @@ Respond ONLY with valid JSON in this exact format, no other text:
 
         // Validate colors
         const validColorNames = COLORS.map((c) => c.name);
-        analysis.colors = analysis.colors.filter((c) => validColorNames.includes(c));
+        analysis.colors = analysis.colors.filter((c) => (validColorNames as readonly string[]).includes(c));
         if (analysis.colors.length === 0) {
             analysis.colors = ['Black']; // Default fallback
         }

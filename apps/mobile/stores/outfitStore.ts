@@ -51,12 +51,12 @@ export const useOutfitStore = create<OutfitStore>((set, get) => ({
     fetchOutfits: async (options) => {
         const state = get();
 
-        // Reset if refreshing
+        if (state.isLoading) return;
+
+        // Reset if refreshing (after the guard to prevent double-refresh)
         if (options?.refresh) {
             set({ outfits: [], hasMore: true });
         }
-
-        if (state.isLoading) return;
 
         set({ isLoading: true, error: null });
 

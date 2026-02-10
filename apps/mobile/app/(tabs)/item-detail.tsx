@@ -78,7 +78,7 @@ export default function ItemDetailScreen() {
 
         if (error) {
             Alert.alert('Error', 'Failed to load item details');
-            router.back();
+            router.push('/(tabs)/wardrobe');
             return;
         }
 
@@ -169,7 +169,7 @@ export default function ItemDetailScreen() {
                         if (error) {
                             Alert.alert('Error', 'Failed to delete item');
                         } else {
-                            router.back();
+                            router.push('/(tabs)/wardrobe');
                         }
                     },
                 },
@@ -252,7 +252,7 @@ export default function ItemDetailScreen() {
         return (
             <View style={styles.container}>
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <TouchableOpacity onPress={() => router.push('/(tabs)/wardrobe')} style={styles.backButton}>
                         <Ionicons name="arrow-back" size={24} color="#1f2937" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Item Details</Text>
@@ -269,7 +269,7 @@ export default function ItemDetailScreen() {
         return (
             <View style={styles.container}>
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <TouchableOpacity onPress={() => router.push('/(tabs)/wardrobe')} style={styles.backButton}>
                         <Ionicons name="arrow-back" size={24} color="#1f2937" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Item Details</Text>
@@ -286,7 +286,7 @@ export default function ItemDetailScreen() {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/wardrobe')} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#1f2937" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{item.name || 'Item Details'}</Text>

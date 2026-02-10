@@ -133,7 +133,7 @@ export default function PremiumScreen() {
             <View style={styles.header}>
                 <TouchableOpacity
                     style={styles.backButton}
-                    onPress={() => router.back()}
+                    onPress={() => router.push('/(tabs)/profile')}
                 >
                     <Ionicons name="arrow-back" size={24} color="#1f2937" />
                 </TouchableOpacity>

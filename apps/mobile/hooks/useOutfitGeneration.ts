@@ -3,7 +3,7 @@
  * React hook for generating AI outfit suggestions
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { OutfitSuggestion, aiOutfitService } from '../services/aiOutfitService';
 import { itemsService, WardrobeItem } from '../services/items';
 import { useOutfitStore } from '../stores/outfitStore';
@@ -32,6 +32,7 @@ export const useOutfitGeneration = (): UseOutfitGenerationResult => {
     const [limitStatus, setLimitStatus] = useState<UsageLimitStatus | null>(null);
 
     const { createOutfit } = useOutfitStore();
+    const isGeneratingRef = useRef(false);
 
     const refreshLimitStatus = useCallback(async () => {
         try {
@@ -46,6 +47,8 @@ export const useOutfitGeneration = (): UseOutfitGenerationResult => {
      * Generate new outfit suggestions
      */
     const generate = useCallback(async () => {
+        if (isGeneratingRef.current) return;
+        isGeneratingRef.current = true;
         setIsLoading(true);
         setError(null);
 
@@ -83,6 +86,7 @@ export const useOutfitGeneration = (): UseOutfitGenerationResult => {
             setSuggestions([]);
         } finally {
             setIsLoading(false);
+            isGeneratingRef.current = false;
         }
     }, []);
 

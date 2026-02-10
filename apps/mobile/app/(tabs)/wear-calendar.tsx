@@ -119,7 +119,7 @@ export default function WearCalendarScreen() {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/wardrobe')}>
                     <Ionicons name="arrow-back" size={24} color="#1f2937" />
                 </TouchableOpacity>
                 <Text style={styles.title}>Wear Calendar</Text>

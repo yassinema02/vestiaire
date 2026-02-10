@@ -4,6 +4,7 @@
  */
 
 import * as ImageManipulator from 'expo-image-manipulator';
+import { Image } from 'react-native';
 
 const MAX_WIDTH = 1200;
 const INITIAL_QUALITY = 0.7;
@@ -37,12 +38,19 @@ export const compressImage = async (uri: string): Promise<ImageInfo> => {
         };
     } catch (error) {
         console.error('Compress error:', error);
-        // Return original on failure
-        return {
-            uri,
-            width: 0,
-            height: 0,
-        };
+        // Return original with real dimensions if possible
+        try {
+            const { width, height } = await new Promise<{ width: number; height: number }>(
+                (resolve, reject) => Image.getSize(
+                    uri,
+                    (w, h) => resolve({ width: w, height: h }),
+                    reject
+                )
+            );
+            return { uri, width, height };
+        } catch {
+            return { uri, width: MAX_WIDTH, height: MAX_WIDTH };
+        }
     }
 };
 

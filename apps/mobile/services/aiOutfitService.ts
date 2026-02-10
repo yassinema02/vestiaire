@@ -4,7 +4,7 @@
  */
 
 import Constants from 'expo-constants';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { WardrobeItem } from './items';
 import { buildCurrentContext, formatContextForPrompt } from './contextService';
 import { Outfit, OutfitPosition } from '../types/outfit';
@@ -146,12 +146,17 @@ export const generateOutfitSuggestions = async (
         const prompt = buildOutfitPrompt(itemSummaries, contextText);
 
         // Call Gemini
-        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: prompt,
+        });
+
+        const text = result.text;
+        if (!text) {
+            throw new Error('No text response from Gemini');
+        }
 
         // Parse JSON response
         const jsonMatch = text.match(/\{[\s\S]*\}/);

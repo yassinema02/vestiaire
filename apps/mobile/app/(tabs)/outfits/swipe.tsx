@@ -3,7 +3,7 @@
  * Tinder-style swipe interface for outfit suggestions
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
     View,
     Text,
@@ -35,16 +35,19 @@ export default function OutfitSwipeScreen() {
 
     const [wardrobeItems, setWardrobeItems] = useState<WardrobeItem[]>([]);
     const [detailSuggestion, setDetailSuggestion] = useState<OutfitSuggestion | null>(null);
+    const hasInitialized = useRef(false);
 
     // Load wardrobe items and generate suggestions
     useEffect(() => {
+        if (hasInitialized.current) return;
+        hasInitialized.current = true;
         const init = async () => {
             const { items } = await itemsService.getItems();
             setWardrobeItems(items);
             generate();
         };
         init();
-    }, []);
+    }, [generate]);
 
     const handleSave = useCallback(async (suggestion: OutfitSuggestion) => {
         const success = await saveSuggestion(suggestion);
@@ -67,7 +70,7 @@ export default function OutfitSwipeScreen() {
     }, [regenerate]);
 
     const handleBack = () => {
-        router.back();
+        router.push('/(tabs)/outfits');
     };
 
     // Get full item details for detail modal

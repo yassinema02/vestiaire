@@ -27,6 +27,9 @@ interface AuthActions {
 
 type AuthStore = AuthState & AuthActions;
 
+// Track the auth subscription so we can clean it up
+let authSubscription: { unsubscribe: () => void } | null = null;
+
 export const useAuthStore = create<AuthStore>((set, get) => ({
     // State
     user: null,
@@ -55,14 +58,21 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
                 error: null,
             });
 
+            // Unsubscribe previous listener to prevent duplicates
+            if (authSubscription) {
+                authSubscription.unsubscribe();
+                authSubscription = null;
+            }
+
             // Subscribe to auth changes
-            authService.onAuthStateChange((event, newSession) => {
+            const { data } = authService.onAuthStateChange((event, newSession) => {
                 console.log('Auth state changed:', event);
                 set({
                     session: newSession,
                     user: newSession?.user ?? null,
                 });
             });
+            authSubscription = data.subscription;
         } catch (err) {
             console.error('Auth initialization failed:', err);
             set({ isLoading: false, isInitialized: true, error: 'Failed to initialize auth' });

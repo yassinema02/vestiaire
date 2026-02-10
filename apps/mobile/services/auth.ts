@@ -82,6 +82,14 @@ export const authService = {
     },
 
     /**
+     * Update user profile metadata (e.g. display name)
+     */
+    updateProfile: async (data: { display_name?: string }): Promise<{ user: User | null; error: AuthError | null }> => {
+        const { data: result, error } = await supabase.auth.updateUser({ data });
+        return { user: result.user, error };
+    },
+
+    /**
      * Resend verification email
      */
     resendVerificationEmail: async (email: string): Promise<AuthErrorResponse> => {

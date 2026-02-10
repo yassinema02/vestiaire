@@ -64,7 +64,7 @@ export default function OutfitDetailScreen() {
                     onPress: async () => {
                         const { success } = await deleteOutfit(currentOutfit.id);
                         if (success) {
-                            router.back();
+                            router.push('/(tabs)/outfits');
                         }
                     },
                 },
@@ -99,7 +99,7 @@ export default function OutfitDetailScreen() {
             <View style={styles.header}>
                 <TouchableOpacity
                     style={styles.backButton}
-                    onPress={() => router.back()}
+                    onPress={() => router.push('/(tabs)/outfits')}
                 >
                     <Ionicons name="chevron-back" size={24} color="#1f2937" />
                 </TouchableOpacity>

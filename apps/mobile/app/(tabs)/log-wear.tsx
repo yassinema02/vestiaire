@@ -117,18 +117,20 @@ export default function LogWearScreen() {
 
     // Select an outfit
     const selectOutfit = useCallback((outfit: Outfit) => {
-        if (selectedOutfitId === outfit.id) {
-            setSelectedOutfitId(null);
-            setSelectedItemIds(new Set());
-        } else {
-            setSelectedOutfitId(outfit.id);
-            // Auto-select all items in the outfit
-            const itemIds = new Set(
-                outfit.items?.map(oi => oi.item_id) || []
-            );
-            setSelectedItemIds(itemIds);
-        }
-    }, [selectedOutfitId]);
+        setSelectedOutfitId(prev => {
+            if (prev === outfit.id) {
+                setSelectedItemIds(new Set());
+                return null;
+            } else {
+                // Auto-select all items in the outfit
+                const itemIds = new Set(
+                    outfit.items?.map(oi => oi.item_id) || []
+                );
+                setSelectedItemIds(itemIds);
+                return outfit.id;
+            }
+        });
+    }, []);
 
     // Play success animation
     const playSuccessAnimation = () => {
@@ -151,7 +153,7 @@ export default function LogWearScreen() {
             }),
         ]).start(() => {
             setShowSuccess(false);
-            router.back();
+            router.push('/(tabs)');
         });
     };
 
@@ -226,7 +228,7 @@ export default function LogWearScreen() {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)')}>
                     <Ionicons name="close" size={28} color="#1f2937" />
                 </TouchableOpacity>
                 <Text style={styles.title}>Log Today's Outfit</Text>
