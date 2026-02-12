@@ -63,7 +63,7 @@ vestiaire/
 - **Styling:** NativeWind (Tailwind for RN)
 - **State:** Zustand + TanStack Query
 - **Backend:** Supabase (PostgreSQL, Auth, Storage, Edge Functions)
-- **AI:** OpenAI GPT-4o-mini
+- **AI:** OpenAI Gemini 2.5 Flash
 
 ## Documentation
 
