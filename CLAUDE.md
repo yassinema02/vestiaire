@@ -43,6 +43,13 @@
 5. **Document Results**: Add review to 'tasks/todo.md'
 6. **Capture Lessons**: Update 'tasks/lessons.md' after corrections
 
+## Common Errors & Lessons
+
+### 1. Don't call undeployed Supabase Edge Functions
+- **Mistake**: Created a new Edge Function (`analyze-product`) in local code and called it via `supabase.functions.invoke()` — but it was never deployed to Supabase, resulting in a **404**.
+- **Rule**: Before writing code that calls an Edge Function, verify it's deployed. If deploying isn't possible (no CLI access, no credentials), **use the existing client-side pattern instead** (e.g. calling Gemini directly via `@google/genai` SDK, same as `aiCategorization.ts`, `backgroundRemoval.ts`, `listingService.ts`).
+- **Detection**: `FunctionsHttpError` with `status: 404` means the function doesn't exist on the remote Supabase project.
+
 ## Core Principles
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.

@@ -139,6 +139,24 @@ export default function HomeScreen() {
                 />
             </View>
 
+            {/* Check Before You Buy */}
+            <View style={styles.section}>
+                <TouchableOpacity
+                    style={styles.shoppingButton}
+                    onPress={() => router.push('/(tabs)/shopping')}
+                    activeOpacity={0.8}
+                >
+                    <View style={styles.shoppingIcon}>
+                        <Ionicons name="bag-outline" size={24} color="#fff" />
+                    </View>
+                    <View style={styles.shoppingContent}>
+                        <Text style={styles.shoppingTitle}>Check Before You Buy</Text>
+                        <Text style={styles.shoppingSubtitle}>See if it matches your wardrobe</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#6366f1" />
+                </TouchableOpacity>
+            </View>
+
             {/* Log Today's Outfit */}
             <View style={styles.section}>
                 <TouchableOpacity
@@ -429,6 +447,37 @@ const styles = StyleSheet.create({
     signOutText: {
         color: '#dc2626',
         fontWeight: '600',
+    },
+    shoppingButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#eef2ff',
+        borderRadius: 16,
+        padding: 16,
+        gap: 14,
+        borderWidth: 1,
+        borderColor: '#c7d2fe',
+    },
+    shoppingIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 14,
+        backgroundColor: '#6366f1',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    shoppingContent: {
+        flex: 1,
+    },
+    shoppingTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1f2937',
+        marginBottom: 2,
+    },
+    shoppingSubtitle: {
+        fontSize: 13,
+        color: '#6366f1',
     },
     analyticsButton: {
         flexDirection: 'row',
