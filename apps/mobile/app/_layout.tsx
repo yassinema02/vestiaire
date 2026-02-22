@@ -10,7 +10,37 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 import { onboardingService } from '../services/onboarding';
 import { eveningReminderService } from '../services/eveningReminderService';
+import { ootdReminderService } from '../services/ootdReminderService';
 import { migrateSessionStorage } from '../services/sessionMigration';
+
+/**
+ * Register for push notifications and save token to profile.
+ * STUBBED: expo-notifications requires a development build.
+ */
+/**
+ * Schedule OOTD daily posting reminder if enabled.
+ * STUBBED: expo-notifications requires a development build.
+ */
+async function scheduleOotdReminder() {
+    try {
+        const { prefs } = await ootdReminderService.getPreferences();
+        if (prefs.enabled) {
+            await ootdReminderService.scheduleReminder(prefs.time);
+        }
+    } catch (error) {
+        console.error('[OOTD Reminder] Schedule error:', error);
+    }
+}
+
+async function registerForPushNotifications() {
+    // TODO: Replace with real expo-notifications when migrating to dev build
+    // import * as Notifications from 'expo-notifications';
+    // const { status } = await Notifications.requestPermissionsAsync();
+    // if (status !== 'granted') return;
+    // const token = (await Notifications.getExpoPushTokenAsync()).data;
+    // await supabase.from('profiles').update({ push_token: token }).eq('id', userId);
+    console.log('[Push Notifications STUB] Token registration skipped (Expo Go)');
+}
 
 export default function RootLayout() {
     const router = useRouter();
@@ -22,6 +52,23 @@ export default function RootLayout() {
     useEffect(() => {
         migrateSessionStorage().then(() => initialize());
         eveningReminderService.recordAppOpen();
+        registerForPushNotifications();
+        scheduleOotdReminder();
+    }, []);
+
+    // Listen for notification taps (deep linking)
+    useEffect(() => {
+        // TODO: Replace with real expo-notifications listener when migrating to dev build
+        // const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+        //   const data = response.notification.request.content.data;
+        //   if (data?.type === 'ootd_post') {
+        //     router.push('/(tabs)/social');
+        //   } else if (data?.type === 'ootd_reminder') {
+        //     router.push('/(tabs)/create-ootd');
+        //   }
+        // });
+        // return () => subscription.remove();
+        console.log('[Push Notifications STUB] Deep link listener registered (stubbed for Expo Go)');
     }, []);
 
     // Handle auth state routing with onboarding check
