@@ -42,7 +42,7 @@ export default function StealLookScreen() {
 
     const handleBack = () => {
         useSocialStore.getState().clearStealLook();
-        router.back();
+        router.push('/(tabs)/social');
     };
 
     const handleSaveOutfit = async () => {

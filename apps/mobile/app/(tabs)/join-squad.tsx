@@ -60,7 +60,7 @@ export default function JoinSquadScreen() {
                 },
                 {
                     text: 'OK',
-                    onPress: () => router.back(),
+                    onPress: () => router.push('/(tabs)/social'),
                 },
             ]);
         }
@@ -72,7 +72,7 @@ export default function JoinSquadScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/social')} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#1f2937" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Join a Squad</Text>

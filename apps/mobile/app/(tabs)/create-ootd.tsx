@@ -121,7 +121,7 @@ export default function CreateOotdScreen() {
         }
 
         Alert.alert('Posted!', 'Your OOTD has been shared with your squad(s).', [
-            { text: 'OK', onPress: () => router.back() },
+            { text: 'OK', onPress: () => router.push('/(tabs)/social') },
         ]);
     };
 
@@ -179,7 +179,7 @@ export default function CreateOotdScreen() {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/social')} style={styles.headerBtn}>
                     <Ionicons name="close" size={24} color="#1f2937" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>New OOTD Post</Text>

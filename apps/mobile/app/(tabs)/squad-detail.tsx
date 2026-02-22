@@ -23,8 +23,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSocialStore } from '../../stores/socialStore';
 import { SquadMember, OotdPostWithAuthor } from '../../types/social';
-// expo-clipboard needed: npx expo install expo-clipboard
-import * as Clipboard from 'expo-clipboard';
 
 function getTimeAgo(dateStr: string): string {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -75,8 +73,7 @@ export default function SquadDetailScreen() {
 
     const handleCopyCode = async () => {
         if (!activeSquad) return;
-        await Clipboard.setStringAsync(activeSquad.invite_code);
-        Alert.alert('Copied!', 'Invite code copied to clipboard.');
+        await Share.share({ message: `Join my Style Squad! Use code: ${activeSquad.invite_code}` });
     };
 
     const handleMemberPress = (member: SquadMember) => {
@@ -210,7 +207,7 @@ export default function SquadDetailScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/social')} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#1f2937" />
                 </TouchableOpacity>
                 <View style={styles.headerCenter}>

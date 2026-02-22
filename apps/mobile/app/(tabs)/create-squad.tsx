@@ -65,7 +65,7 @@ export default function CreateSquadScreen() {
     };
 
     const handleDone = () => {
-        router.back();
+        router.push('/(tabs)/social');
     };
 
     // Success state — show invite code
@@ -113,7 +113,7 @@ export default function CreateSquadScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/social')} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#1f2937" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Create Style Squad</Text>

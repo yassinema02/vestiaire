@@ -9,11 +9,53 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
 const GEMINI_MODEL = 'gemini-2.0-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') || '*';
 
 const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+
+/**
+ * Validate that a URL is safe to fetch (no SSRF).
+ */
+function isUrlSafe(urlStr: string): { safe: boolean; reason?: string } {
+    let parsed: URL;
+    try {
+        parsed = new URL(urlStr);
+    } catch {
+        return { safe: false, reason: 'Invalid URL' };
+    }
+
+    if (parsed.protocol !== 'https:') {
+        return { safe: false, reason: 'Only HTTPS URLs are allowed' };
+    }
+
+    const hostname = parsed.hostname.toLowerCase();
+
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]') {
+        return { safe: false, reason: 'Localhost URLs are not allowed' };
+    }
+
+    const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4Match) {
+        const [, a, b] = ipv4Match.map(Number);
+        if (a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || a === 169) {
+            return { safe: false, reason: 'Private/internal IPs are not allowed' };
+        }
+        if (a === 0 || a >= 224) {
+            return { safe: false, reason: 'Reserved IP range' };
+        }
+    }
+
+    if (hostname === '169.254.169.254' || hostname.endsWith('.internal') || hostname.endsWith('.local')) {
+        return { safe: false, reason: 'Metadata/internal endpoints are not allowed' };
+    }
+
+    return { safe: true };
+}
 
 const ANALYSIS_PROMPT = `You are a fashion product analyst. Analyze this product image and extract detailed information.
 
@@ -86,10 +128,34 @@ Deno.serve(async (req) => {
         let mimeType = 'image/jpeg';
 
         if (image_base64) {
+            // Enforce size limit on base64 input
+            if (image_base64.length > MAX_IMAGE_SIZE * 1.37) { // base64 overhead ~37%
+                return new Response(
+                    JSON.stringify({ error: 'Image too large (max 10MB)' }),
+                    { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                );
+            }
             imageData = image_base64;
         } else {
-            // Fetch image from URL and convert to base64
-            const imageResponse = await fetch(image_url);
+            // Validate URL to prevent SSRF
+            const urlCheck = isUrlSafe(image_url);
+            if (!urlCheck.safe) {
+                return new Response(
+                    JSON.stringify({ error: urlCheck.reason }),
+                    { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                );
+            }
+
+            // Fetch image from URL with timeout
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+
+            const imageResponse = await fetch(image_url, {
+                signal: controller.signal,
+                redirect: 'error', // Prevent redirect-based SSRF
+            });
+            clearTimeout(timeout);
+
             if (!imageResponse.ok) {
                 return new Response(
                     JSON.stringify({ error: 'Failed to fetch image from URL' }),
@@ -97,10 +163,26 @@ Deno.serve(async (req) => {
                 );
             }
 
+            // Validate content type is an image
             const contentType = imageResponse.headers.get('content-type');
+            if (contentType && !contentType.startsWith('image/')) {
+                return new Response(
+                    JSON.stringify({ error: 'URL does not point to an image' }),
+                    { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                );
+            }
             if (contentType) mimeType = contentType;
 
             const imageBuffer = await imageResponse.arrayBuffer();
+
+            // Enforce size limit
+            if (imageBuffer.byteLength > MAX_IMAGE_SIZE) {
+                return new Response(
+                    JSON.stringify({ error: 'Image too large (max 10MB)' }),
+                    { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                );
+            }
+
             // Convert to base64
             const bytes = new Uint8Array(imageBuffer);
             let binary = '';
@@ -110,7 +192,10 @@ Deno.serve(async (req) => {
             imageData = btoa(binary);
         }
 
-        // Call Gemini API
+        // Call Gemini API with timeout
+        const geminiController = new AbortController();
+        const geminiTimeout = setTimeout(() => geminiController.abort(), 30000);
+
         const geminiResponse = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -122,7 +207,9 @@ Deno.serve(async (req) => {
                     ],
                 }],
             }),
+            signal: geminiController.signal,
         });
+        clearTimeout(geminiTimeout);
 
         if (!geminiResponse.ok) {
             const errorText = await geminiResponse.text();
@@ -160,8 +247,11 @@ Deno.serve(async (req) => {
         );
     } catch (err) {
         console.error('Analyze product error:', err);
+        const message = err instanceof DOMException && err.name === 'AbortError'
+            ? 'Request timed out'
+            : 'Internal server error';
         return new Response(
-            JSON.stringify({ error: 'Internal server error' }),
+            JSON.stringify({ error: message }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
     }
