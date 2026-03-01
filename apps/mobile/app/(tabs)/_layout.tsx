@@ -170,6 +170,13 @@ export default function TabsLayout() {
                 }}
             />
             <Tabs.Screen
+                name="donation-history"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
                 name="premium"
                 options={{
                     href: null,
@@ -269,6 +276,48 @@ export default function TabsLayout() {
             />
             <Tabs.Screen
                 name="steal-look"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
+                name="bulk-upload"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
+                name="review-items"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
+                name="calendar-settings"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
+                name="events"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
+                name="plan-week"
+                options={{
+                    href: null,
+                    tabBarStyle: { display: 'none' },
+                }}
+            />
+            <Tabs.Screen
+                name="travel"
                 options={{
                     href: null,
                     tabBarStyle: { display: 'none' },

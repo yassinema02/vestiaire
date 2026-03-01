@@ -25,8 +25,10 @@ import {
     listingService,
     ResaleListing,
     ListingStatus,
+    EarningsMonth,
 } from '../../services/listingService';
 import ListingGeneratorModal from '../../components/features/ListingGeneratorModal';
+import EarningsChart from '../../components/features/EarningsChart';
 import { WardrobeItem } from '../../services/items';
 
 const STATUS_FILTERS: { id: ListingStatus | 'all'; label: string }[] = [
@@ -48,6 +50,7 @@ export default function ListingHistoryScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<ListingStatus | 'all'>('all');
     const [stats, setStats] = useState({ totalListed: 0, totalSold: 0, totalRevenue: 0 });
+    const [earningsTimeline, setEarningsTimeline] = useState<EarningsMonth[]>([]);
 
     // Sold price modal
     const [showSoldModal, setShowSoldModal] = useState(false);
@@ -70,6 +73,10 @@ export default function ListingHistoryScreen() {
             totalListed: statsResult.totalListed,
             totalSold: statsResult.totalSold,
             totalRevenue: statsResult.totalRevenue,
+        });
+        // Load earnings timeline (Story 13.5)
+        listingService.getEarningsTimeline().then(result => {
+            if (!result.error) setEarningsTimeline(result.timeline);
         });
         setIsLoading(false);
     }, [statusFilter]);
@@ -141,6 +148,23 @@ export default function ListingHistoryScreen() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
+                {/* Earnings Chart (Story 13.5) */}
+                {earningsTimeline.length > 0 && stats.totalSold > 0 && (
+                    <View style={{ marginBottom: 16 }}>
+                        <EarningsChart data={earningsTimeline} />
+                    </View>
+                )}
+
+                {/* Sustainability metric (Story 13.5) */}
+                {stats.totalSold > 0 && (
+                    <View style={styles.sustainRow}>
+                        <Ionicons name="leaf-outline" size={16} color="#22c55e" />
+                        <Text style={styles.sustainText}>
+                            You kept {stats.totalSold} item{stats.totalSold !== 1 ? 's' : ''} out of landfills
+                        </Text>
+                    </View>
+                )}
+
                 {/* Stats Row */}
                 <View style={styles.statsRow}>
                     <View style={styles.statCard}>
@@ -355,6 +379,20 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F5F0E8',
+    },
+    sustainRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: '#f0fdf4',
+        borderRadius: 10,
+        padding: 10,
+        marginBottom: 12,
+    },
+    sustainText: {
+        fontSize: 13,
+        color: '#16a34a',
+        fontWeight: '500',
     },
     header: {
         flexDirection: 'row',

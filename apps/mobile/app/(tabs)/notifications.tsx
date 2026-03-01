@@ -278,6 +278,27 @@ export default function NotificationsScreen() {
                         </TouchableOpacity>
                     )}
                 </View>
+
+                {/* Calendar Integration (Story 12.1) */}
+                <View style={[styles.section, { marginTop: 20 }]}>
+                    <Text style={styles.sectionTitle}>Integrations</Text>
+
+                    <TouchableOpacity
+                        style={styles.toggleRow}
+                        onPress={() => router.push('/(tabs)/calendar-settings')}
+                    >
+                        <View style={styles.toggleInfo}>
+                            <Ionicons name="calendar-outline" size={22} color="#5D4E37" />
+                            <View style={styles.toggleText}>
+                                <Text style={styles.toggleLabel}>Calendar Integration</Text>
+                                <Text style={styles.toggleDescription}>
+                                    Get outfit suggestions based on your events
+                                </Text>
+                            </View>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
         </View>
     );

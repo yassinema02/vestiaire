@@ -37,6 +37,12 @@ import PointsHistorySheet from '../../components/gamification/PointsHistorySheet
 import StreakCard from '../../components/gamification/StreakCard';
 import ActivityFeed from '../../components/gamification/ActivityFeed';
 import LeaderboardTeaser from '../../components/gamification/LeaderboardTeaser';
+import { neglectService } from '../../services/neglectService';
+import { resalePromptService } from '../../services/resalePromptService';
+import { listingService } from '../../services/listingService';
+import ResaleHistoryCard from '../../components/features/ResaleHistoryCard';
+import DonationHistoryCard from '../../components/features/DonationHistoryCard';
+import { donationService, DonationStats } from '../../services/donationService';
 
 // Complete auth session for web browser redirect
 WebBrowser.maybeCompleteAuthSession();
@@ -93,6 +99,18 @@ export default function ProfileScreen() {
     const [reminderTime, setReminderTime] = useState('20:00');
     const [showTimePicker, setShowTimePicker] = useState(false);
     const [isLoadingReminder, setIsLoadingReminder] = useState(true);
+
+    // Neglect threshold state (Story 13.1)
+    const [neglectThreshold, setNeglectThreshold] = useState(180);
+
+    // Resale prompts state (Story 13.2)
+    const [resalePromptsEnabled, setResalePromptsEnabled] = useState(true);
+
+    // Resale history stats (Story 13.5)
+    const [resaleHistoryStats, setResaleHistoryStats] = useState<{ totalListed: number; totalSold: number; totalRevenue: number } | null>(null);
+
+    // Donation stats (Story 13.6)
+    const [donationStats, setDonationStats] = useState<DonationStats | null>(null);
 
     // Google OAuth configuration
     const googleWebClientId = Constants.expoConfig?.extra?.googleWebClientId;
@@ -162,6 +180,35 @@ export default function ProfileScreen() {
             setIsLoadingReminder(false);
         };
         loadReminderPrefs();
+        // Load neglect threshold (Story 13.1)
+        neglectService.getNeglectThreshold().then(setNeglectThreshold);
+        // Load resale prompts preference (Story 13.2)
+        resalePromptService.isGloballyEnabled().then(setResalePromptsEnabled);
+        // Load resale history stats (Story 13.5)
+        listingService.getResaleStats().then(stats => {
+            if (!stats.error) setResaleHistoryStats(stats);
+        });
+        // Load donation stats (Story 13.6)
+        donationService.getDonationStats().then(setDonationStats);
+    }, []);
+
+    const NEGLECT_OPTIONS = [30, 60, 90, 120, 180, 365];
+
+    const handleNeglectThresholdChange = useCallback(async (days: number) => {
+        setNeglectThreshold(days);
+        await neglectService.setNeglectThreshold(days);
+        // Trigger recomputation with new threshold
+        await neglectService.computeNeglectStatuses(true);
+    }, []);
+
+    const handleToggleResalePrompts = useCallback(async (value: boolean) => {
+        setResalePromptsEnabled(value);
+        try {
+            await resalePromptService.setGloballyEnabled(value);
+        } catch {
+            setResalePromptsEnabled(!value);
+            Alert.alert('Error', 'Failed to update resale prompt setting');
+        }
     }, []);
 
     const handleToggleReminder = useCallback(async (value: boolean) => {
@@ -730,6 +777,69 @@ export default function ProfileScreen() {
                 </Text>
             </View>
 
+            {/* Neglect Threshold Setting (Story 13.1) */}
+            <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Neglect Detection</Text>
+                <View style={styles.reminderCard}>
+                    <View style={styles.reminderRow}>
+                        <View style={styles.reminderInfo}>
+                            <Ionicons name="moon-outline" size={22} color="#f59e0b" />
+                            <View style={styles.reminderTextContainer}>
+                                <Text style={styles.reminderLabel}>Neglect threshold</Text>
+                                <Text style={styles.reminderDescription}>
+                                    Items not worn for this long are marked neglected
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                    <View style={styles.neglectChipsRow}>
+                        {NEGLECT_OPTIONS.map((days) => (
+                            <TouchableOpacity
+                                key={days}
+                                style={[
+                                    styles.neglectChip,
+                                    neglectThreshold === days && styles.neglectChipActive,
+                                ]}
+                                onPress={() => handleNeglectThresholdChange(days)}
+                            >
+                                <Text
+                                    style={[
+                                        styles.neglectChipText,
+                                        neglectThreshold === days && styles.neglectChipTextActive,
+                                    ]}
+                                >
+                                    {days < 365 ? `${days}d` : '1yr'}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </View>
+            </View>
+
+            {/* Resale Prompts Setting (Story 13.2) */}
+            <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Resale Prompts</Text>
+                <View style={styles.reminderCard}>
+                    <View style={styles.reminderRow}>
+                        <View style={styles.reminderInfo}>
+                            <Ionicons name="cash-outline" size={22} color="#f59e0b" />
+                            <View style={styles.reminderTextContainer}>
+                                <Text style={styles.reminderLabel}>Enable resale prompts</Text>
+                                <Text style={styles.reminderDescription}>
+                                    Get suggestions to sell neglected items
+                                </Text>
+                            </View>
+                        </View>
+                        <Switch
+                            value={resalePromptsEnabled}
+                            onValueChange={handleToggleResalePrompts}
+                            trackColor={{ false: '#d1d5db', true: '#c7d2fe' }}
+                            thumbColor={resalePromptsEnabled ? '#6366f1' : '#9ca3af'}
+                        />
+                    </View>
+                </View>
+            </View>
+
             {/* Premium Upgrade Banner (free users only) */}
             {subStatus && !subStatus.isPremium && (
                 <View style={styles.sectionContainer}>
@@ -773,6 +883,24 @@ export default function ProfileScreen() {
                     <Text style={styles.menuText}>Wardrobe Analytics</Text>
                     <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
                 </TouchableOpacity>
+
+                {/* Resale History Card (Story 13.5) */}
+                {resaleHistoryStats && (resaleHistoryStats.totalSold > 0 || resaleHistoryStats.totalListed > 0) && (
+                    <View style={{ marginBottom: 12 }}>
+                        <ResaleHistoryCard
+                            totalListed={resaleHistoryStats.totalListed}
+                            totalSold={resaleHistoryStats.totalSold}
+                            totalRevenue={resaleHistoryStats.totalRevenue}
+                        />
+                    </View>
+                )}
+
+                {/* Donation History Card (Story 13.6) */}
+                {donationStats && donationStats.totalDonated > 0 && (
+                    <View style={{ marginBottom: 12 }}>
+                        <DonationHistoryCard stats={donationStats} />
+                    </View>
+                )}
 
                 <TouchableOpacity
                     style={styles.menuItem}
@@ -1422,5 +1550,29 @@ const styles = StyleSheet.create({
         color: '#9ca3af',
         marginTop: 8,
         paddingHorizontal: 4,
+    },
+    // Neglect threshold chips (Story 13.1)
+    neglectChipsRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginTop: 12,
+    },
+    neglectChip: {
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: '#f3f4f6',
+    },
+    neglectChipActive: {
+        backgroundColor: '#f59e0b',
+    },
+    neglectChipText: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#4b5563',
+    },
+    neglectChipTextActive: {
+        color: '#fff',
     },
 });

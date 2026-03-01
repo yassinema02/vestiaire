@@ -27,6 +27,8 @@ import { COLORS, CATEGORIES } from '../../services/aiCategorization';
 import { getCPWResult, formatCPWBreakdown } from '../../utils/cpwCalculator';
 import { isNeglected, formatNeglectedLabel } from '../../utils/neglectedItems';
 import ListingGeneratorModal from '../../components/features/ListingGeneratorModal';
+import { resalePromptService } from '../../services/resalePromptService';
+import { donationService } from '../../services/donationService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -48,7 +50,7 @@ const OCCASIONS = ['Casual', 'Work', 'Formal', 'Sport', 'Night Out'];
 
 export default function ItemDetailScreen() {
     const router = useRouter();
-    const { itemId, itemIds, openListing } = useLocalSearchParams<{ itemId: string; itemIds?: string; openListing?: string }>();
+    const { itemId, itemIds, openListing, fromResalePrompt } = useLocalSearchParams<{ itemId: string; itemIds?: string; openListing?: string; fromResalePrompt?: string }>();
 
     const [item, setItem] = useState<WardrobeItem | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -114,6 +116,13 @@ export default function ItemDetailScreen() {
             setShowListingModal(true);
         }
     }, [openListing, item, isLoading]);
+
+    // Record resale prompt tap (Story 13.2)
+    useEffect(() => {
+        if (fromResalePrompt === 'true' && itemId) {
+            resalePromptService.recordPromptTapped(itemId).catch(() => {});
+        }
+    }, [fromResalePrompt, itemId]);
 
     const handleDeleteWearLog = (logId: string) => {
         Alert.alert(
@@ -415,6 +424,22 @@ export default function ItemDetailScreen() {
                     );
                 })()}
 
+                {/* Listed for Resale Status (Story 13.3) */}
+                {item.resale_status === 'listed' && (
+                    <View style={styles.listedStatusCard}>
+                        <Ionicons name="pricetag" size={16} color="#22c55e" />
+                        <Text style={styles.listedStatusText}>Listed for Resale</Text>
+                    </View>
+                )}
+
+                {/* Donated Status (Story 13.6) */}
+                {item.resale_status === 'donated' && (
+                    <View style={styles.donatedStatusCard}>
+                        <Ionicons name="heart" size={16} color="#f59e0b" />
+                        <Text style={styles.donatedStatusText}>Donated</Text>
+                    </View>
+                )}
+
                 {/* Neglected Item Actions */}
                 {isNeglected(item) && (
                     <View style={styles.neglectedCard}>
@@ -446,6 +471,31 @@ export default function ItemDetailScreen() {
                                 <Text style={[styles.resaleButtonText, { color: '#22c55e' }]}>Generate Listing</Text>
                             </TouchableOpacity>
                         </View>
+                        <TouchableOpacity
+                            style={styles.donateButton}
+                            onPress={() => {
+                                Alert.prompt(
+                                    'Donate Item',
+                                    'Enter charity name (optional):',
+                                    [
+                                        { text: 'Cancel', style: 'cancel' },
+                                        {
+                                            text: 'Donate',
+                                            onPress: async (charityName) => {
+                                                await donationService.logDonation(item.id, charityName || undefined);
+                                                loadItem();
+                                            },
+                                        },
+                                    ],
+                                    'plain-text',
+                                    '',
+                                    'default'
+                                );
+                            }}
+                        >
+                            <Ionicons name="heart-outline" size={16} color="#fff" />
+                            <Text style={styles.donateButtonText}>Mark as Donated</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
 
@@ -1080,6 +1130,38 @@ const styles = StyleSheet.create({
         color: '#9ca3af',
         flex: 1,
     },
+    // Listed for Resale Status (Story 13.3)
+    listedStatusCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: '#f0fdf4',
+        borderRadius: 12,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: '#bbf7d0',
+    },
+    listedStatusText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#16a34a',
+    },
+    // Donated Status (Story 13.6)
+    donatedStatusCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: '#fffbeb',
+        borderRadius: 12,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: '#fde68a',
+    },
+    donatedStatusText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#b45309',
+    },
     // Neglected Item Actions
     neglectedCard: {
         backgroundColor: '#fffbeb',
@@ -1138,6 +1220,21 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
         color: '#22c55e',
+    },
+    donateButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        backgroundColor: '#f59e0b',
+        borderRadius: 10,
+        paddingVertical: 10,
+        marginTop: 8,
+    },
+    donateButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#fff',
     },
     // Generate Listing
     generateListingButton: {

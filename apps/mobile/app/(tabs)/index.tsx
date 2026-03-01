@@ -21,6 +21,14 @@ import { gamificationService, UserStats } from '../../services/gamificationServi
 import { challengeService, UserChallenge } from '../../services/challengeService';
 import { itemsService } from '../../services/items';
 import { countNeglected } from '../../utils/neglectedItems';
+import { neglectService } from '../../services/neglectService';
+import { useEventSync } from '../../hooks/useEventSync';
+import { eventSyncService, CalendarEventRow } from '../../services/eventSyncService';
+import { generateEventOutfit, clearEventOutfitCache, OutfitSuggestion } from '../../services/aiOutfitService';
+import { WardrobeItem } from '../../services/items';
+import { TripEvent } from '../../types/packingList';
+import ResalePromptBanner from '../../components/features/ResalePromptBanner';
+import { resalePromptService, ResalePrompt } from '../../services/resalePromptService';
 
 function getGreeting(): string {
     const hour = new Date().getHours();
@@ -41,6 +49,14 @@ export default function HomeScreen() {
     const [userStats, setUserStats] = useState<UserStats | null>(null);
     const [activeChallenge, setActiveChallenge] = useState<UserChallenge | null>(null);
     const streakLostShown = useRef(false);
+    const [nextEvent, setNextEvent] = useState<CalendarEventRow | null>(null);
+    const [nextEventOutfit, setNextEventOutfit] = useState<OutfitSuggestion | null>(null);
+    const [allWardrobeItems, setAllWardrobeItems] = useState<WardrobeItem[]>([]);
+    const [upcomingTrip, setUpcomingTrip] = useState<TripEvent | null>(null);
+    const [resalePrompts, setResalePrompts] = useState<ResalePrompt[]>([]);
+
+    // Background event sync (Story 12.2)
+    useEventSync();
 
     // Initialize weather and calendar stores on mount
     useEffect(() => {
@@ -54,8 +70,13 @@ export default function HomeScreen() {
             refreshWeather();
             refreshForecast();
             refreshEvents();
-            itemsService.getItems().then(({ items }) => {
-                setNeglectedCount(countNeglected(items));
+            // Trigger neglect status computation (debounced 24h) then count from DB + load resale prompts
+            neglectService.computeNeglectStatuses().then(() => {
+                itemsService.getItems().then(({ items }) => {
+                    setNeglectedCount(items.filter(i => i.neglect_status).length);
+                    // Load resale prompts (Story 13.2)
+                    resalePromptService.getResalePrompts(items).then(setResalePrompts).catch(() => {});
+                });
             });
             // Load active challenge
             challengeService.getChallenge().then(({ challenge }) => {
@@ -79,12 +100,59 @@ export default function HomeScreen() {
                 }
             };
             loadStats();
+
+            // Load next event for banner (Story 12.3)
+            const loadNextEvent = async () => {
+                const { events } = await eventSyncService.getUpcomingEvents(7);
+                if (events.length > 0) {
+                    // Pick highest formality event (AC 4)
+                    const sorted = [...events].sort((a, b) => (b.formality_score || 0) - (a.formality_score || 0));
+                    setNextEvent(sorted[0]);
+
+                    // Load wardrobe for outfit generation
+                    const { items } = await itemsService.getItems();
+                    if (items) {
+                        setAllWardrobeItems(items);
+                        const { suggestion } = await generateEventOutfit(sorted[0], items);
+                        setNextEventOutfit(suggestion);
+                    }
+                } else {
+                    setNextEvent(null);
+                    setNextEventOutfit(null);
+                }
+            };
+            loadNextEvent();
+
+            // Detect upcoming trips (Story 12.6)
+            const loadTrips = async () => {
+                const { trips } = await eventSyncService.detectTripEvents(30);
+                setUpcomingTrip(trips.length > 0 ? trips[0] : null);
+            };
+            loadTrips();
         }, [])
     );
 
     const handleConnectCalendar = () => {
         // Navigate to profile tab where calendar connection is handled
         router.push('/(tabs)/profile');
+    };
+
+    // Resale prompt handlers (Story 13.2)
+    const handleResaleDismiss = async (itemId: string) => {
+        await resalePromptService.dismissPrompt(itemId);
+        setResalePrompts(prev => prev.filter(p => p.item.id !== itemId));
+    };
+
+    const handleResaleCreateListing = async (itemId: string) => {
+        await resalePromptService.recordPromptTapped(itemId);
+        router.push({ pathname: '/(tabs)/item-detail', params: { id: itemId, fromResalePrompt: 'true' } });
+    };
+
+    const handleResaleDismissAll = async () => {
+        for (const prompt of resalePrompts) {
+            await resalePromptService.dismissPrompt(prompt.item.id);
+        }
+        setResalePrompts([]);
     };
 
     return (
@@ -131,6 +199,77 @@ export default function HomeScreen() {
             <View style={styles.eventsSection}>
                 <EventsWidget onConnectPress={handleConnectCalendar} />
             </View>
+
+            {/* Event Outfit Banner (Story 12.3) */}
+            {nextEvent && (
+                <View style={styles.section}>
+                    <View style={styles.eventBanner}>
+                        <View style={styles.eventBannerHeader}>
+                            <Ionicons name="calendar" size={16} color="#5D4E37" />
+                            <Text style={styles.eventBannerLabel}>Next Event</Text>
+                        </View>
+                        <Text style={styles.eventBannerTitle} numberOfLines={1}>{nextEvent.title}</Text>
+                        <Text style={styles.eventBannerMeta}>
+                            {nextEvent.is_all_day ? 'All day' : new Date(nextEvent.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                            {nextEvent.event_type ? ` · ${nextEvent.event_type.charAt(0).toUpperCase() + nextEvent.event_type.slice(1)}` : ''}
+                            {nextEvent.formality_score ? ` · ${nextEvent.formality_score}/10` : ''}
+                        </Text>
+                        {nextEventOutfit && (
+                            <Text style={styles.eventBannerOutfit} numberOfLines={1}>
+                                Suggested: {nextEventOutfit.name}
+                            </Text>
+                        )}
+                        <View style={styles.eventBannerLinks}>
+                            <TouchableOpacity
+                                style={styles.eventBannerSeeAll}
+                                onPress={() => router.push('/(tabs)/events')}
+                            >
+                                <Text style={styles.eventBannerSeeAllText}>See all events</Text>
+                                <Ionicons name="chevron-forward" size={14} color="#6366f1" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.eventBannerSeeAll}
+                                onPress={() => router.push('/(tabs)/plan-week')}
+                            >
+                                <Text style={styles.eventBannerSeeAllText}>Plan week</Text>
+                                <Ionicons name="chevron-forward" size={14} color="#6366f1" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            )}
+
+            {/* Trip Banner (Story 12.6) */}
+            {upcomingTrip && (
+                <TouchableOpacity
+                    style={styles.tripBanner}
+                    onPress={() => router.push('/(tabs)/travel')}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons name="airplane" size={18} color="#6366f1" />
+                    <View style={styles.tripBannerInfo}>
+                        <Text style={styles.tripBannerTitle}>{upcomingTrip.title}</Text>
+                        <Text style={styles.tripBannerDates}>
+                            {upcomingTrip.durationDays} day{upcomingTrip.durationDays !== 1 ? 's' : ''}
+                            {upcomingTrip.location ? ` · ${upcomingTrip.location}` : ''}
+                        </Text>
+                    </View>
+                    <Text style={styles.tripBannerAction}>Pack now</Text>
+                    <Ionicons name="chevron-forward" size={16} color="#6366f1" />
+                </TouchableOpacity>
+            )}
+
+            {/* Resale Prompts Banner (Story 13.2) */}
+            {resalePrompts.length > 0 && (
+                <View style={styles.section}>
+                    <ResalePromptBanner
+                        prompts={resalePrompts}
+                        onDismiss={handleResaleDismiss}
+                        onCreateListing={handleResaleCreateListing}
+                        onDismissAll={handleResaleDismissAll}
+                    />
+                </View>
+            )}
 
             {/* AI Outfit Suggestions */}
             <View style={styles.section}>
@@ -189,7 +328,7 @@ export default function HomeScreen() {
                         <View style={styles.neglectedContent}>
                             <Text style={styles.neglectedTitle}>Forgotten Items</Text>
                             <Text style={styles.neglectedSubtitle}>
-                                {neglectedCount} item{neglectedCount !== 1 ? 's' : ''} haven't been worn in 2+ months
+                                {neglectedCount} item{neglectedCount !== 1 ? 's' : ''} haven't been worn in 6+ months
                             </Text>
                         </View>
                         <Ionicons name="chevron-forward" size={20} color="#f59e0b" />
@@ -508,6 +647,87 @@ const styles = StyleSheet.create({
     },
     analyticsSubtitle: {
         fontSize: 13,
+        color: '#6366f1',
+    },
+
+    // Event Banner (Story 12.3)
+    eventBanner: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 16,
+    },
+    eventBannerHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 6,
+    },
+    eventBannerLabel: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#5D4E37',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    eventBannerTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1f2937',
+    },
+    eventBannerMeta: {
+        fontSize: 13,
+        color: '#6b7280',
+        marginTop: 2,
+    },
+    eventBannerOutfit: {
+        fontSize: 13,
+        color: '#6366f1',
+        fontWeight: '500',
+        marginTop: 6,
+    },
+    eventBannerLinks: {
+        flexDirection: 'row',
+        gap: 16,
+        marginTop: 10,
+    },
+    eventBannerSeeAll: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    eventBannerSeeAllText: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#6366f1',
+    },
+
+    // Trip banner
+    tripBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        backgroundColor: '#eef2ff',
+        borderRadius: 12,
+        padding: 14,
+        marginHorizontal: 16,
+        marginBottom: 12,
+    },
+    tripBannerInfo: {
+        flex: 1,
+    },
+    tripBannerTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#1f2937',
+    },
+    tripBannerDates: {
+        fontSize: 12,
+        color: '#6b7280',
+        marginTop: 1,
+    },
+    tripBannerAction: {
+        fontSize: 13,
+        fontWeight: '500',
         color: '#6366f1',
     },
 });

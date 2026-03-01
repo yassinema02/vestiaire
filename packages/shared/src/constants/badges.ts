@@ -84,6 +84,22 @@ export const BADGES: BadgeDefinition[] = [
         iconName: 'pricetag',
         hint: 'Give your clothes a second life',
     },
+    {
+        id: 'circular_champion',
+        name: 'Circular Champion',
+        description: 'Sell 10 or more items through resale',
+        category: 'sustainability',
+        iconName: 'trophy',
+        hint: 'Keep selling to earn this badge',
+    },
+    {
+        id: 'generous_giver',
+        name: 'Generous Giver',
+        description: 'Donate 20 or more items',
+        category: 'sustainability',
+        iconName: 'heart',
+        hint: 'Give your clothes to those in need',
+    },
 
     // Secret badges
     {

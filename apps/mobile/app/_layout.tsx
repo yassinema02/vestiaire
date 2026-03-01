@@ -9,6 +9,7 @@ import { Slot, useRouter, useSegments } from 'expo-router';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 import { onboardingService } from '../services/onboarding';
+import { profileSetupService } from '../services/profileSetupService';
 import { eveningReminderService } from '../services/eveningReminderService';
 import { ootdReminderService } from '../services/ootdReminderService';
 import { migrateSessionStorage } from '../services/sessionMigration';
@@ -78,6 +79,7 @@ export default function RootLayout() {
         const checkAndRoute = async () => {
             const inAuthGroup = segments[0] === '(auth)';
             const inOnboarding = segments[0] === 'onboarding';
+            const inProfileSetup = segments[0] === 'profile-setup';
             const inAddFlow = segments[1] === 'add' || segments[1] === 'confirm-item';
             const isAuthenticated = !!session;
 
@@ -85,7 +87,13 @@ export default function RootLayout() {
                 // Redirect to sign-in if not authenticated
                 router.replace('/(auth)/sign-in');
             } else if (isAuthenticated && inAuthGroup) {
-                // User just logged in - check if should show onboarding
+                // User just logged in - check profile setup then onboarding
+                const shouldSetup = await profileSetupService.shouldShowProfileSetup();
+                if (shouldSetup) {
+                    router.replace('/profile-setup');
+                    setHasCheckedInitialOnboarding(true);
+                    return;
+                }
                 const shouldOnboard = await onboardingService.shouldShowOnboarding();
                 if (shouldOnboard) {
                     router.replace('/onboarding');
@@ -93,9 +101,14 @@ export default function RootLayout() {
                     router.replace('/(tabs)');
                 }
                 setHasCheckedInitialOnboarding(true);
-            } else if (isAuthenticated && !inOnboarding && !inAuthGroup && !inAddFlow && !hasCheckedInitialOnboarding) {
-                // First load after auth - check onboarding status (skip if in add flow)
+            } else if (isAuthenticated && !inOnboarding && !inProfileSetup && !inAuthGroup && !inAddFlow && !hasCheckedInitialOnboarding) {
+                // First load after auth - check profile setup then onboarding
                 setHasCheckedInitialOnboarding(true);
+                const shouldSetup = await profileSetupService.shouldShowProfileSetup();
+                if (shouldSetup) {
+                    router.replace('/profile-setup');
+                    return;
+                }
                 const shouldOnboard = await onboardingService.shouldShowOnboarding();
                 if (shouldOnboard) {
                     router.replace('/onboarding');

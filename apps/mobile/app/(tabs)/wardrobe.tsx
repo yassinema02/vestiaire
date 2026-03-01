@@ -17,14 +17,16 @@ import {
     Modal,
     Platform,
     ScrollView,
+    Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { itemsService, WardrobeItem } from '../../services/items';
 import { CATEGORIES, COLORS } from '../../services/aiCategorization';
 import { getCPWResult } from '../../utils/cpwCalculator';
-import { isNeglected, countNeglected } from '../../utils/neglectedItems';
+import { isNeglected, countNeglected, isNeglectedFromDb } from '../../utils/neglectedItems';
 import { resaleService } from '../../services/resaleService';
+import { useExtractionStore } from '../../stores/extractionStore';
 
 // Filter constants
 const SORT_OPTIONS = [
@@ -43,6 +45,29 @@ type SortOption = typeof SORT_OPTIONS[number]['value'];
 
 export default function WardrobeScreen() {
     const router = useRouter();
+    const extractionState = useExtractionStore();
+    const isExtracting = extractionState.isUploading || extractionState.isProcessing || extractionState.isBgRemoving;
+    const extractionDone = extractionState.completionPending;
+
+    const extractionBannerText = (() => {
+        if (extractionDone) return 'Items ready to review!';
+        if (extractionState.isUploading) {
+            const pct = extractionState.uploadProgress?.percentage ?? 0;
+            return `Uploading photos... ${pct}%`;
+        }
+        if (extractionState.isProcessing) {
+            const p = extractionState.processingProgress;
+            const pct = p && p.total > 0 ? Math.round((p.processed / p.total) * 100) : 0;
+            return `Analyzing photos... ${pct}%`;
+        }
+        if (extractionState.isBgRemoving) {
+            const p = extractionState.bgRemovalProgress;
+            const pct = p && p.total > 0 ? Math.round((p.processed / p.total) * 100) : 0;
+            return `Cleaning backgrounds... ${pct}%`;
+        }
+        return null;
+    })();
+
     const [items, setItems] = useState<WardrobeItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -57,6 +82,7 @@ export default function WardrobeScreen() {
     const [sortBy, setSortBy] = useState<SortOption>('newest');
     const [showNeglectedOnly, setShowNeglectedOnly] = useState(false);
     const [showResaleOnly, setShowResaleOnly] = useState(false);
+    const [showListedOnly, setShowListedOnly] = useState(false);
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [showSortModal, setShowSortModal] = useState(false);
 
@@ -128,14 +154,19 @@ export default function WardrobeScreen() {
             );
         }
 
-        // Neglected filter
+        // Neglected filter (uses DB column from Story 13.1)
         if (showNeglectedOnly) {
-            result = result.filter((item) => isNeglected(item));
+            result = result.filter((item) => isNeglectedFromDb(item));
         }
 
         // Resale candidates filter
         if (showResaleOnly) {
             result = result.filter((item) => resaleService.isResaleCandidate(item));
+        }
+
+        // Listed for resale filter (Story 13.3)
+        if (showListedOnly) {
+            result = result.filter((item) => item.resale_status === 'listed');
         }
 
         // Sort
@@ -165,10 +196,11 @@ export default function WardrobeScreen() {
         }
 
         return result;
-    }, [items, searchQuery, selectedCategory, selectedColors, selectedSeasons, selectedOccasions, showNeglectedOnly, showResaleOnly, sortBy]);
+    }, [items, searchQuery, selectedCategory, selectedColors, selectedSeasons, selectedOccasions, showNeglectedOnly, showResaleOnly, showListedOnly, sortBy]);
 
-    const neglectedCount = useMemo(() => countNeglected(items), [items]);
+    const neglectedCount = useMemo(() => items.filter(i => i.neglect_status).length, [items]);
     const resaleCount = useMemo(() => items.filter(i => resaleService.isResaleCandidate(i)).length, [items]);
+    const listedCount = useMemo(() => items.filter(i => i.resale_status === 'listed').length, [items]);
 
     const activeFilterCount = useMemo(() => {
         let count = 0;
@@ -178,8 +210,9 @@ export default function WardrobeScreen() {
         if (selectedOccasions.length > 0) count++;
         if (showNeglectedOnly) count++;
         if (showResaleOnly) count++;
+        if (showListedOnly) count++;
         return count;
-    }, [selectedCategory, selectedColors, selectedSeasons, selectedOccasions, showNeglectedOnly, showResaleOnly]);
+    }, [selectedCategory, selectedColors, selectedSeasons, selectedOccasions, showNeglectedOnly, showResaleOnly, showListedOnly]);
 
     const clearAllFilters = () => {
         setSelectedCategory(null);
@@ -188,6 +221,7 @@ export default function WardrobeScreen() {
         setSelectedOccasions([]);
         setShowNeglectedOnly(false);
         setShowResaleOnly(false);
+        setShowListedOnly(false);
         setSearchQuery('');
     };
 
@@ -213,7 +247,7 @@ export default function WardrobeScreen() {
         const displayUrl = item.processed_image_url || item.image_url;
         const allItemIds = filteredItems.map(i => i.id);
         const cpw = getCPWResult(item.purchase_price, item.wear_count);
-        const neglected = isNeglected(item);
+        const neglected = isNeglectedFromDb(item);
         return (
             <TouchableOpacity
                 style={styles.itemCard}
@@ -228,6 +262,11 @@ export default function WardrobeScreen() {
                         <View style={styles.neglectedBadge}>
                             <Ionicons name="moon-outline" size={12} color="#fff" />
                         </View>
+                    </View>
+                )}
+                {item.resale_status === 'listed' && (
+                    <View style={styles.listedBadge}>
+                        <Ionicons name="pricetag" size={10} color="#fff" />
                     </View>
                 )}
                 {item.category && (
@@ -294,6 +333,29 @@ export default function WardrobeScreen() {
                     </Text>
                 </View>
                 <View style={styles.headerActions}>
+                    <TouchableOpacity
+                        style={styles.magicImportButton}
+                        onPress={() => {
+                            Alert.alert(
+                                'Magic Import',
+                                'How would you like to add items?',
+                                [
+                                    {
+                                        text: 'Upload from Gallery',
+                                        onPress: () => router.push('/(tabs)/bulk-upload'),
+                                    },
+                                    {
+                                        text: 'Connect Instagram',
+                                        onPress: () => Alert.alert('Coming Soon', 'Instagram import will be available in a future update.'),
+                                    },
+                                    { text: 'Cancel', style: 'cancel' },
+                                ]
+                            );
+                        }}
+                    >
+                        <Ionicons name="sparkles" size={16} color="#fff" />
+                        <Text style={styles.magicImportText}>Import</Text>
+                    </TouchableOpacity>
                     <TouchableOpacity style={styles.iconButton} onPress={() => setShowSortModal(true)}>
                         <Ionicons name="swap-vertical" size={20} color="#1f2937" />
                     </TouchableOpacity>
@@ -310,6 +372,24 @@ export default function WardrobeScreen() {
                     </TouchableOpacity>
                 </View>
             </View>
+
+            {/* Extraction In-Progress Banner (Story 10.6) */}
+            {(isExtracting || extractionDone) && extractionBannerText && (
+                <TouchableOpacity
+                    style={[styles.extractionBanner, extractionDone && styles.extractionBannerDone]}
+                    onPress={() => router.push('/(tabs)/bulk-upload')}
+                >
+                    <Ionicons
+                        name={extractionDone ? 'checkmark-circle' : 'sync'}
+                        size={16}
+                        color={extractionDone ? '#22c55e' : '#6366f1'}
+                    />
+                    <Text style={[styles.extractionBannerText, extractionDone && { color: '#22c55e' }]}>
+                        {extractionBannerText}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={14} color="#6b7280" />
+                </TouchableOpacity>
+            )}
 
             {/* Search Bar */}
             <View style={styles.searchContainer}>
@@ -369,7 +449,7 @@ export default function WardrobeScreen() {
             </ScrollView>
 
             {/* Special Filter Chips */}
-            {(neglectedCount > 0 || resaleCount > 0) && (
+            {(neglectedCount > 0 || resaleCount > 0 || listedCount > 0) && (
                 <View style={styles.specialFilterRow}>
                     {neglectedCount > 0 && (
                         <TouchableOpacity
@@ -389,7 +469,7 @@ export default function WardrobeScreen() {
                     {resaleCount > 0 && (
                         <TouchableOpacity
                             style={[styles.resaleChip, showResaleOnly && styles.resaleChipActive]}
-                            onPress={() => { setShowResaleOnly(!showResaleOnly); setShowNeglectedOnly(false); }}
+                            onPress={() => { setShowResaleOnly(!showResaleOnly); setShowNeglectedOnly(false); setShowListedOnly(false); }}
                         >
                             <Ionicons
                                 name="pricetag-outline"
@@ -398,6 +478,21 @@ export default function WardrobeScreen() {
                             />
                             <Text style={[styles.resaleChipText, showResaleOnly && styles.resaleChipTextActive]}>
                                 Resale ({resaleCount})
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                    {listedCount > 0 && (
+                        <TouchableOpacity
+                            style={[styles.resaleChip, showListedOnly && styles.resaleChipActive]}
+                            onPress={() => { setShowListedOnly(!showListedOnly); setShowNeglectedOnly(false); setShowResaleOnly(false); }}
+                        >
+                            <Ionicons
+                                name="pricetag"
+                                size={14}
+                                color={showListedOnly ? '#fff' : '#22c55e'}
+                            />
+                            <Text style={[styles.resaleChipText, showListedOnly && styles.resaleChipTextActive]}>
+                                Listed ({listedCount})
                             </Text>
                         </TouchableOpacity>
                     )}
@@ -508,7 +603,9 @@ const styles = StyleSheet.create({
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 12 },
     title: { fontSize: 28, fontWeight: 'bold', color: '#1f2937' },
     itemCount: { fontSize: 13, color: '#6b7280', marginTop: 2 },
-    headerActions: { flexDirection: 'row', gap: 8 },
+    headerActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+    magicImportButton: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: '#6366f1' },
+    magicImportText: { color: '#fff', fontSize: 13, fontWeight: '600' },
     iconButton: { width: 40, height: 40, borderRadius: 10, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
     iconButtonActive: { backgroundColor: '#6366f1' },
     filterBadge: { position: 'absolute', top: -4, right: -4, backgroundColor: '#ef4444', width: 18, height: 18, borderRadius: 9, justifyContent: 'center', alignItems: 'center' },
@@ -546,6 +643,7 @@ const styles = StyleSheet.create({
     cpwBadgeText: { color: '#fff', fontSize: 10, fontWeight: '600' },
     neglectedOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.08)', zIndex: 1 },
     neglectedBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: '#f59e0b', width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+    listedBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: '#22c55e', width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center', zIndex: 2 },
     specialFilterRow: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 10, gap: 8 },
     neglectedChip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#f59e0b' },
     neglectedChipActive: { backgroundColor: '#f59e0b', borderColor: '#f59e0b' },
@@ -576,4 +674,8 @@ const styles = StyleSheet.create({
     sortOption: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
     sortOptionText: { fontSize: 15, color: '#4b5563' },
     sortOptionTextActive: { color: '#6366f1', fontWeight: '500' },
+    // Extraction banner (Story 10.6)
+    extractionBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 12, padding: 12, borderRadius: 10, backgroundColor: '#eef2ff', borderWidth: 1, borderColor: '#c7d2fe' },
+    extractionBannerDone: { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' },
+    extractionBannerText: { flex: 1, fontSize: 13, fontWeight: '500', color: '#6366f1' },
 });

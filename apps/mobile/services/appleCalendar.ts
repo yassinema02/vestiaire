@@ -205,6 +205,55 @@ export const appleCalendarService = {
     },
 
     /**
+     * Fetch events in a date range from selected calendars
+     */
+    fetchEventsInRange: async (
+        startDate: Date,
+        endDate: Date,
+        calendarIds?: string[]
+    ): Promise<{ events: CalendarEvent[]; error: Error | null }> => {
+        try {
+            const selectedIds = calendarIds || await appleCalendarService.getSelectedCalendarIds();
+            if (selectedIds.length === 0) {
+                return { events: [], error: null };
+            }
+
+            const events = await Calendar.getEventsAsync(selectedIds, startDate, endDate);
+
+            const calendarEvents: CalendarEvent[] = events.map(event => {
+                const title = event.title || 'Untitled Event';
+                const isAllDay = event.allDay || false;
+
+                return {
+                    id: event.id,
+                    title,
+                    startTime: isAllDay
+                        ? new Date(event.startDate).toISOString()
+                        : new Date(event.startDate).toISOString(),
+                    endTime: isAllDay
+                        ? new Date(event.endDate).toISOString()
+                        : new Date(event.endDate).toISOString(),
+                    location: event.location || null,
+                    isAllDay,
+                    occasion: detectOccasion(title, event.location || undefined),
+                    source: 'apple' as const,
+                };
+            });
+
+            calendarEvents.sort((a, b) => {
+                if (a.isAllDay && !b.isAllDay) return -1;
+                if (!a.isAllDay && b.isAllDay) return 1;
+                return a.startTime.localeCompare(b.startTime);
+            });
+
+            return { events: calendarEvents, error: null };
+        } catch (error) {
+            console.error('Error fetching Apple Calendar events in range:', error);
+            return { events: [], error: error as Error };
+        }
+    },
+
+    /**
      * Disconnect Apple Calendar (clear selected calendars)
      */
     disconnect: async (): Promise<void> => {

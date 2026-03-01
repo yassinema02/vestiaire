@@ -5,7 +5,7 @@
 
 import { WardrobeItem } from '../services/items';
 
-export const NEGLECTED_THRESHOLD_DAYS = 60;
+export const NEGLECTED_THRESHOLD_DAYS = 180;
 
 /**
  * Check if an item is neglected (not worn in threshold days)
@@ -66,4 +66,12 @@ export function countNeglected(items: WardrobeItem[], thresholdDays: number = NE
  */
 export function getNeglectedItems(items: WardrobeItem[], thresholdDays: number = NEGLECTED_THRESHOLD_DAYS): WardrobeItem[] {
     return items.filter(item => isNeglected(item, thresholdDays));
+}
+
+/**
+ * Check neglect status directly from the DB column (Story 13.1)
+ * Use this when neglect_status has been computed server-side.
+ */
+export function isNeglectedFromDb(item: WardrobeItem): boolean {
+    return !!item.neglect_status;
 }

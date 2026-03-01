@@ -582,8 +582,32 @@ async function checkBadgeCondition(
                 return (items || []).some((i: any) => (i.wear_count ?? 0) >= 10);
             }
             case 'circular_seller': {
-                // Resale feature not yet implemented — skip
-                return false;
+                // Story 13.3: Check if user has sold any items via resale listings
+                const { data: soldListings } = await supabase
+                    .from('resale_listings')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .eq('status', 'sold')
+                    .limit(1);
+                return (soldListings || []).length > 0;
+            }
+            case 'circular_champion': {
+                // Story 13.5: Check if user has sold 10+ items
+                const { data: championListings } = await supabase
+                    .from('resale_listings')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .eq('status', 'sold');
+                return (championListings || []).length >= 10;
+            }
+            case 'generous_giver': {
+                // Story 13.6: Check if user has donated 20+ items
+                const { data: donatedItems } = await supabase
+                    .from('items')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .eq('resale_status', 'donated');
+                return (donatedItems || []).length >= 20;
             }
 
             // Secret badges

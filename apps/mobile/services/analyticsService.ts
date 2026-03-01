@@ -46,11 +46,50 @@ export interface WardrobeStats {
 
 export interface SustainabilityScore {
     score: number;
-    utilization: number;
-    wearDepth: number;
-    valueEfficiency: number;
+    // 5-factor breakdown
+    wearDepth: number;          // 30% — avg wear count vs target 30
+    utilization: number;        // 25% — % wardrobe worn in 90 days
+    valueEfficiency: number;    // 20% — CPW target vs actual
+    resaleActivity: number;     // 15% — items with resale status
+    purchaseRestraint: number;  // 10% — fewer new items in last 90 days
+    // Environmental
+    co2Saved: number;           // kg CO2 saved estimate
+    // Meta
     tier: string;
     tip: string;
+    badgeUnlocked: boolean;
+    badgeName?: string;
+}
+
+// Story 13.4: Wardrobe Health Score
+export interface HealthScore {
+    score: number;
+    tier: 'excellent' | 'good' | 'poor';
+    color: string;
+    utilizationFactor: number;
+    cpwFactor: number;
+    sizeRatioFactor: number;
+    recommendation: string;
+    comparisonLabel: string;
+    declutterCount: number;
+}
+
+// Story 11.1: Brand Value Analytics
+export interface BrandStats {
+    brand: string;
+    itemCount: number;
+    totalSpent: number;
+    totalWears: number;
+    avgCPW: number;
+    bestItem?: string;
+    bestItemCPW?: number;
+}
+
+export interface BrandAnalytics {
+    brands: BrandStats[];
+    topBrand: BrandStats | null;
+    insight: string;
+    categoryFilter: string | null;
 }
 
 export const analyticsService = {
@@ -153,6 +192,117 @@ export const analyticsService = {
         } catch (error) {
             console.error('Get wardrobe stats exception:', error);
             return { stats: emptyStats(), error: error as Error };
+        }
+    },
+
+    /**
+     * Story 11.1: Get brand value analytics.
+     * Groups items by brand, calculates CPW, filters brands with 3+ items.
+     */
+    getBrandAnalytics: async (categoryFilter?: string): Promise<{ analytics: BrandAnalytics; error: Error | null }> => {
+        try {
+            const userId = await requireUserId();
+
+            // 1. Fetch items with brand set
+            let query = supabase
+                .from('items')
+                .select('*')
+                .eq('user_id', userId)
+                .not('brand', 'is', null);
+            if (categoryFilter) {
+                query = query.eq('category', categoryFilter);
+            }
+            const { data: items, error: itemsError } = await query;
+
+            if (itemsError) {
+                return { analytics: emptyBrandAnalytics(categoryFilter), error: itemsError };
+            }
+
+            const allItems = (items || []) as WardrobeItem[];
+            if (allItems.length === 0) {
+                return {
+                    analytics: {
+                        ...emptyBrandAnalytics(categoryFilter),
+                        insight: 'Add brands and prices to your items to see value insights',
+                    },
+                    error: null,
+                };
+            }
+
+            // 2. Count wears per item via wear_logs
+            const itemIds = allItems.map(i => i.id);
+            const { data: wearLogs } = await supabase
+                .from('wear_logs')
+                .select('item_id')
+                .in('item_id', itemIds);
+
+            const wearCounts: Record<string, number> = {};
+            (wearLogs || []).forEach((log: any) => {
+                wearCounts[log.item_id] = (wearCounts[log.item_id] || 0) + 1;
+            });
+
+            // 3. Group by brand
+            const brandMap: Record<string, {
+                brand: string;
+                itemCount: number;
+                totalSpent: number;
+                totalWears: number;
+                bestItem?: string;
+                bestItemCPW?: number;
+            }> = {};
+
+            for (const item of allItems) {
+                const brand = item.brand!;
+                if (!brandMap[brand]) {
+                    brandMap[brand] = { brand, itemCount: 0, totalSpent: 0, totalWears: 0 };
+                }
+                const entry = brandMap[brand];
+                entry.itemCount++;
+                if (item.purchase_price) {
+                    entry.totalSpent += item.purchase_price;
+                }
+                const itemWears = wearCounts[item.id] || 0;
+                entry.totalWears += itemWears;
+
+                // Track best CPW item (only for items with price)
+                if (item.purchase_price && item.purchase_price > 0) {
+                    const itemCPW = item.purchase_price / Math.max(itemWears, 1);
+                    if (entry.bestItemCPW === undefined || itemCPW < entry.bestItemCPW) {
+                        entry.bestItem = item.name || item.sub_category || item.category || brand;
+                        entry.bestItemCPW = itemCPW;
+                    }
+                }
+            }
+
+            // 4. Calculate avgCPW, filter 3+ items, sort by best value
+            const brands: BrandStats[] = Object.values(brandMap)
+                .filter(b => b.itemCount >= 3)
+                .map(b => ({
+                    ...b,
+                    avgCPW: b.totalWears > 0 ? b.totalSpent / b.totalWears : Infinity,
+                }))
+                .sort((a, b) => {
+                    if (a.avgCPW === Infinity && b.avgCPW === Infinity) return 0;
+                    if (a.avgCPW === Infinity) return 1;
+                    if (b.avgCPW === Infinity) return -1;
+                    return a.avgCPW - b.avgCPW;
+                });
+
+            const topBrand = brands[0] || null;
+            const insight = generateBrandInsight(brands);
+
+            return {
+                analytics: {
+                    brands,
+                    topBrand,
+                    insight,
+                    categoryFilter: categoryFilter || null,
+                },
+                error: null,
+            };
+        } catch (error) {
+            console.error('Get brand analytics exception:', error);
+            return { analytics: emptyBrandAnalytics(categoryFilter), error: error as Error };
         }
     },
 
@@ -272,6 +422,29 @@ function capitalize(s: string): string {
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+export function generateBrandInsight(brands: BrandStats[]): string {
+    if (brands.length === 0) {
+        return 'Add brands and prices to your items to see value insights';
+    }
+    const top = brands[0];
+    if (top.avgCPW === Infinity || top.totalWears === 0) {
+        return `Add purchase prices and brand names to unlock brand insights`;
+    }
+    if (top.bestItem && top.bestItemCPW !== undefined && top.bestItemCPW !== top.avgCPW) {
+        return `Your ${top.brand} ${top.bestItem} is your best value at £${top.bestItemCPW.toFixed(2)}/wear`;
+    }
+    return `Your ${top.brand} items cost £${top.avgCPW.toFixed(2)}/wear — great value!`;
+}
+
+function emptyBrandAnalytics(categoryFilter?: string): BrandAnalytics {
+    return {
+        brands: [],
+        topBrand: null,
+        insight: 'Add brands and prices to your items to see value insights',
+        categoryFilter: categoryFilter || null,
+    };
+}
+
 function emptyStats(): WardrobeStats {
     return {
         totalItems: 0,
@@ -285,33 +458,56 @@ function emptyStats(): WardrobeStats {
 }
 
 function emptySustainability(): SustainabilityScore {
-    return { score: 0, utilization: 0, wearDepth: 0, valueEfficiency: 0, tier: 'Improving', tip: '' };
+    return {
+        score: 0,
+        utilization: 0,
+        wearDepth: 0,
+        valueEfficiency: 0,
+        resaleActivity: 0,
+        purchaseRestraint: 0,
+        co2Saved: 0,
+        tier: 'Getting started — every wear counts!',
+        tip: '',
+        badgeUnlocked: false,
+    };
 }
 
 /**
  * Calculate sustainability score (0-100).
- * Weighted: Utilization 40%, Wear Depth 30%, Value Efficiency 30%.
+ * Story 11.2: 5-Factor Model
+ * Weighted: Wear Depth 30%, Utilization 25%, Value Efficiency 20%, Resale Activity 15%, Purchase Restraint 10%
  */
 async function calculateSustainabilityScore(userId: string): Promise<SustainabilityScore> {
-    // Fetch all complete items for this user
+    // Fetch all complete items (include resale_status and created_at for new factors)
     const { data: items } = await supabase
         .from('items')
-        .select('id, wear_count, purchase_price')
+        .select('id, wear_count, purchase_price, created_at')
         .eq('user_id', userId)
         .eq('status', 'complete');
 
-    const allItems = (items || []) as { id: string; wear_count: number; purchase_price: number | null }[];
+    const allItems = (items || []) as {
+        id: string;
+        wear_count: number;
+        purchase_price: number | null;
+        created_at: string;
+        resale_status?: string | null;
+    }[];
     const totalItems = allItems.length;
 
     if (totalItems === 0) {
         return emptySustainability();
     }
 
-    // 1. Utilization (40%): % of items worn in last 90 days
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
     const sinceDate = ninetyDaysAgo.toISOString().split('T')[0];
 
+    // Factor 1: Wear Depth (30%) — avg wear count vs target 30
+    const TARGET_WEAR = 30;
+    const avgWearCount = allItems.reduce((sum, i) => sum + (i.wear_count || 0), 0) / totalItems;
+    const wearDepth = Math.min((avgWearCount / TARGET_WEAR) * 100, 100);
+
+    // Factor 2: Utilization (25%) — % of items worn in last 90 days
     const { data: recentLogs } = await supabase
         .from('wear_logs')
         .select('item_id')
@@ -320,72 +516,202 @@ async function calculateSustainabilityScore(userId: string): Promise<Sustainabil
 
     const activeItemIds = new Set((recentLogs || []).map((l: any) => l.item_id));
     const activeCount = allItems.filter(i => activeItemIds.has(i.id)).length;
-    const utilizationRaw = (activeCount / totalItems) * 100;
-    const utilization = Math.min(utilizationRaw, 100);
+    const utilization = Math.min((activeCount / totalItems) * 100, 100);
 
-    // 2. Wear Depth (30%): avg wear count vs target of 30
-    const TARGET_WEAR = 30;
-    const avgWearCount = allItems.reduce((sum, i) => sum + (i.wear_count || 0), 0) / totalItems;
-    const wearDepthRaw = (avgWearCount / TARGET_WEAR) * 100;
-    const wearDepth = Math.min(wearDepthRaw, 100);
-
-    // 3. Value Efficiency (30%): target CPW £1 vs actual avg CPW
+    // Factor 3: Value Efficiency (20%) — target CPW £1 vs actual avg CPW
     const TARGET_CPW = 1;
     const itemsWithCPW = allItems.filter(i => i.purchase_price && i.wear_count > 0);
-    let valueEfficiency = 100; // default if no priced items
+    let valueEfficiency = 100;
     if (itemsWithCPW.length > 0) {
         const avgCPW = itemsWithCPW.reduce(
             (sum, i) => sum + (i.purchase_price! / i.wear_count),
             0
         ) / itemsWithCPW.length;
-        const valueRaw = (TARGET_CPW / Math.max(avgCPW, 0.01)) * 100;
-        valueEfficiency = Math.min(valueRaw, 100);
+        valueEfficiency = Math.min((TARGET_CPW / Math.max(avgCPW, 0.01)) * 100, 100);
     }
 
+    // Factor 4: Resale Activity (15%) — items with resale_status = 'listed' or 'sold'
+    // Fetch resale_status separately (field may not exist on older items)
+    const { data: resaleItems } = await supabase
+        .from('items')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'complete')
+        .in('resale_status', ['listed', 'sold']);
+    const resaleCount = (resaleItems || []).length;
+    const resaleActivity = Math.min((resaleCount / totalItems) * 100, 100);
+
+    // Factor 5: Purchase Restraint (10%) — fewer new items in 90 days
+    // 0 new = 100%, 1 = 80%, 2 = 60%, 3 = 40%, 4 = 20%, 5+ = 0%
+    const newItemCount = allItems.filter(i => i.created_at && i.created_at >= sinceDate).length;
+    const purchaseRestraint = Math.max(0, Math.min(100, (1 - newItemCount / 5) * 100));
+
     // Weighted score
-    const score = Math.round(
-        utilization * 0.4 + wearDepth * 0.3 + valueEfficiency * 0.3
+    const rawScore = Math.round(
+        wearDepth * 0.30 +
+        utilization * 0.25 +
+        valueEfficiency * 0.20 +
+        resaleActivity * 0.15 +
+        purchaseRestraint * 0.10
     );
-    const clampedScore = Math.max(0, Math.min(score, 100));
+    const clampedScore = Math.max(0, Math.min(rawScore, 100));
+
+    // CO2 savings: each extra wear avoids buying new (~0.5 kg CO2 saved per rewear)
+    const totalWears = allItems.reduce((sum, i) => sum + (i.wear_count || 0), 0);
+    const co2Saved = Math.round(Math.max(0, totalWears - totalItems) * 0.5);
 
     return buildSustainabilityResult(clampedScore, {
-        utilization: Math.round(utilization),
         wearDepth: Math.round(wearDepth),
+        utilization: Math.round(utilization),
         valueEfficiency: Math.round(valueEfficiency),
+        resaleActivity: Math.round(resaleActivity),
+        purchaseRestraint: Math.round(purchaseRestraint),
+        co2Saved,
     });
+}
+
+interface FullBreakdown {
+    wearDepth: number;
+    utilization: number;
+    valueEfficiency: number;
+    resaleActivity: number;
+    purchaseRestraint: number;
+    co2Saved: number;
 }
 
 function buildSustainabilityResult(
     score: number,
-    breakdown: { utilization: number; wearDepth: number; valueEfficiency: number } | null
+    breakdown: FullBreakdown | null
 ): SustainabilityScore {
-    // Tier
+    // Tier (Story 11.2: refined thresholds)
     let tier: string;
-    if (score > 80) tier = 'Top 10% of Vestiaire users!';
+    if (score > 85) tier = 'Top 5% of Vestiaire users! 🏆';
+    else if (score > 75) tier = 'Top 15% of Vestiaire users! 🌟';
     else if (score > 60) tier = 'Top 25% of Vestiaire users!';
-    else if (score > 40) tier = 'Top 50% of Vestiaire users!';
-    else tier = 'Improving — keep going!';
+    else if (score > 40) tier = 'Top 50% — keep going!';
+    else tier = 'Getting started — every wear counts!';
 
-    // Tip
+    // Tip: based on weakest factor
     let tip = '';
     if (breakdown) {
-        if (breakdown.utilization < 50) {
-            tip = 'Wear your neglected items to boost utilization!';
-        } else if (breakdown.valueEfficiency < 50) {
-            tip = 'Wear your expensive items more to improve cost per wear!';
-        } else if (breakdown.wearDepth < 50) {
-            tip = 'Keep rewearing favorites to deepen your wardrobe usage!';
+        const factors = [
+            { name: 'utilization', value: breakdown.utilization, msg: 'Try wearing items you haven\'t touched in 90 days' },
+            { name: 'wearDepth', value: breakdown.wearDepth, msg: 'Keep rewearing your favorites to deepen wardrobe usage' },
+            { name: 'valueEfficiency', value: breakdown.valueEfficiency, msg: 'Wear your expensive items more to improve cost per wear' },
+            { name: 'resaleActivity', value: breakdown.resaleActivity, msg: 'List neglected items for resale to boost your score' },
+            { name: 'purchaseRestraint', value: breakdown.purchaseRestraint, msg: 'Challenge yourself to a 30-day no-buy period' },
+        ];
+        const weakest = factors.reduce((a, b) => a.value < b.value ? a : b);
+        if (score >= 80) {
+            tip = 'Amazing! You\'re a sustainable fashion champion! 🌱';
         } else {
-            tip = 'Great job! Keep up your sustainable fashion habits!';
+            tip = weakest.msg;
         }
+    }
+
+    // Badge
+    const badgeUnlocked = score >= 80;
+
+    return {
+        score,
+        wearDepth: breakdown?.wearDepth ?? 0,
+        utilization: breakdown?.utilization ?? 0,
+        valueEfficiency: breakdown?.valueEfficiency ?? 0,
+        resaleActivity: breakdown?.resaleActivity ?? 0,
+        purchaseRestraint: breakdown?.purchaseRestraint ?? 0,
+        co2Saved: breakdown?.co2Saved ?? 0,
+        tier,
+        tip,
+        badgeUnlocked,
+        badgeName: badgeUnlocked ? 'Eco Warrior 🌱' : undefined,
+    };
+}
+
+// ─── Story 13.4: Wardrobe Health Score ────────────────────────────
+
+function getHealthTier(score: number): { tier: 'excellent' | 'good' | 'poor'; color: string } {
+    if (score >= 80) return { tier: 'excellent', color: '#22c55e' };
+    if (score >= 50) return { tier: 'good', color: '#f59e0b' };
+    return { tier: 'poor', color: '#ef4444' };
+}
+
+function getComparisonLabel(score: number): string {
+    if (score >= 90) return 'Healthier than ~95% of users';
+    if (score >= 80) return 'Healthier than ~80% of users';
+    if (score >= 70) return 'Healthier than ~60% of users';
+    if (score >= 50) return 'Healthier than ~35% of users';
+    return 'Room for improvement';
+}
+
+export function calculateHealthScore(items: WardrobeItem[]): HealthScore {
+    const completeItems = items.filter(i => i.status === 'complete');
+    const totalComplete = completeItems.length;
+
+    if (totalComplete === 0) {
+        return {
+            score: 0, tier: 'poor', color: '#ef4444',
+            utilizationFactor: 0, cpwFactor: 50, sizeRatioFactor: 0,
+            recommendation: 'Add items to your wardrobe to get started',
+            comparisonLabel: 'Room for improvement',
+            declutterCount: 0,
+        };
+    }
+
+    // Factor 1: Utilization (50%) — % items worn in last 90 days
+    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+    const activeCount = completeItems.filter(i => {
+        if (!i.last_worn_at) return false;
+        return new Date(i.last_worn_at).getTime() >= ninetyDaysAgo;
+    }).length;
+    const utilizationFactor = Math.min((activeCount / totalComplete) * 100, 100);
+
+    // Factor 2: Cost Efficiency (30%) — % items with CPW < £5
+    const itemsWithPrice = completeItems.filter(i => i.purchase_price && i.purchase_price > 0 && i.wear_count > 0);
+    let cpwFactor: number;
+    if (itemsWithPrice.length === 0) {
+        cpwFactor = 50; // neutral if no items have price data
+    } else {
+        const goodCPWCount = itemsWithPrice.filter(i => (i.purchase_price! / i.wear_count) < 5).length;
+        cpwFactor = Math.min((goodCPWCount / itemsWithPrice.length) * 100, 100);
+    }
+
+    // Factor 3: Size Ratio (20%) — inverse of neglect percentage
+    const neglectedCount = completeItems.filter(i => i.neglect_status).length;
+    const neglectPercentage = (neglectedCount / totalComplete) * 100;
+    const sizeRatioFactor = Math.max(100 - neglectPercentage, 0);
+
+    // Weighted score
+    const rawScore = (utilizationFactor * 0.5) + (cpwFactor * 0.3) + (sizeRatioFactor * 0.2);
+    const score = Math.round(Math.min(Math.max(rawScore, 0), 100));
+
+    const { tier, color } = getHealthTier(score);
+
+    // Recommendation
+    const utilizationPct = (activeCount / totalComplete) * 100;
+    let recommendation: string;
+    let declutterCount: number;
+    if (utilizationPct < 70) {
+        declutterCount = neglectedCount;
+        recommendation = declutterCount > 0
+            ? `Declutter ${declutterCount} item${declutterCount !== 1 ? 's' : ''} to improve health`
+            : 'Wear more of your existing items to boost your score';
+    } else if (utilizationPct < 85) {
+        declutterCount = Math.max(1, Math.round(neglectedCount * 0.3));
+        recommendation = `Consider letting go of ${declutterCount} item${declutterCount !== 1 ? 's' : ''}`;
+    } else {
+        declutterCount = 0;
+        recommendation = 'Your wardrobe is well-utilized — keep it up!';
     }
 
     return {
         score,
-        utilization: breakdown?.utilization ?? 0,
-        wearDepth: breakdown?.wearDepth ?? 0,
-        valueEfficiency: breakdown?.valueEfficiency ?? 0,
         tier,
-        tip,
+        color,
+        utilizationFactor: Math.round(utilizationFactor),
+        cpwFactor: Math.round(cpwFactor),
+        sizeRatioFactor: Math.round(sizeRatioFactor),
+        recommendation,
+        comparisonLabel: getComparisonLabel(score),
+        declutterCount,
     };
 }

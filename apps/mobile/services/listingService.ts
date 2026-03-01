@@ -7,15 +7,23 @@
  */
 
 import Constants from 'expo-constants';
-import { GoogleGenAI } from '@google/genai';
 import { WardrobeItem } from './items';
 import { supabase } from './supabase';
 import { requireUserId } from './auth-helpers';
+import { buildListingPrompt as buildListingPromptTemplate, LISTING_TONE_INSTRUCTIONS } from '../constants/prompts';
+import { trackedGenerateContent } from './aiUsageLogger';
 
 const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 
 export type ListingTone = 'casual' | 'detailed' | 'minimal';
 export type ListingStatus = 'listed' | 'sold' | 'cancelled';
+
+export interface EarningsMonth {
+    month: string;
+    year: number;
+    earnings: number;
+    count: number;
+}
 
 export interface ListingData {
     title: string;
@@ -45,11 +53,15 @@ const isConfigured = (): boolean => {
     return !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
 };
 
-const TONE_INSTRUCTIONS: Record<ListingTone, string> = {
-    casual: 'Write in a friendly, conversational tone. Use short sentences. Keep it approachable and relatable.',
-    detailed: 'Write a thorough description with precise details about material, fit, and condition. Be professional but warm.',
-    minimal: 'Write a very concise, no-fluff listing. Bullet-point style is fine. Just the essentials.',
-};
+function formatRelativeTime(dateStr: string): string {
+    const date = new Date(dateStr);
+    const days = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (days < 30) return `${days} days ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months} month${months !== 1 ? 's' : ''} ago`;
+    const years = Math.floor(months / 12);
+    return `${years} year${years !== 1 ? 's' : ''} ago`;
+}
 
 function buildListingPrompt(item: WardrobeItem, tone: ListingTone): string {
     const features: string[] = [];
@@ -57,33 +69,24 @@ function buildListingPrompt(item: WardrobeItem, tone: ListingTone): string {
     if (item.seasons?.length) features.push(`Seasons: ${item.seasons.join(', ')}`);
     if (item.occasions?.length) features.push(`Occasions: ${item.occasions.join(', ')}`);
 
-    return `You are an expert reseller on Vinted with thousands of successful sales. Generate a listing for this clothing item.
+    // Calculate CPW if possible
+    const cpw = item.purchase_price && item.wear_count > 0
+        ? item.purchase_price / item.wear_count
+        : undefined;
 
-ITEM DETAILS:
-- Name: ${item.name || 'Not specified'}
-- Brand: ${item.brand || 'Not specified'}
-- Category: ${item.category || 'Not specified'}${item.sub_category ? ` / ${item.sub_category}` : ''}
-${features.length > 0 ? `- Features: ${features.join('; ')}` : ''}
-${item.purchase_price ? `- Original price: $${item.purchase_price.toFixed(0)}` : ''}
-- Times worn: ${item.wear_count || 0}
-
-TONE: ${TONE_INSTRUCTIONS[tone]}
-
-REQUIREMENTS:
-- Title: catchy, includes brand name if known, max 50 characters
-- Description: optimized for Vinted search/SEO, include relevant keywords
-- Suggest a realistic price range based on the brand, category, and wear count
-- Include 5-8 relevant hashtags for Vinted discovery
-- If wear count is 0, mention "never worn" or "new without tags"
-- If wear count is low (<5), mention "barely worn" or "like new"
-
-Respond ONLY with valid JSON in this exact format:
-{
-  "title": "Listing title here",
-  "description": "Full listing description here",
-  "suggested_price_range": "$X - $Y",
-  "hashtags": ["#tag1", "#tag2"]
-}`;
+    return buildListingPromptTemplate({
+        name: item.name || 'Not specified',
+        brand: item.brand || 'Not specified',
+        category: item.category || 'Not specified',
+        subCategory: item.sub_category || undefined,
+        features,
+        purchasePrice: item.purchase_price || undefined,
+        wearCount: item.wear_count || 0,
+        toneInstruction: LISTING_TONE_INSTRUCTIONS[tone] || LISTING_TONE_INSTRUCTIONS.casual,
+        lastWornAt: item.last_worn_at ? formatRelativeTime(item.last_worn_at) : undefined,
+        purchaseDate: item.purchase_date ? formatRelativeTime(item.purchase_date) : undefined,
+        cpw,
+    });
 }
 
 function generateFallbackListing(item: WardrobeItem, tone: ListingTone): ListingData {
@@ -98,24 +101,29 @@ function generateFallbackListing(item: WardrobeItem, tone: ListingTone): Listing
 
     const title = `${brand} ${name}`.slice(0, 50);
 
+    const sustainabilityNote = item.wear_count === 0
+        ? 'Brand new — give it a loving home!'
+        : 'Give this piece a second life.';
+
     let description: string;
     if (tone === 'minimal') {
         const lines = [`${brand} ${category}`, condition];
         if (item.colors?.length) lines.push(`Color: ${item.colors.join(', ')}`);
-        if (item.purchase_price) lines.push(`Original price: $${item.purchase_price.toFixed(0)}`);
+        if (item.purchase_price) lines.push(`Original price: £${item.purchase_price.toFixed(0)}`);
+        lines.push(sustainabilityNote);
         description = lines.join('\n');
     } else if (tone === 'detailed') {
         description = `Selling my ${brand} ${name.toLowerCase()}. ${condition}.\n\n`;
         if (item.colors?.length) description += `Color: ${item.colors.join(', ')}.\n`;
         if (item.seasons?.length) description += `Perfect for: ${item.seasons.join(', ')}.\n`;
         if (item.occasions?.length) description += `Great for: ${item.occasions.join(', ')}.\n`;
-        if (item.purchase_price) description += `\nOriginally purchased for $${item.purchase_price.toFixed(0)}.`;
-        description += '\n\nFeel free to ask any questions!';
+        if (item.purchase_price) description += `\nOriginally purchased for £${item.purchase_price.toFixed(0)}.`;
+        description += `\n\n${sustainabilityNote}\n\nFeel free to ask any questions!`;
     } else {
         description = `${brand} ${name.toLowerCase()} for sale! ${condition}. `;
         if (item.colors?.length) description += `${item.colors[0]} color. `;
-        if (item.purchase_price) description += `Was $${item.purchase_price.toFixed(0)} new. `;
-        description += 'Message me with any questions!';
+        if (item.purchase_price) description += `Was £${item.purchase_price.toFixed(0)} new. `;
+        description += `${sustainabilityNote} Message me with any questions!`;
     }
 
     const hashtags = ['#vinted', `#${brand.toLowerCase().replace(/\s+/g, '')}`, `#${(category).toLowerCase().replace(/\s+/g, '')}`];
@@ -150,12 +158,10 @@ export const listingService = {
         try {
             const prompt = buildListingPrompt(item, tone);
 
-            const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-            const result = await ai.models.generateContent({
+            const result = await trackedGenerateContent({
                 model: 'gemini-2.0-flash',
                 contents: prompt,
-            });
+            }, 'listing_gen');
 
             const text = result.text;
             if (!text) {
@@ -218,6 +224,19 @@ export const listingService = {
                 .single();
 
             if (error) return { listing: null, error: error.message };
+
+            // Mark item as listed for resale (Story 13.3)
+            await supabase
+                .from('items')
+                .update({ resale_status: 'listed' })
+                .eq('id', item.id);
+
+            // Award points for listing creation (Story 13.3)
+            try {
+                const { gamificationService } = await import('./gamificationService');
+                await gamificationService.addPoints(10, 'list_for_resale');
+            } catch { /* non-fatal */ }
+
             return { listing: data as ResaleListing, error: null };
         } catch (err) {
             console.error('Save listing to history error:', err);
@@ -269,6 +288,14 @@ export const listingService = {
                 if (soldPrice !== undefined) updates.sold_price = soldPrice;
             }
 
+            // Fetch item_id before updating (needed for resale_status sync)
+            const { data: listingRow } = await supabase
+                .from('resale_listings')
+                .select('item_id')
+                .eq('id', listingId)
+                .eq('user_id', userId)
+                .single();
+
             const { error } = await supabase
                 .from('resale_listings')
                 .update(updates)
@@ -276,6 +303,15 @@ export const listingService = {
                 .eq('user_id', userId);
 
             if (error) return { error: error.message };
+
+            // Sync items.resale_status (Story 13.5)
+            if (listingRow?.item_id) {
+                const newResaleStatus = status === 'sold' ? 'sold' : status === 'cancelled' ? null : 'listed';
+                await supabase
+                    .from('items')
+                    .update({ resale_status: newResaleStatus })
+                    .eq('id', listingRow.item_id);
+            }
 
             // If sold, update user stats
             if (status === 'sold') {
@@ -335,6 +371,49 @@ export const listingService = {
         } catch (err) {
             console.error('Get resale stats error:', err);
             return { totalListed: 0, totalSold: 0, totalRevenue: 0, error: 'Failed to load stats' };
+        }
+    },
+
+    /**
+     * Get monthly earnings timeline for the last 6 months (Story 13.5).
+     */
+    getEarningsTimeline: async (): Promise<{ timeline: EarningsMonth[]; error: string | null }> => {
+        try {
+            const { listings, error } = await listingService.getHistory('sold');
+            if (error) return { timeline: [], error };
+
+            const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const now = new Date();
+
+            // Build last 6 months (including current)
+            const months: EarningsMonth[] = [];
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                months.push({
+                    month: MONTH_NAMES[d.getMonth()],
+                    year: d.getFullYear(),
+                    earnings: 0,
+                    count: 0,
+                });
+            }
+
+            // Group sold listings by month
+            for (const listing of listings) {
+                if (!listing.sold_at) continue;
+                const soldDate = new Date(listing.sold_at);
+                const entry = months.find(
+                    m => m.month === MONTH_NAMES[soldDate.getMonth()] && m.year === soldDate.getFullYear()
+                );
+                if (entry) {
+                    entry.earnings += listing.sold_price || 0;
+                    entry.count += 1;
+                }
+            }
+
+            return { timeline: months, error: null };
+        } catch (err) {
+            console.error('Get earnings timeline error:', err);
+            return { timeline: [], error: 'Failed to load timeline' };
         }
     },
 };

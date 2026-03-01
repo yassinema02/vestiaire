@@ -6,11 +6,13 @@
  */
 
 import Constants from 'expo-constants';
-import { GoogleGenAI } from '@google/genai';
 import { supabase } from './supabase';
 import { requireUserId } from './auth-helpers';
 import { ShoppingScan, ProductAnalysis, AiInsight, ScrapedProduct } from '../types/shopping';
 import { WardrobeItem, itemsService } from './items';
+import { PRODUCT_ANALYSIS_PROMPT } from '../constants/prompts';
+import { trackedGenerateContent } from './aiUsageLogger';
+import { optimizeForAI } from './imageOptimizer';
 
 const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 
@@ -157,11 +159,11 @@ export const shoppingService = {
         }
 
         try {
-            // Fetch image (works for both local URIs and remote URLs)
-            const isRemote = imageUri.startsWith('http');
-            const imageResponse = isRemote
-                ? await fetchWithTimeout(imageUri, SCRAPE_TIMEOUT_MS)
-                : await fetch(imageUri);
+            // Optimize image for AI (512px, 85% JPEG) — handles both local URIs and remote URLs
+            const optimizedUri = await optimizeForAI(imageUri);
+
+            // Fetch optimized image and convert to base64
+            const imageResponse = await fetch(optimizedUri);
             const imageBlob = await imageResponse.blob();
 
             // Detect actual mime type from response or blob
@@ -181,32 +183,9 @@ export const shoppingService = {
                 reader.readAsDataURL(imageBlob);
             });
 
-            const prompt = `You are a fashion product analyst. Analyze this product image and extract detailed information.
+            const prompt = PRODUCT_ANALYSIS_PROMPT;
 
-Return ONLY valid JSON in this exact format, no other text:
-{
-  "product_name": "Short descriptive name of the product",
-  "product_brand": "Brand name if visible, or null",
-  "category": "One of: tops, bottoms, dresses, outerwear, shoes, accessories",
-  "color": "Primary color name (e.g. Black, Navy, Red)",
-  "secondary_colors": ["Array of other colors if multi-colored, empty if solid"],
-  "style": "One of: casual, formal, smart-casual, sporty, bohemian, streetwear, classic, minimalist",
-  "material": "Best guess of material (e.g. cotton, denim, leather, polyester, silk, wool) or null",
-  "pattern": "One of: solid, striped, plaid, floral, polka-dot, checkered, geometric, abstract, animal-print, camo, tie-dye",
-  "season": ["Array of suitable seasons: spring, summer, autumn, winter"],
-  "formality": 5,
-  "confidence": 0.9
-}
-
-Rules:
-- "formality" is 1-10 where 1=very casual, 10=black-tie formal
-- "confidence" is 0.0-1.0 for how confident you are in the analysis
-- Focus on the PRODUCT, not the model wearing it or background
-- If the image is not a clothing/fashion item, set confidence to 0`;
-
-            const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-            const result = await ai.models.generateContent({
+            const result = await trackedGenerateContent({
                 model: 'gemini-2.0-flash',
                 contents: [{
                     role: 'user',
@@ -215,7 +194,7 @@ Rules:
                         { inlineData: { mimeType: geminiMime, data: base64 } },
                     ],
                 }],
-            });
+            }, 'shopping_analysis');
 
             const text = result.text;
             if (!text) {

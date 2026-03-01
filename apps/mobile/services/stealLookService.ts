@@ -5,10 +5,11 @@
  */
 
 import Constants from 'expo-constants';
-import { GoogleGenAI } from '@google/genai';
 import { OotdPostWithAuthor, StealMatchResult, StealLookResult } from '../types/social';
 import { ootdService } from './ootdService';
 import { itemsService, WardrobeItem } from './items';
+import { buildStealLookPrompt } from '../constants/prompts';
+import { trackedGenerateContent } from './aiUsageLogger';
 
 const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 
@@ -117,8 +118,6 @@ async function matchWithAI(
     targets: TaggedItemInfo[],
     userItems: WardrobeItem[]
 ): Promise<StealMatchResult[]> {
-    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
     // Build wardrobe summary grouped by category for token efficiency
     const wardrobeSummary = userItems.map((i) => ({
         id: i.id,
@@ -136,37 +135,15 @@ async function matchWithAI(
         colors: t.colors,
     }));
 
-    const prompt = `You are a fashion matching assistant. Given TARGET items from a friend's outfit, find the BEST match for each from the user's wardrobe.
+    const prompt = buildStealLookPrompt(
+        JSON.stringify(targetsSummary, null, 2),
+        JSON.stringify(wardrobeSummary, null, 2)
+    );
 
-TARGET ITEMS (friend's outfit):
-${JSON.stringify(targetsSummary, null, 2)}
-
-USER'S WARDROBE:
-${JSON.stringify(wardrobeSummary, null, 2)}
-
-For EACH target item, find the best match. Rules:
-- "exact": same category AND very similar color/style (confidence 85-100)
-- "similar": same category but different color/style (confidence 40-80)
-- "missing": no items in that category at all (confidence 0)
-- If multiple items match, pick the BEST one
-
-Return ONLY valid JSON:
-{
-  "matches": [
-    {
-      "targetId": "target-item-id",
-      "matchedItemId": "user-item-id or null if missing",
-      "matchType": "exact | similar | missing",
-      "confidence": 0-100,
-      "reason": "human-readable explanation"
-    }
-  ]
-}`;
-
-    const result = await ai.models.generateContent({
+    const result = await trackedGenerateContent({
         model: 'gemini-2.0-flash',
         contents: prompt,
-    });
+    }, 'steal_look');
 
     const text = result.text;
     if (!text) throw new Error('No response from Gemini');

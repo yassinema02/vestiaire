@@ -27,6 +27,15 @@ export interface WardrobeItem {
     status: 'pending' | 'processing' | 'complete';
     created_at: string;
     updated_at: string;
+    // Extraction metadata (Story 10.5)
+    creation_method?: string;
+    extraction_source?: string;
+    extraction_job_id?: string;
+    ai_confidence?: number;
+    // Neglect detection (Story 13.1)
+    neglect_status?: boolean;
+    // Resale status (Story 13.3)
+    resale_status?: 'listed' | 'sold' | 'donated' | null;
 }
 
 export interface CreateItemInput {
@@ -41,6 +50,11 @@ export interface CreateItemInput {
     occasions?: string[];
     purchase_price?: number;
     purchase_date?: string;
+    // Extraction metadata (Story 10.5)
+    creation_method?: 'manual' | 'ai_extraction' | 'screenshot_import';
+    extraction_source?: string;
+    extraction_job_id?: string;
+    ai_confidence?: number;
 }
 
 export const itemsService = {
@@ -56,9 +70,7 @@ export const itemsService = {
                 return { item: null, error: new Error('User not authenticated') };
             }
 
-            const { data, error } = await supabase
-                .from('items')
-                .insert({
+            const insertData: Record<string, any> = {
                     user_id: userData.user.id,
                     image_url: input.image_url,
                     original_image_url: input.original_image_url || input.image_url,
@@ -72,7 +84,17 @@ export const itemsService = {
                     purchase_price: input.purchase_price,
                     purchase_date: input.purchase_date,
                     status: 'pending',
-                })
+                };
+
+            // Add extraction metadata if present
+            if (input.creation_method) insertData.creation_method = input.creation_method;
+            if (input.extraction_source) insertData.extraction_source = input.extraction_source;
+            if (input.extraction_job_id) insertData.extraction_job_id = input.extraction_job_id;
+            if (input.ai_confidence != null) insertData.ai_confidence = input.ai_confidence;
+
+            const { data, error } = await supabase
+                .from('items')
+                .insert(insertData)
                 .select()
                 .single();
 

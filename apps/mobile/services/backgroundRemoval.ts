@@ -4,8 +4,10 @@
  */
 
 import Constants from 'expo-constants';
-import { GoogleGenAI } from '@google/genai';
 import { decode } from 'base64-arraybuffer';
+import { BACKGROUND_REMOVAL_PROMPT } from '../constants/prompts';
+import { trackedGenerateContent } from './aiUsageLogger';
+import { optimizeForAI } from './imageOptimizer';
 
 const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 
@@ -57,21 +59,22 @@ export const removeBackground = async (
     try {
         console.log('Starting background removal with Gemini');
 
+        // Optimize image for AI (512px, 85% JPEG)
+        const optimizedUri = await optimizeForAI(imageUrl);
+
         // Fetch image and convert to base64
-        const imageResponse = await fetch(imageUrl);
+        const imageResponse = await fetch(optimizedUri);
         const imageBlob = await imageResponse.blob();
         const imageBase64 = await blobToBase64(imageBlob);
 
-        const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-        const response = await ai.models.generateContent({
+        const response = await trackedGenerateContent({
             model: 'gemini-2.5-flash-image',
             contents: [
                 {
                     role: 'user',
                     parts: [
                         {
-                            text: 'Remove the background from this clothing item photo. Keep only the clothing item itself on a clean pure white background. Preserve all details of the clothing. Do not add any text or watermarks.',
+                            text: BACKGROUND_REMOVAL_PROMPT,
                         },
                         {
                             inlineData: {
@@ -82,7 +85,7 @@ export const removeBackground = async (
                     ],
                 },
             ],
-        });
+        }, 'bg_removal');
 
         // Extract image data from response
         const parts = response.candidates?.[0]?.content?.parts;
