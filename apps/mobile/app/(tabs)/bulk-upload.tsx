@@ -1,29 +1,20 @@
 /**
  * Bulk Upload Screen
- * Multi-phase: selection → upload → detection → bg removal → complete
+ * Multi-phase: selection → upload → detection → photo gen → complete
  * Story 10.1: Bulk Photo Upload
  * Story 10.2: Multi-Item Detection
- * Story 10.3: Background Removal for Extracted Items
+ * Story 10.3: Product Photo Generation for Extracted Items
  * Story 10.6: Extraction Progress & Feedback
  */
 
 import { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  FlatList,
-  Platform,
-  Animated,
-  ScrollView,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, FlatList, Platform, Animated, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useExtractionStore } from '../../stores/extractionStore';
 import { bulkUploadService } from '../../services/bulkUploadService';
-import { batchBgRemovalService } from '../../services/batchBgRemovalService';
+import { batchProductPhotoService } from '../../services/batchProductPhotoService';
+import { Text } from '../../components/ui/Typography';
 import {
   getStatusMessage,
   getDetailMessage,
@@ -40,8 +31,8 @@ export default function BulkUploadScreen() {
     isUploading,
     isProcessing,
     processingProgress,
-    isBgRemoving,
-    bgRemovalProgress,
+    isGeneratingPhotos,
+    photoGenProgress,
     currentJob,
     detectedItems,
     processedItems,
@@ -73,17 +64,17 @@ export default function BulkUploadScreen() {
 
   // Determine current phase
   const phase = (() => {
-    if (processedItems && !isBgRemoving) return 'complete';
-    if (isBgRemoving) return 'bgRemoval';
+    if (processedItems && !isGeneratingPhotos) return 'complete';
+    if (isGeneratingPhotos) return 'photoGen';
     if (currentJob?.status === 'failed') return 'complete';
     if (isProcessing || currentJob?.status === 'processing') return 'processing';
     if (currentJob && !isProcessing && currentJob.status === 'pending') return 'processing';
-    if (detectedItems && !processedItems && !isBgRemoving) return 'processing';
+    if (detectedItems && !processedItems && !isGeneratingPhotos) return 'processing';
     if (isUploading) return 'uploading';
     return 'selection';
   })();
 
-  const isActiveProcessing = phase === 'uploading' || phase === 'processing' || phase === 'bgRemoval';
+  const isActiveProcessing = phase === 'uploading' || phase === 'processing' || phase === 'photoGen';
 
   // Pulsing animation during active processing
   useEffect(() => {
@@ -103,8 +94,8 @@ export default function BulkUploadScreen() {
     if (phase === 'uploading') return uploadProgress?.percentage ?? 0;
     if (phase === 'processing' && processingProgress && processingProgress.total > 0)
       return Math.round((processingProgress.processed / processingProgress.total) * 100);
-    if (phase === 'bgRemoval' && bgRemovalProgress && bgRemovalProgress.total > 0)
-      return Math.round((bgRemovalProgress.processed / bgRemovalProgress.total) * 100);
+    if (phase === 'photoGen' && photoGenProgress && photoGenProgress.total > 0)
+      return Math.round((photoGenProgress.processed / photoGenProgress.total) * 100);
     return 0;
   })();
 
@@ -169,7 +160,7 @@ export default function BulkUploadScreen() {
             <View style={styles.thumbnailContainer}>
               <Image source={{ uri: item }} style={styles.thumbnail} />
               <View style={styles.checkOverlay}>
-                <Ionicons name="checkmark-circle" size={20} color="#A04F37" />
+                <Ionicons name="checkmark-circle" size={20} color="#87A96B" />
               </View>
             </View>
           )}
@@ -185,7 +176,7 @@ export default function BulkUploadScreen() {
 
       <View style={styles.bottomActions}>
         <TouchableOpacity style={styles.selectButton} onPress={selectPhotos}>
-          <Ionicons name="images" size={20} color="#A04F37" />
+          <Ionicons name="images" size={20} color="#87A96B" />
           <Text style={styles.selectButtonText}>
             {selectedPhotos.length > 0 ? 'Change Selection' : 'Select Photos'}
           </Text>
@@ -215,7 +206,7 @@ export default function BulkUploadScreen() {
         return { done: uploadProgress?.uploaded ?? 0, total: uploadProgress?.total ?? selectedPhotos.length };
       if (progressPhase === 'detection')
         return { done: processingProgress?.processed ?? 0, total: processingProgress?.total ?? currentJob?.total_photos ?? 0 };
-      return { done: bgRemovalProgress?.processed ?? 0, total: bgRemovalProgress?.total ?? 0 };
+      return { done: photoGenProgress?.processed ?? 0, total: photoGenProgress?.total ?? 0 };
     })();
 
     const remaining = progress.total - progress.done;
@@ -229,13 +220,13 @@ export default function BulkUploadScreen() {
         <View style={styles.progressSection}>
           {/* Pulsing spinner */}
           <Animated.View style={{ opacity: pulseAnim, marginBottom: 16 }}>
-            <Ionicons name="sync" size={40} color="#A04F37" />
+            <Ionicons name="sync" size={40} color="#87A96B" />
           </Animated.View>
 
           <Text style={styles.phaseTitle}>
             {progressPhase === 'upload' ? 'Uploading photos...'
               : progressPhase === 'detection' ? 'Analyzing your photos...'
-              : 'Cleaning up backgrounds...'}
+              : 'Generating product photos...'}
           </Text>
 
           {/* Animated progress bar */}
@@ -246,15 +237,15 @@ export default function BulkUploadScreen() {
           <Text style={styles.progressText}>{statusMsg}</Text>
           <Text style={styles.percentageText}>{currentPercentage}% complete</Text>
 
-          {/* Bg removal inline stats */}
-          {progressPhase === 'bgRemoval' && bgRemovalProgress &&
-            (bgRemovalProgress.succeeded > 0 || bgRemovalProgress.failed > 0) && (
+          {/* Photo gen inline stats */}
+          {progressPhase === 'photoGen' && photoGenProgress &&
+            (photoGenProgress.succeeded > 0 || photoGenProgress.failed > 0) && (
             <View style={styles.bgStatsRow}>
-              {bgRemovalProgress.succeeded > 0 && (
-                <Text style={styles.bgStatSuccess}>{bgRemovalProgress.succeeded} cleaned</Text>
+              {photoGenProgress.succeeded > 0 && (
+                <Text style={styles.bgStatSuccess}>{photoGenProgress.succeeded} generated</Text>
               )}
-              {bgRemovalProgress.failed > 0 && (
-                <Text style={styles.bgStatFailed}>{bgRemovalProgress.failed} kept original</Text>
+              {photoGenProgress.failed > 0 && (
+                <Text style={styles.bgStatFailed}>{photoGenProgress.failed} kept original</Text>
               )}
             </View>
           )}
@@ -271,7 +262,7 @@ export default function BulkUploadScreen() {
           {/* Continue using app button */}
           <TouchableOpacity style={styles.backgroundButton} onPress={handleBackground}>
             <Text style={styles.backgroundButtonText}>Continue using app</Text>
-            <Ionicons name="arrow-forward" size={16} color="#A04F37" />
+            <Ionicons name="arrow-forward" size={16} color="#87A96B" />
           </TouchableOpacity>
         </View>
       </View>
@@ -288,8 +279,8 @@ export default function BulkUploadScreen() {
     const totalPhotos = currentJob?.total_photos ?? 0;
     const processedPhotos = totalPhotos - failedPhotos;
 
-    const bgSucceeded = processedItems?.filter((i) => i.bg_removal_status === 'success').length ?? 0;
-    const bgFailed = processedItems?.filter((i) => i.bg_removal_status === 'failed').length ?? 0;
+    const bgSucceeded = processedItems?.filter((i) => i.photo_gen_status === 'success').length ?? 0;
+    const bgFailed = processedItems?.filter((i) => i.photo_gen_status === 'failed').length ?? 0;
 
     return (
       <ScrollView style={styles.phaseContainer} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -364,7 +355,7 @@ export default function BulkUploadScreen() {
               {bgSucceeded > 0 && (
                 <View style={styles.summaryStatRow}>
                   <Text style={styles.summaryStatIcon}>🎨</Text>
-                  <Text style={styles.summaryStatText}>{bgSucceeded} backgrounds cleaned</Text>
+                  <Text style={styles.summaryStatText}>{bgSucceeded} product photos generated</Text>
                 </View>
               )}
               {failedPhotos > 0 && (
@@ -385,7 +376,7 @@ export default function BulkUploadScreen() {
                   .sort(([, a], [, b]) => b - a)
                   .map(([category, count]) => (
                     <View key={category} style={styles.summaryRow}>
-                      <Ionicons name={getCategoryIcon(category)} size={16} color="#A04F37" />
+                      <Ionicons name={getCategoryIcon(category)} size={16} color="#87A96B" />
                       <Text style={styles.summaryText}>{count} {category}</Text>
                     </View>
                   ))}
@@ -445,7 +436,7 @@ export default function BulkUploadScreen() {
       {phase === 'selection' && renderSelection()}
       {phase === 'uploading' && renderProgress('upload')}
       {phase === 'processing' && renderProgress('detection')}
-      {phase === 'bgRemoval' && renderProgress('bgRemoval')}
+      {phase === 'photoGen' && renderProgress('photoGen')}
       {phase === 'complete' && renderComplete()}
     </View>
   );
@@ -546,9 +537,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#A04F37',
+    borderColor: '#87A96B',
   },
-  selectButtonText: { fontSize: 15, fontWeight: '600', color: '#A04F37' },
+  selectButtonText: { fontSize: 15, fontWeight: '600', color: '#87A96B' },
   estimateText: { fontSize: 13, color: '#6b7280', textAlign: 'center' },
 
   // Progress
@@ -560,10 +551,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#e5e7eb',
     overflow: 'hidden',
   },
-  progressBarFill: { height: '100%', borderRadius: 4, backgroundColor: '#A04F37' },
+  progressBarFill: { height: '100%', borderRadius: 4, backgroundColor: '#87A96B' },
   progressText: { fontSize: 15, color: '#4b5563' },
   percentageText: { fontSize: 14, color: '#6b7280' },
-  detailText: { fontSize: 14, color: '#A04F37', fontWeight: '500' },
+  detailText: { fontSize: 14, color: '#87A96B', fontWeight: '500' },
   remainingText: { fontSize: 14, color: '#6b7280', marginTop: 4 },
   funFactContainer: {
     flexDirection: 'row',
@@ -583,11 +574,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#A04F37',
+    borderColor: '#87A96B',
   },
-  backgroundButtonText: { fontSize: 14, fontWeight: '600', color: '#A04F37' },
+  backgroundButtonText: { fontSize: 14, fontWeight: '600', color: '#87A96B' },
 
-  // Bg Removal stats
+  // Photo Gen stats
   bgStatsRow: { flexDirection: 'row', gap: 16, marginTop: 4 },
   bgStatSuccess: { fontSize: 13, color: '#22c55e', fontWeight: '500' },
   bgStatFailed: { fontSize: 13, color: '#f59e0b', fontWeight: '500' },
@@ -643,7 +634,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#A04F37',
+    backgroundColor: '#87A96B',
   },
   primaryButtonText: { fontSize: 15, fontWeight: '600', color: '#fff' },
   secondaryButton: {

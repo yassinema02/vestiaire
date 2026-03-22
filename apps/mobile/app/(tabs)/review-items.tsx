@@ -5,27 +5,13 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  FlatList,
-  Modal,
-  TextInput,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-  Platform,
-  KeyboardAvoidingView,
-  Dimensions,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, FlatList, Modal, TextInput, ScrollView, ActivityIndicator, Alert, Platform, KeyboardAvoidingView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useExtractionStore } from '../../stores/extractionStore';
 import { ReviewableItem } from '../../types/extraction';
 import { CATEGORIES, COLORS } from '../../services/aiCategorization';
+import { Text } from '../../components/ui/Typography';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_GAP = 10;
@@ -136,7 +122,7 @@ export default function ReviewItemsScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.importingContainer}>
-          <ActivityIndicator size="large" color="#A04F37" />
+          <ActivityIndicator size="large" color="#87A96B" />
           <Text style={styles.importingTitle}>Adding items to wardrobe...</Text>
           {importProgress && (
             <Text style={styles.importingProgress}>
@@ -165,7 +151,7 @@ export default function ReviewItemsScreen() {
     const displayCategory = item.editedCategory || item.category;
     const displaySubCategory = item.editedSubCategory || item.sub_category;
     const displayColors = item.editedColors || item.colors;
-    const bgFailed = item.bg_removal_status === 'failed';
+    const photoGenFailed = item.photo_gen_status === 'failed';
     const isVeryLow = item.confidence < 50;
     const isNeedsReview = item.needsReview && !isVeryLow; // 50-69
 
@@ -179,8 +165,8 @@ export default function ReviewItemsScreen() {
         {/* Image */}
         <View style={styles.cardImageContainer}>
           <Image source={{ uri: imageUrl }} style={styles.cardImage} />
-          {bgFailed && (
-            <View style={styles.bgFailedBadge}>
+          {photoGenFailed && (
+            <View style={styles.photoGenFailedBadge}>
               <Ionicons name="warning" size={12} color="#f59e0b" />
             </View>
           )}
@@ -282,7 +268,7 @@ export default function ReviewItemsScreen() {
       <View style={styles.batchBar}>
         <View style={styles.batchButtons}>
           <TouchableOpacity style={styles.batchButton} onPress={selectAll}>
-            <Ionicons name="checkmark-done" size={16} color="#A04F37" />
+            <Ionicons name="checkmark-done" size={16} color="#87A96B" />
             <Text style={styles.batchButtonText}>Keep All</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.batchButton} onPress={deselectAll}>
@@ -524,7 +510,7 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-  bgFailedBadge: {
+  photoGenFailedBadge: {
     position: 'absolute',
     top: 6,
     left: 6,
@@ -554,7 +540,7 @@ const styles = StyleSheet.create({
   },
   categoryBadgeText: {
     fontSize: 11,
-    color: '#A04F37',
+    color: '#87A96B',
     fontWeight: '500',
   },
   needsReviewBadge: {
@@ -644,7 +630,7 @@ const styles = StyleSheet.create({
   batchButtonText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#A04F37',
+    color: '#87A96B',
   },
   counterText: {
     fontSize: 12,
@@ -702,7 +688,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#A04F37',
+    backgroundColor: '#87A96B',
   },
   primaryButtonDisabled: {
     backgroundColor: '#c7c8cc',
@@ -751,7 +737,7 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: '100%',
     borderRadius: 4,
-    backgroundColor: '#A04F37',
+    backgroundColor: '#87A96B',
   },
 
   // Edit Modal
@@ -772,7 +758,7 @@ const styles = StyleSheet.create({
   },
   modalCancel: { fontSize: 16, color: '#6b7280' },
   modalTitle: { fontSize: 17, fontWeight: '600', color: '#1f2937' },
-  modalSave: { fontSize: 16, fontWeight: '600', color: '#A04F37' },
+  modalSave: { fontSize: 16, fontWeight: '600', color: '#87A96B' },
   modalContent: { flex: 1, padding: 20 },
   modalImageContainer: {
     height: 200,
@@ -808,7 +794,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-  chipSelected: { backgroundColor: '#A04F37', borderColor: '#A04F37' },
+  chipSelected: { backgroundColor: '#87A96B', borderColor: '#87A96B' },
   chipText: { fontSize: 13, color: '#4b5563', textTransform: 'capitalize' },
   chipTextSelected: { color: '#fff', fontWeight: '500' },
   colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -821,5 +807,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  colorChipSelected: { borderColor: '#A04F37', borderWidth: 3 },
+  colorChipSelected: { borderColor: '#87A96B', borderWidth: 3 },
 });

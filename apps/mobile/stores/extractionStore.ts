@@ -1,9 +1,9 @@
 /**
  * Extraction Store
- * Manages bulk upload, detection, background removal, review, and import
+ * Manages bulk upload, detection, product photo generation, review, and import
  * Story 10.1: Bulk Photo Upload
  * Story 10.2: Multi-Item Detection
- * Story 10.3: Background Removal for Extracted Items
+ * Story 10.3: Product Photo Generation for Extracted Items
  * Story 10.4: Review & Confirm Interface
  * Story 10.6: Extraction Progress & Feedback
  */
@@ -15,13 +15,13 @@ import {
   DetectedItem,
   ExtractionJobResult,
   ProcessedDetectedItem,
-  BgRemovalProgress,
+  PhotoGenProgress,
   ReviewableItem,
 } from '../types/extraction';
 import { supabase } from '../services/supabase';
 import { bulkUploadService } from '../services/bulkUploadService';
 import { extractionService } from '../services/extractionService';
-import { batchBgRemovalService } from '../services/batchBgRemovalService';
+import { batchProductPhotoService } from '../services/batchProductPhotoService';
 import { itemsService, CreateItemInput, WardrobeItem } from '../services/items';
 import { extractionCategorizationService } from '../services/extractionCategorizationService';
 import { extractionNotificationService } from '../services/extractionNotificationService';
@@ -32,8 +32,8 @@ interface ExtractionState {
   isUploading: boolean;
   isProcessing: boolean;
   processingProgress: { processed: number; total: number } | null;
-  isBgRemoving: boolean;
-  bgRemovalProgress: BgRemovalProgress | null;
+  isGeneratingPhotos: boolean;
+  photoGenProgress: PhotoGenProgress | null;
   currentJob: ExtractionJob | null;
   detectedItems: DetectedItem[] | null;
   processedItems: ProcessedDetectedItem[] | null;
@@ -55,7 +55,7 @@ interface ExtractionActions {
   clearSelection: () => void;
   startUpload: () => Promise<void>;
   startProcessing: (jobId: string) => Promise<void>;
-  startBgRemoval: (jobId: string) => Promise<void>;
+  startPhotoGeneration: (jobId: string) => Promise<void>;
   pollJobStatus: (jobId: string) => Promise<void>;
   // Review actions (Story 10.4, 10.5)
   initReview: () => Promise<void>;
@@ -76,7 +76,8 @@ interface ExtractionActions {
 
 type ExtractionStore = ExtractionState & ExtractionActions;
 
-let pollInterval: ReturnType<typeof setInterval> | null = null;
+let pollTimer: ReturnType<typeof setTimeout> | null = null;
+let pollCancelled = false;
 
 export const useExtractionStore = create<ExtractionStore>((set, get) => ({
   // State
@@ -85,8 +86,8 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
   isUploading: false,
   isProcessing: false,
   processingProgress: null,
-  isBgRemoving: false,
-  bgRemovalProgress: null,
+  isGeneratingPhotos: false,
+  photoGenProgress: null,
   currentJob: null,
   detectedItems: null,
   processedItems: null,
@@ -205,24 +206,24 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
       categorySummary: summary,
     });
 
-    // Auto-trigger background removal
+    // Auto-trigger photo generation
     if (items.length > 0 && updatedJob) {
-      get().startBgRemoval(updatedJob.id);
+      get().startPhotoGeneration(updatedJob.id);
     }
   },
 
-  startBgRemoval: async (jobId: string) => {
-    const { isBgRemoving, currentJob } = get();
-    if (isBgRemoving || !currentJob) return;
+  startPhotoGeneration: async (jobId: string) => {
+    const { isGeneratingPhotos, currentJob } = get();
+    if (isGeneratingPhotos || !currentJob) return;
 
-    set({ isBgRemoving: true, bgRemovalProgress: null });
+    set({ isGeneratingPhotos: true, photoGenProgress: null });
 
-    const processedItems = await batchBgRemovalService.processExtractedItems(
+    const processedItems = await batchProductPhotoService.processExtractedItems(
       currentJob,
-      (progress) => set({ bgRemovalProgress: progress })
+      (progress) => set({ photoGenProgress: progress })
     );
 
-    set({ processedItems, isBgRemoving: false });
+    set({ processedItems, isGeneratingPhotos: false });
 
     // Notify if backgrounded (Story 10.6)
     const { isBackgrounded } = get();
@@ -251,7 +252,7 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
             return {
               ...item,
               processed_image_url: processed.processed_image_url,
-              bg_removal_status: processed.bg_removal_status,
+              photo_gen_status: processed.photo_gen_status,
             };
           }
           return item;
@@ -275,16 +276,25 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
   },
 
   pollJobStatus: async (jobId: string) => {
-    if (pollInterval) {
-      clearInterval(pollInterval);
-      pollInterval = null;
+    // Cancel any existing poll loop
+    pollCancelled = true;
+    if (pollTimer) {
+      clearTimeout(pollTimer);
+      pollTimer = null;
     }
+    pollCancelled = false;
 
-    pollInterval = setInterval(async () => {
+    const poll = async () => {
+      if (pollCancelled) return;
+
       const { job, error } = await bulkUploadService.getJob(jobId);
+
+      if (pollCancelled) return;
 
       if (error) {
         console.warn('Poll error:', error.message);
+        // Schedule next poll even on error
+        pollTimer = setTimeout(poll, 3000);
         return;
       }
 
@@ -301,10 +311,8 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
         }
 
         if (job.status === 'completed' || job.status === 'failed') {
-          if (pollInterval) {
-            clearInterval(pollInterval);
-            pollInterval = null;
-          }
+          // Terminal state — stop polling
+          pollTimer = null;
 
           if (job.status === 'completed' && job.detected_items) {
             const result = job.detected_items as ExtractionJobResult;
@@ -321,9 +329,16 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
               error: job.error_message || 'Processing failed',
             });
           }
+          return; // Don't schedule another poll
         }
       }
-    }, 3000);
+
+      // Schedule next poll only after current one completes (sequential)
+      pollTimer = setTimeout(poll, 3000);
+    };
+
+    // Start first poll
+    poll();
   },
 
   // Review & Import Actions (Story 10.4, 10.5)
@@ -353,7 +368,7 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
 
       return {
         ...item,
-        bg_removal_status: (item as ProcessedDetectedItem).bg_removal_status || 'skipped',
+        photo_gen_status: (item as ProcessedDetectedItem).photo_gen_status || 'skipped',
         isSelected,
         needsReview,
         duplicateOf,
@@ -500,9 +515,9 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
       categorySummary: summary,
     });
 
-    // Auto-trigger bg removal on retry results
+    // Auto-trigger photo generation on retry results
     if (items.length > 0 && updatedJob) {
-      get().startBgRemoval(updatedJob.id);
+      get().startPhotoGeneration(updatedJob.id);
     }
   },
 
@@ -512,9 +527,10 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
   },
 
   reset: () => {
-    if (pollInterval) {
-      clearInterval(pollInterval);
-      pollInterval = null;
+    pollCancelled = true;
+    if (pollTimer) {
+      clearTimeout(pollTimer);
+      pollTimer = null;
     }
     set({
       selectedPhotos: [],
@@ -522,8 +538,8 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
       isUploading: false,
       isProcessing: false,
       processingProgress: null,
-      isBgRemoving: false,
-      bgRemovalProgress: null,
+      isGeneratingPhotos: false,
+      photoGenProgress: null,
       currentJob: null,
       detectedItems: null,
       processedItems: null,
