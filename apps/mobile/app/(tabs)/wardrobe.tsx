@@ -4,21 +4,8 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  FlatList,
-  ActivityIndicator,
-  RefreshControl,
-  TextInput,
-  Modal,
-  Platform,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, FlatList, ActivityIndicator, RefreshControl, TextInput, Modal, Platform, ScrollView, Alert } from 'react-native';
+import { Text } from '../../components/ui/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { itemsService, WardrobeItem } from '../../services/items';
@@ -50,7 +37,7 @@ export default function WardrobeScreen() {
   const extractionState = useExtractionStore();
   const tabBarScroll = useTabBarOnScroll();
   const isExtracting =
-    extractionState.isUploading || extractionState.isProcessing || extractionState.isBgRemoving;
+    extractionState.isUploading || extractionState.isProcessing || extractionState.isGeneratingPhotos;
   const extractionDone = extractionState.completionPending;
 
   const extractionBannerText = (() => {
@@ -64,10 +51,10 @@ export default function WardrobeScreen() {
       const pct = p && p.total > 0 ? Math.round((p.processed / p.total) * 100) : 0;
       return `Analyzing photos... ${pct}%`;
     }
-    if (extractionState.isBgRemoving) {
-      const p = extractionState.bgRemovalProgress;
+    if (extractionState.isGeneratingPhotos) {
+      const p = extractionState.photoGenProgress;
       const pct = p && p.total > 0 ? Math.round((p.processed / p.total) * 100) : 0;
-      return `Cleaning backgrounds... ${pct}%`;
+      return `Generating product photos... ${pct}%`;
     }
     return null;
   })();
@@ -367,70 +354,60 @@ export default function WardrobeScreen() {
   );
 
   const renderWardrobeHeader = () => (
-    <>
-      <View style={styles.heroPanel}>
-        <View style={styles.heroGlow} />
-        <View style={styles.heroHeader}>
-          <View style={styles.heroCopy}>
-            <Text style={styles.heroEyebrow}>Closet edit</Text>
-            <Text style={styles.title}>Wardrobe</Text>
-            <Text style={styles.heroSubtitle}>
-              {filteredItems.length} of {items.length} pieces in your current view
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.magicImportButton}
-            onPress={() => {
-              Alert.alert('Magic Import', 'How would you like to add items?', [
-                {
-                  text: 'Upload from Gallery',
-                  onPress: () => router.push('/(tabs)/bulk-upload'),
-                },
-                {
-                  text: 'Connect Instagram',
-                  onPress: () =>
-                    Alert.alert(
-                      'Coming Soon',
-                      'Instagram import will be available in a future update.'
-                    ),
-                },
-                { text: 'Cancel', style: 'cancel' },
-              ]);
-            }}
-          >
-            <Ionicons name="sparkles" size={16} color={appTheme.palette.surface} />
-            <Text style={styles.magicImportText}>Import</Text>
-          </TouchableOpacity>
+    <View style={styles.headerContainer}>
+      <View style={styles.topRow}>
+        <View>
+          <Text style={styles.pageTitle}>Wardrobe</Text>
+          <Text style={styles.pageSubtitle}>{filteredItems.length} items</Text>
         </View>
+        <TouchableOpacity
+          style={styles.addIconBtn}
+          onPress={() => {
+            Alert.alert('Magic Import', 'How would you like to add items?', [
+              { text: 'Upload from Gallery', onPress: () => router.push('/(tabs)/bulk-upload') },
+              { text: 'Connect Instagram', onPress: () => Alert.alert('Coming Soon', 'Instagram import will be available in a future update.') },
+              { text: 'Cancel', style: 'cancel' },
+            ]);
+          }}
+        >
+          <Ionicons name="add" size={24} color={appTheme.palette.surface} />
+        </TouchableOpacity>
+      </View>
 
-        <View style={styles.headerActions}>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricNumber}>{items.length}</Text>
-            <Text style={styles.metricText}>total pieces</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricNumber}>{activeFilterCount}</Text>
-            <Text style={styles.metricText}>active filters</Text>
-          </View>
-          <TouchableOpacity style={styles.iconButton} onPress={() => setShowSortModal(true)}>
-            <Ionicons name="swap-vertical" size={20} color={appTheme.palette.text} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.iconButton, activeFilterCount > 0 && styles.iconButtonActive]}
-            onPress={() => setShowFilterModal(true)}
-          >
-            <Ionicons
-              name="filter"
-              size={20}
-              color={activeFilterCount > 0 ? appTheme.palette.surface : appTheme.palette.text}
-            />
-            {activeFilterCount > 0 && (
-              <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+      <View style={styles.actionRow}>
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={18} color={appTheme.palette.textSoft} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search clothes..."
+            placeholderTextColor={appTheme.palette.textSoft}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={18} color={appTheme.palette.textSoft} />
+            </TouchableOpacity>
+          )}
         </View>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => setShowSortModal(true)}>
+          <Ionicons name="swap-vertical" size={20} color={appTheme.palette.text} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.iconBtn, activeFilterCount > 0 && styles.iconBtnActive]}
+          onPress={() => setShowFilterModal(true)}
+        >
+          <Ionicons
+            name="options"
+            size={20}
+            color={activeFilterCount > 0 ? appTheme.palette.surface : appTheme.palette.text}
+          />
+          {activeFilterCount > 0 && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       {(isExtracting || extractionDone) && extractionBannerText && (
@@ -441,7 +418,7 @@ export default function WardrobeScreen() {
           <Ionicons
             name={extractionDone ? 'checkmark-circle' : 'sync'}
             size={16}
-            color={extractionDone ? '#22c55e' : '#A04F37'}
+            color={extractionDone ? '#22c55e' : '#87A96B'}
           />
           <Text
             style={[
@@ -455,27 +432,6 @@ export default function WardrobeScreen() {
         </TouchableOpacity>
       )}
 
-      <View style={styles.searchContainer}>
-        <Ionicons
-          name="search"
-          size={20}
-          color={appTheme.palette.textSoft}
-          style={styles.searchIcon}
-        />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search by name or brand"
-          placeholderTextColor={appTheme.palette.textSoft}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={20} color={appTheme.palette.textSoft} />
-          </TouchableOpacity>
-        )}
-      </View>
-
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -486,9 +442,7 @@ export default function WardrobeScreen() {
           style={[styles.categoryTab, !selectedCategory && styles.categoryTabActive]}
           onPress={() => setSelectedCategory(null)}
         >
-          <Text style={[styles.categoryTabText, !selectedCategory && styles.categoryTabTextActive]}>
-            All
-          </Text>
+          <Text style={[styles.categoryTabText, !selectedCategory && styles.categoryTabTextActive]}>All</Text>
         </TouchableOpacity>
         {Object.keys(CATEGORIES).map(cat => (
           <TouchableOpacity
@@ -508,67 +462,24 @@ export default function WardrobeScreen() {
         ))}
       </ScrollView>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.colorRow}
-        contentContainerStyle={styles.colorRowContent}
-      >
-        {COLORS.map(color => (
-          <TouchableOpacity
-            key={color.name}
-            style={[
-              styles.colorDot,
-              { backgroundColor: color.hex },
-              selectedColors.includes(color.name) && styles.colorDotSelected,
-            ]}
-            onPress={() => toggleColor(color.name)}
-          >
-            {selectedColors.includes(color.name) && (
-              <Ionicons
-                name="checkmark"
-                size={14}
-                color={
-                  [
-                    'White',
-                    'Cream',
-                    'Yellow',
-                    'Lavender',
-                    'Beige',
-                    'Tan',
-                    'Light Blue',
-                    'Pink',
-                  ].includes(color.name)
-                    ? '#000'
-                    : '#fff'
-                }
-              />
-            )}
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
       {(neglectedCount > 0 || resaleCount > 0 || listedCount > 0) && (
-        <View style={styles.specialFilterRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.specialFilterRow}
+          contentContainerStyle={styles.specialFilterContent}
+        >
           {neglectedCount > 0 && (
             <TouchableOpacity
               style={[styles.neglectedChip, showNeglectedOnly && styles.neglectedChipActive]}
               onPress={() => {
                 setShowNeglectedOnly(!showNeglectedOnly);
                 setShowResaleOnly(false);
+                setShowListedOnly(false);
               }}
             >
-              <Ionicons
-                name="moon-outline"
-                size={14}
-                color={showNeglectedOnly ? '#fff' : '#f59e0b'}
-              />
-              <Text
-                style={[
-                  styles.neglectedChipText,
-                  showNeglectedOnly && styles.neglectedChipTextActive,
-                ]}
-              >
+              <Ionicons name="moon-outline" size={14} color={showNeglectedOnly ? '#fff' : '#f59e0b'} />
+              <Text style={[styles.neglectedChipText, showNeglectedOnly && styles.neglectedChipTextActive]}>
                 Neglected ({neglectedCount})
               </Text>
             </TouchableOpacity>
@@ -582,11 +493,7 @@ export default function WardrobeScreen() {
                 setShowListedOnly(false);
               }}
             >
-              <Ionicons
-                name="pricetag-outline"
-                size={14}
-                color={showResaleOnly ? '#fff' : '#22c55e'}
-              />
+              <Ionicons name="pricetag-outline" size={14} color={showResaleOnly ? '#fff' : '#22c55e'} />
               <Text style={[styles.resaleChipText, showResaleOnly && styles.resaleChipTextActive]}>
                 Resale ({resaleCount})
               </Text>
@@ -607,16 +514,16 @@ export default function WardrobeScreen() {
               </Text>
             </TouchableOpacity>
           )}
-        </View>
+        </ScrollView>
       )}
-    </>
+    </View>
   );
 
   return (
     <View style={styles.container}>
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#A04F37" />
+          <ActivityIndicator size="large" color="#87A96B" />
         </View>
       ) : error ? (
         <View style={styles.emptyContainer}>
@@ -643,7 +550,7 @@ export default function WardrobeScreen() {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={handleRefresh}
-              tintColor="#A04F37"
+              tintColor="#87A96B"
             />
           }
         />
@@ -660,6 +567,30 @@ export default function WardrobeScreen() {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalScroll}>
+              <Text style={styles.filterLabel}>Colors</Text>
+              <View style={styles.chipWrap}>
+                {COLORS.map(color => (
+                  <TouchableOpacity
+                    key={color.name}
+                    style={[
+                      styles.colorChip,
+                      selectedColors.includes(color.name) && styles.colorChipSelected,
+                      { borderColor: selectedColors.includes(color.name) ? 'transparent' : 'rgba(181, 150, 120, 0.18)' }
+                    ]}
+                    onPress={() => toggleColor(color.name)}
+                  >
+                    <View style={[styles.colorModalDot, { backgroundColor: color.hex }]} />
+                    <Text
+                      style={[
+                        styles.colorChipText,
+                        selectedColors.includes(color.name) && styles.colorChipTextSelected,
+                      ]}
+                    >
+                      {color.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
               <Text style={styles.filterLabel}>Seasons</Text>
               <View style={styles.chipWrap}>
                 {SEASONS.map(season => (
@@ -743,7 +674,7 @@ export default function WardrobeScreen() {
                 >
                   {option.label}
                 </Text>
-                {sortBy === option.value && <Ionicons name="checkmark" size={20} color="#A04F37" />}
+                {sortBy === option.value && <Ionicons name="checkmark" size={20} color="#87A96B" />}
               </TouchableOpacity>
             ))}
           </View>
@@ -759,88 +690,64 @@ const styles = StyleSheet.create({
     backgroundColor: appTheme.palette.canvas,
     paddingTop: Platform.OS === 'ios' ? 28 : 20,
   },
-  heroPanel: {
-    marginHorizontal: 20,
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 4,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
-    borderRadius: appTheme.radii.xl,
-    backgroundColor: appTheme.palette.surfaceRaised,
-    padding: 20,
-    overflow: 'hidden',
-    ...appTheme.shadows.float,
   },
-  heroGlow: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    top: -36,
-    right: -20,
-    backgroundColor: 'rgba(244, 227, 191, 0.16)',
-  },
-  heroHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginBottom: 16 },
-  heroCopy: { flex: 1, paddingRight: 8 },
-  heroEyebrow: {
-    color: appTheme.palette.accent,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    fontWeight: '700',
-    fontSize: 11,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 34,
-    lineHeight: 38,
+  pageTitle: {
+    fontSize: 32,
     fontFamily: appTheme.typography.display,
     color: appTheme.palette.text,
+    lineHeight: 36,
   },
-  heroSubtitle: {
+  pageSubtitle: {
     fontSize: 14,
-    lineHeight: 21,
-    color: appTheme.palette.textMuted,
-    marginTop: 8,
-    maxWidth: 240,
+    color: appTheme.palette.textSoft,
   },
-  itemCount: { fontSize: 13, color: appTheme.palette.textSoft, marginTop: 2 },
-  headerActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  metricCard: {
-    flex: 1,
-    minHeight: 58,
-    borderRadius: appTheme.radii.md,
-    backgroundColor: appTheme.palette.canvas,
-    paddingHorizontal: 14,
+  addIconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: appTheme.palette.accent,
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(181, 150, 120, 0.16)',
+    alignItems: 'center',
+    ...appTheme.shadows.float,
   },
-  metricNumber: {
-    color: appTheme.palette.text,
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 2,
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
   },
-  metricText: { color: appTheme.palette.textSoft, fontSize: 11 },
-  magicImportButton: {
+  searchContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: appTheme.palette.accent,
+    backgroundColor: appTheme.palette.canvas,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    height: 44,
+    borderWidth: 1,
+    borderColor: 'rgba(181, 150, 120, 0.22)',
   },
-  magicImportText: { color: appTheme.palette.surface, fontSize: 13, fontWeight: '700' },
-  iconButton: {
+  searchIcon: { marginRight: 6 },
+  searchInput: { flex: 1, fontSize: 15, color: appTheme.palette.text },
+  iconBtn: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: appTheme.palette.surfaceRaised,
+    backgroundColor: appTheme.palette.canvas,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(181, 150, 120, 0.22)',
-    ...appTheme.shadows.card,
   },
-  iconButtonActive: { backgroundColor: appTheme.palette.accent, borderColor: 'transparent' },
+  iconBtnActive: { backgroundColor: appTheme.palette.accent, borderColor: 'transparent' },
   filterBadge: {
     position: 'absolute',
     top: -4,
@@ -852,53 +759,51 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  filterBadgeText: { color: '#fff', fontSize: 10, fontWeight: '600' },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: appTheme.palette.surfaceRaised,
-    marginHorizontal: 20,
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    height: 52,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(181, 150, 120, 0.22)',
-  },
-  searchIcon: { marginRight: 8 },
-  searchInput: { flex: 1, fontSize: 15, color: appTheme.palette.text },
-  categoryTabs: { marginBottom: 12, minHeight: 44 },
-  categoryTabsContent: { paddingHorizontal: 16, alignItems: 'center' },
+  filterBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  categoryTabs: { marginBottom: 12, minHeight: 40 },
+  categoryTabsContent: { alignItems: 'center' },
   categoryTab: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
     marginRight: 8,
     borderRadius: 20,
-    backgroundColor: appTheme.palette.surfaceRaised,
-    height: 40,
+    backgroundColor: appTheme.palette.canvas,
+    height: 36,
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(181, 150, 120, 0.16)',
   },
   categoryTabActive: {
-    backgroundColor: appTheme.palette.surfaceInverse,
+    backgroundColor: appTheme.palette.surfaceRaised,
     borderColor: 'transparent',
+    ...appTheme.shadows.card,
   },
   categoryTabText: { fontSize: 14, color: appTheme.palette.textMuted, fontWeight: '600' },
-  categoryTabTextActive: { color: appTheme.palette.surface },
-  colorRow: { marginBottom: 16, minHeight: 40 },
-  colorRowContent: { paddingHorizontal: 20, alignItems: 'center' },
-  colorDot: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: 10,
-    borderWidth: 2,
-    borderColor: appTheme.palette.surfaceRaised,
-    justifyContent: 'center',
+  categoryTabTextActive: { color: appTheme.palette.text },
+  colorChip: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: appTheme.palette.canvas,
+    borderWidth: 1,
+    marginRight: 8,
   },
-  colorDotSelected: { borderColor: appTheme.palette.surfaceInverse, borderWidth: 3 },
+  colorChipSelected: {
+    backgroundColor: appTheme.palette.surfaceInverse,
+  },
+  colorModalDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+  colorChipText: { fontSize: 13, color: appTheme.palette.textMuted },
+  colorChipTextSelected: { color: '#fff', fontWeight: '500' },
+  specialFilterContent: { paddingRight: 20 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyContainer: {
     flex: 1,

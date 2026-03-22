@@ -44,8 +44,8 @@ jest.mock('../../services/extractionService', () => ({
   },
 }));
 
-jest.mock('../../services/batchBgRemovalService', () => ({
-  batchBgRemovalService: {
+jest.mock('../../services/batchProductPhotoService', () => ({
+  batchProductPhotoService: {
     processExtractedItems: jest.fn().mockResolvedValue([]),
     getEstimatedTime: jest.fn().mockReturnValue('~30 seconds'),
   },

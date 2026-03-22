@@ -279,8 +279,8 @@ export default function BulkUploadScreen() {
     const totalPhotos = currentJob?.total_photos ?? 0;
     const processedPhotos = totalPhotos - failedPhotos;
 
-    const bgSucceeded = processedItems?.filter((i) => i.photo_gen_status === 'success').length ?? 0;
-    const bgFailed = processedItems?.filter((i) => i.photo_gen_status === 'failed').length ?? 0;
+    const photoGenSucceeded = processedItems?.filter((i) => i.photo_gen_status === 'success').length ?? 0;
+    const photoGenFailed = processedItems?.filter((i) => i.photo_gen_status === 'failed').length ?? 0;
 
     return (
       <ScrollView style={styles.phaseContainer} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -352,10 +352,10 @@ export default function BulkUploadScreen() {
                 <Text style={styles.summaryStatIcon}>👕</Text>
                 <Text style={styles.summaryStatText}>{totalFound} items detected</Text>
               </View>
-              {bgSucceeded > 0 && (
+              {photoGenSucceeded > 0 && (
                 <View style={styles.summaryStatRow}>
                   <Text style={styles.summaryStatIcon}>🎨</Text>
-                  <Text style={styles.summaryStatText}>{bgSucceeded} product photos generated</Text>
+                  <Text style={styles.summaryStatText}>{photoGenSucceeded} product photos generated</Text>
                 </View>
               )}
               {failedPhotos > 0 && (

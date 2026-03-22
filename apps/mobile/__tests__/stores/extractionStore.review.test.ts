@@ -44,8 +44,8 @@ jest.mock('../../services/extractionService', () => ({
   },
 }));
 
-jest.mock('../../services/batchBgRemovalService', () => ({
-  batchBgRemovalService: {
+jest.mock('../../services/batchProductPhotoService', () => ({
+  batchProductPhotoService: {
     processExtractedItems: jest.fn(),
   },
 }));
@@ -64,7 +64,7 @@ function makeProcessedItem(overrides: Partial<ProcessedDetectedItem> = {}): Proc
     confidence: 90,
     photo_index: 0,
     photo_url: 'https://storage.test/photo1.jpg',
-    bg_removal_status: 'success',
+    photo_gen_status: 'success',
     processed_image_url: 'https://storage.test/processed_1.png',
     ...overrides,
   };
@@ -339,7 +339,7 @@ describe('importToWardrobe', () => {
     const items = [
       makeProcessedItem({
         processed_image_url: undefined,
-        bg_removal_status: 'failed',
+        photo_gen_status: 'failed',
       }),
     ];
     useExtractionStore.setState({
