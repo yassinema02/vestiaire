@@ -1,14 +1,14 @@
 /**
- * Batch Background Removal Service
- * Processes extracted items through bg removal pipeline
- * Story 10.3: Background Removal for Extracted Items
+ * Batch Product Photo Service
+ * Processes extracted items through product photo generation pipeline
+ * Story 10.3: Product Photo Generation for Extracted Items
  *
- * Reuses existing removeBackground() from backgroundRemoval.ts
+ * Reuses existing generateProductPhoto() from productPhotoService.ts
  * and uploadProcessedImage() from storage.ts
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { removeBackground, isBackgroundRemovalConfigured } from './backgroundRemoval';
+import { generateProductPhoto } from './productPhotoService';
 import { storageService } from './storage';
 import { requireUserId } from './auth-helpers';
 import { extractionService } from './extractionService';
@@ -16,12 +16,12 @@ import {
   ExtractionJob,
   DetectedItem,
   ProcessedDetectedItem,
-  BgRemovalProgress,
+  PhotoGenProgress,
   ExtractionJobResult,
 } from '../types/extraction';
 
 const LOW_CONFIDENCE_THRESHOLD = 50;
-const USAGE_KEY_PREFIX = 'bg_removal_usage_';
+const USAGE_KEY_PREFIX = 'product_photo_usage_';
 
 function getMonthlyUsageKey(): string {
   const now = new Date();
@@ -30,13 +30,13 @@ function getMonthlyUsageKey(): string {
   return `${USAGE_KEY_PREFIX}${yyyy}-${mm}`;
 }
 
-export const batchBgRemovalService = {
+export const batchProductPhotoService = {
   /**
-   * Process all detected items from a job through background removal
+   * Process all detected items from a job through product photo generation
    */
   processExtractedItems: async (
     job: ExtractionJob,
-    onProgress: (progress: BgRemovalProgress) => void
+    onProgress: (progress: PhotoGenProgress) => void
   ): Promise<ProcessedDetectedItem[]> => {
     if (!job.detected_items) return [];
 
@@ -45,15 +45,14 @@ export const batchBgRemovalService = {
 
     if (allItems.length === 0) return [];
 
-    const bgConfigured = isBackgroundRemovalConfigured();
     let userId: string;
     try {
       userId = await requireUserId();
     } catch {
-      // If not authenticated, skip bg removal
+      // If not authenticated, skip photo generation
       return allItems.map((item) => ({
         ...item,
-        bg_removal_status: 'skipped' as const,
+        photo_gen_status: 'skipped' as const,
       }));
     }
 
@@ -68,22 +67,24 @@ export const batchBgRemovalService = {
 
       // Skip low-confidence items
       if (item.confidence < LOW_CONFIDENCE_THRESHOLD) {
-        processedItems.push({ ...item, bg_removal_status: 'skipped' });
-        continue;
-      }
-
-      // Skip if bg removal not configured
-      if (!bgConfigured) {
-        processedItems.push({ ...item, bg_removal_status: 'skipped' });
+        processedItems.push({ ...item, photo_gen_status: 'skipped' });
         continue;
       }
 
       try {
-        // 1. Remove background using existing Gemini service
-        const { processedImageBase64, error: bgError } = await removeBackground(item.photo_url);
+        // 1. Generate product photo using productPhotoService
+        const { processedImageBase64, error: genError } = await generateProductPhoto(
+          item.photo_url,
+          {
+            category: item.category?.toLowerCase(),
+            subCategory: item.sub_category,
+            colors: item.colors,
+            pattern: item.pattern,
+          }
+        );
 
-        if (bgError || !processedImageBase64) {
-          throw bgError || new Error('No processed image data');
+        if (genError || !processedImageBase64) {
+          throw genError || new Error('No processed image data');
         }
 
         // 2. Upload processed image to wardrobe-images bucket
@@ -99,15 +100,15 @@ export const batchBgRemovalService = {
         processedItems.push({
           ...item,
           processed_image_url: url,
-          bg_removal_status: 'success',
+          photo_gen_status: 'success',
         });
         succeeded++;
       } catch (err: any) {
-        console.warn(`Bg removal failed for item ${i} (${item.sub_category}):`, err.message);
+        console.warn(`Product photo generation failed for item ${i} (${item.sub_category}):`, err.message);
         // Fallback: keep original photo URL
         processedItems.push({
           ...item,
-          bg_removal_status: 'failed',
+          photo_gen_status: 'failed',
         });
         failed++;
       }
@@ -122,17 +123,17 @@ export const batchBgRemovalService = {
     });
 
     // Cost tracking
-    await batchBgRemovalService.trackUsage(succeeded);
+    await batchProductPhotoService.trackUsage(succeeded);
 
     console.log(
-      `[BG Removal] Processed ${allItems.length} items: ${succeeded} success, ${failed} failed, ${allItems.length - succeeded - failed} skipped`
+      `[Product Photo] Processed ${allItems.length} items: ${succeeded} success, ${failed} failed, ${allItems.length - succeeded - failed} skipped`
     );
 
     return processedItems;
   },
 
   /**
-   * Track monthly bg removal usage in AsyncStorage
+   * Track monthly product photo generation usage in AsyncStorage
    */
   trackUsage: async (count: number): Promise<void> => {
     if (count === 0) return;
@@ -141,9 +142,9 @@ export const batchBgRemovalService = {
       const current = await AsyncStorage.getItem(key);
       const total = (current ? parseInt(current, 10) : 0) + count;
       await AsyncStorage.setItem(key, String(total));
-      console.log(`[BG Removal] Monthly usage: ${total}`);
+      console.log(`[Product Photo] Monthly usage: ${total}`);
     } catch (err) {
-      console.warn('Failed to track bg removal usage:', err);
+      console.warn('Failed to track product photo usage:', err);
     }
   },
 
@@ -161,7 +162,7 @@ export const batchBgRemovalService = {
   },
 
   /**
-   * Estimated processing time for bg removal
+   * Estimated processing time for product photo generation
    */
   getEstimatedTime: (itemCount: number): string => {
     const seconds = itemCount * 4; // ~4 seconds per item

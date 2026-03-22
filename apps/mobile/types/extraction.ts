@@ -59,10 +59,10 @@ export interface ExtractionJobResult {
 export interface ProcessedDetectedItem extends DetectedItem {
   processed_image_base64?: string;
   processed_image_url?: string;
-  bg_removal_status: 'pending' | 'success' | 'failed' | 'skipped';
+  photo_gen_status: 'pending' | 'success' | 'failed' | 'skipped';
 }
 
-export interface BgRemovalProgress {
+export interface PhotoGenProgress {
   processed: number;
   total: number;
   succeeded: number;

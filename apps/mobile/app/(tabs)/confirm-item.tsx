@@ -4,20 +4,8 @@
  * Extended with metadata fields (name, brand, price, seasons, occasions)
  */
 
-import { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Image,
-    ActivityIndicator,
-    Alert,
-    Platform,
-    TextInput,
-    KeyboardAvoidingView,
-} from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, Platform, TextInput, KeyboardAvoidingView, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -32,6 +20,9 @@ import {
 } from '../../services/aiCategorization';
 import { itemsService } from '../../services/items';
 import { onboardingService } from '../../services/onboarding';
+import { generateProductPhoto } from '../../services/productPhotoService';
+import { storageService } from '../../services/storage';
+import { supabase } from '../../services/supabase';
 import { gamificationService } from '../../services/gamificationService';
 import { challengeService } from '../../services/challengeService';
 import { subscriptionService } from '../../services/subscriptionService';
@@ -39,6 +30,7 @@ import LevelUpModal from '../../components/gamification/LevelUpModal';
 import BadgeUnlockModal from '../../components/gamification/BadgeUnlockModal';
 import TrialUnlockedModal from '../../components/TrialUnlockedModal';
 import { BadgeDefinition } from '@vestiaire/shared';
+import { Text } from '../../components/ui/Typography';
 
 // Constants
 const SEASONS = ['Spring', 'Summer', 'Fall', 'Winter', 'All-Season'] as const;
@@ -65,6 +57,12 @@ export default function ConfirmItemScreen() {
     const [unlockedBadge, setUnlockedBadge] = useState<BadgeDefinition | null>(null);
     const [pendingBadges, setPendingBadges] = useState<BadgeDefinition[]>([]);
     const [showTrialUnlocked, setShowTrialUnlocked] = useState(false);
+
+    // Product photo state
+    const [productPhotoBase64, setProductPhotoBase64] = useState<string | null>(null);
+    const [isGeneratingPhoto, setIsGeneratingPhoto] = useState(false);
+    const [showEnhancedBadge, setShowEnhancedBadge] = useState(false);
+    const fadeAnim = useRef(new Animated.Value(0)).current;
 
     // Category/Color state
     const [selectedCategory, setSelectedCategory] = useState<Category>('tops');
@@ -132,6 +130,13 @@ export default function ConfirmItemScreen() {
         loadAnalysis();
     }, []);
 
+    useEffect(() => {
+        if (showEnhancedBadge) {
+            const timer = setTimeout(() => setShowEnhancedBadge(false), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [showEnhancedBadge]);
+
     const loadAnalysis = async () => {
         setIsLoading(true);
         try {
@@ -142,6 +147,29 @@ export default function ConfirmItemScreen() {
                     setSelectedSubCategory(analysis.subCategory);
                     setSelectedColors(analysis.colors);
                     setSelectedPattern(analysis.pattern);
+
+                    // Fire-and-forget product photo generation
+                    setIsGeneratingPhoto(true);
+                    generateProductPhoto(params.imageUrl, {
+                        category: analysis.category,
+                        subCategory: analysis.subCategory,
+                        colors: analysis.colors,
+                        pattern: analysis.pattern,
+                    }).then(({ processedImageBase64 }) => {
+                        if (processedImageBase64) {
+                            setProductPhotoBase64(processedImageBase64);
+                            setShowEnhancedBadge(true);
+                            Animated.timing(fadeAnim, {
+                                toValue: 1,
+                                duration: 300,
+                                useNativeDriver: true,
+                            }).start();
+                        }
+                    }).catch(() => {
+                        // Silent failure — original photo kept
+                    }).finally(() => {
+                        setIsGeneratingPhoto(false);
+                    });
                 } else {
                     const defaults = getDefaultAnalysis();
                     setSelectedCategory(defaults.category);
@@ -195,6 +223,16 @@ export default function ConfirmItemScreen() {
         if (!params.itemId) return;
         setIsSaving(true);
         try {
+            // Upload product photo if available
+            let productPhotoUrl: string | null = null;
+            if (productPhotoBase64) {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { url } = await storageService.uploadProcessedImage(user.id, productPhotoBase64);
+                    productPhotoUrl = url;
+                }
+            }
+
             const { error } = await itemsService.updateItem(params.itemId, {
                 category: selectedCategory,
                 sub_category: selectedSubCategory,
@@ -206,6 +244,7 @@ export default function ConfirmItemScreen() {
                 seasons: selectedSeasons.length > 0 ? selectedSeasons : null,
                 occasions: selectedOccasions.length > 0 ? selectedOccasions : null,
                 status: 'complete',
+                ...(productPhotoUrl && { image_url: productPhotoUrl }),
             } as any);
             if (error) throw error;
 
@@ -296,7 +335,7 @@ export default function ConfirmItemScreen() {
     if (isLoading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#A04F37" />
+                <ActivityIndicator size="large" color="#87A96B" />
                 <Text style={styles.loadingText}>Analyzing your item...</Text>
                 <Text style={styles.loadingSubtext}>AI is detecting category and colors</Text>
             </View>
@@ -316,7 +355,26 @@ export default function ConfirmItemScreen() {
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 {params.imageUrl && (
                     <View style={styles.imageContainer}>
-                        <Image source={{ uri: params.imageUrl }} style={styles.previewImage} />
+                        <Image
+                            source={{ uri: params.imageUrl }}
+                            style={[styles.previewImage, productPhotoBase64 ? { opacity: 0 } : undefined]}
+                        />
+                        {productPhotoBase64 && (
+                            <Animated.Image
+                                source={{ uri: `data:image/png;base64,${productPhotoBase64}` }}
+                                style={[styles.previewImage, styles.overlayImage, { opacity: fadeAnim }]}
+                            />
+                        )}
+                        {isGeneratingPhoto && (
+                            <View style={styles.shimmerOverlay}>
+                                <Text style={styles.enhancingText}>Enhancing photo...</Text>
+                            </View>
+                        )}
+                        {showEnhancedBadge && (
+                            <View style={styles.enhancedBadge}>
+                                <Text style={styles.enhancedBadgeText}>Enhanced ✓</Text>
+                            </View>
+                        )}
                     </View>
                 )}
 
@@ -457,7 +515,7 @@ export default function ConfirmItemScreen() {
                                 >
                                     <Text style={styles.currencyOptionSymbol}>{curr.symbol}</Text>
                                     <Text style={[styles.currencyOptionText, currency === curr.code && styles.currencyOptionTextSelected]}>{curr.code}</Text>
-                                    {currency === curr.code && <Ionicons name="checkmark" size={16} color="#A04F37" />}
+                                    {currency === curr.code && <Ionicons name="checkmark" size={16} color="#87A96B" />}
                                 </TouchableOpacity>
                             ))}
                         </View>
@@ -537,8 +595,13 @@ const styles = StyleSheet.create({
     skipButtonText: { fontSize: 16, color: '#6b7280' },
     headerTitle: { fontSize: 18, fontWeight: '600', color: '#1f2937' },
     content: { flex: 1, paddingHorizontal: 16 },
-    imageContainer: { height: 160, borderRadius: 16, overflow: 'hidden', backgroundColor: '#fff', marginBottom: 20 },
+    imageContainer: { height: 160, borderRadius: 16, overflow: 'hidden', backgroundColor: '#fff', marginBottom: 20, position: 'relative', width: '100%', alignItems: 'center' },
     previewImage: { width: '100%', height: '100%', resizeMode: 'contain' },
+    overlayImage: { position: 'absolute', top: 0 },
+    shimmerOverlay: { position: 'absolute', bottom: 12, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+    enhancingText: { color: '#fff', fontSize: 12, fontFamily: 'Inter_500Medium' },
+    enhancedBadge: { position: 'absolute', top: 12, right: 12, backgroundColor: '#22c55e', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+    enhancedBadgeText: { color: '#fff', fontSize: 11, fontWeight: '600' },
     section: { marginBottom: 20 },
     sectionTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 10 },
     sectionHint: { fontSize: 12, color: '#9ca3af', fontWeight: '400' },
@@ -548,12 +611,12 @@ const styles = StyleSheet.create({
     chipRow: { flexDirection: 'row', gap: 8 },
     chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb' },
-    chipSelected: { backgroundColor: '#A04F37', borderColor: '#A04F37' },
+    chipSelected: { backgroundColor: '#87A96B', borderColor: '#87A96B' },
     chipText: { fontSize: 14, color: '#4b5563', textTransform: 'capitalize' },
     chipTextSelected: { color: '#fff', fontWeight: '500' },
     colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     colorChip: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: '#e5e7eb', justifyContent: 'center', alignItems: 'center' },
-    colorChipSelected: { borderColor: '#A04F37', borderWidth: 3 },
+    colorChipSelected: { borderColor: '#87A96B', borderWidth: 3 },
     inputSection: { marginBottom: 16 },
     inputLabel: { fontSize: 14, fontWeight: '500', color: '#1f2937', marginBottom: 8 },
     textInput: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: '#1f2937' },
@@ -566,9 +629,9 @@ const styles = StyleSheet.create({
     currencyOptionSelected: { backgroundColor: '#f0f0ff' },
     currencyOptionSymbol: { fontSize: 18, fontWeight: '600', color: '#1f2937', width: 24 },
     currencyOptionText: { flex: 1, fontSize: 14, color: '#4b5563' },
-    currencyOptionTextSelected: { color: '#A04F37', fontWeight: '500' },
+    currencyOptionTextSelected: { color: '#87A96B', fontWeight: '500' },
     footer: { padding: 16, paddingBottom: Platform.OS === 'ios' ? 32 : 16 },
-    confirmButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#A04F37', paddingVertical: 16, borderRadius: 12 },
+    confirmButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#87A96B', paddingVertical: 16, borderRadius: 12 },
     confirmButtonDisabled: { opacity: 0.7 },
     confirmButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

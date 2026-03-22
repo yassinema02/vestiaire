@@ -6,7 +6,7 @@
  * for each phase of the extraction pipeline.
  */
 
-export type ExtractionPhase = 'upload' | 'detection' | 'bgRemoval' | 'import';
+export type ExtractionPhase = 'upload' | 'detection' | 'photoGen' | 'import';
 
 /**
  * Get the primary status message for the current phase and progress.
@@ -18,7 +18,7 @@ export function getStatusMessage(
   const messages: Record<ExtractionPhase, string> = {
     upload: `Uploading photo ${progress.done + 1} of ${progress.total}...`,
     detection: `Analyzing photo ${progress.done + 1} of ${progress.total}...`,
-    bgRemoval: `Cleaning backgrounds... ${progress.done} of ${progress.total}`,
+    photoGen: `Generating product photos... ${progress.done} of ${progress.total}`,
     import: `Adding item ${progress.done + 1} of ${progress.total}...`,
   };
   return messages[phase];
@@ -35,7 +35,7 @@ export function getDetailMessage(
   if (phase === 'detection' && itemsFoundSoFar !== undefined && itemsFoundSoFar > 0) {
     return `Found ${itemsFoundSoFar} item${itemsFoundSoFar !== 1 ? 's' : ''} so far`;
   }
-  if (phase === 'bgRemoval' && progress.done > 0 && progress.done >= progress.total - 2) {
+  if (phase === 'photoGen' && progress.done > 0 && progress.done >= progress.total - 2) {
     return 'Almost done!';
   }
   if (phase === 'upload' && progress.total > 10) {
@@ -48,7 +48,7 @@ export function getDetailMessage(
 const SECS_PER_ITEM: Record<ExtractionPhase, number> = {
   upload: 2,
   detection: 6,
-  bgRemoval: 4,
+  photoGen: 4,
   import: 0.2,
 };
 
@@ -89,7 +89,7 @@ export function getPhaseTitle(phase: ExtractionPhase): string {
   const titles: Record<ExtractionPhase, string> = {
     upload: 'Uploading photos...',
     detection: 'Analyzing your photos...',
-    bgRemoval: 'Cleaning up backgrounds...',
+    photoGen: 'Generating product photos...',
     import: 'Adding to wardrobe...',
   };
   return titles[phase];
