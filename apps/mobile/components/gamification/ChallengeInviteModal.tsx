@@ -66,7 +66,7 @@ export default function ChallengeInviteModal({ visible, onAccept, onSkip }: Chal
                 >
                     {/* Safari Icon */}
                     <View style={styles.iconWrap}>
-                        <Ionicons name="compass" size={48} color="#6366f1" />
+                        <Ionicons name="compass" size={48} color="#A04F37" />
                     </View>
 
                     <Text style={styles.title}>Closet Safari</Text>
@@ -74,11 +74,11 @@ export default function ChallengeInviteModal({ visible, onAccept, onSkip }: Chal
 
                     <View style={styles.detailsCard}>
                         <View style={styles.detailRow}>
-                            <Ionicons name="camera-outline" size={20} color="#6366f1" />
+                            <Ionicons name="camera-outline" size={20} color="#A04F37" />
                             <Text style={styles.detailText}>Upload 20 items to your wardrobe</Text>
                         </View>
                         <View style={styles.detailRow}>
-                            <Ionicons name="time-outline" size={20} color="#6366f1" />
+                            <Ionicons name="time-outline" size={20} color="#A04F37" />
                             <Text style={styles.detailText}>Complete within 7 days</Text>
                         </View>
                         <View style={styles.detailRow}>
@@ -86,7 +86,7 @@ export default function ChallengeInviteModal({ visible, onAccept, onSkip }: Chal
                             <Text style={styles.detailText}>Win 1 month of Premium free!</Text>
                         </View>
                         <View style={styles.detailRow}>
-                            <Ionicons name="ribbon-outline" size={20} color="#6366f1" />
+                            <Ionicons name="ribbon-outline" size={20} color="#A04F37" />
                             <Text style={styles.detailText}>Unlock the Safari Explorer badge</Text>
                         </View>
                     </View>
@@ -124,12 +124,12 @@ const styles = StyleSheet.create({
         width: 88,
         height: 88,
         borderRadius: 44,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
         borderWidth: 3,
-        borderColor: '#c7d2fe',
+        borderColor: '#D9C7B4',
     },
     title: {
         fontSize: 24,
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         gap: 8,
         width: '100%',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 14,
         paddingVertical: 16,
         marginBottom: 12,

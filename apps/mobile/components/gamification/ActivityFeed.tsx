@@ -57,7 +57,7 @@ export default function ActivityFeed() {
     if (isLoading) {
         return (
             <View style={styles.loadingWrap}>
-                <ActivityIndicator size="small" color="#6366f1" />
+                <ActivityIndicator size="small" color="#A04F37" />
             </View>
         );
     }
@@ -165,6 +165,6 @@ const styles = StyleSheet.create({
     entryPoints: {
         fontSize: 13,
         fontWeight: '700',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 });

@@ -71,7 +71,7 @@ export default function BadgeGrid({ earnedBadges, onBadgesChanged }: BadgeGridPr
                             return (
                                 <View key={ub.id} style={styles.showcaseBadge}>
                                     <View style={styles.showcaseIconWrap}>
-                                        <Ionicons name={def.iconName as any} size={28} color="#6366f1" />
+                                        <Ionicons name={def.iconName as any} size={28} color="#A04F37" />
                                     </View>
                                     <Text style={styles.showcaseName} numberOfLines={1}>{def.name}</Text>
                                 </View>
@@ -121,7 +121,7 @@ export default function BadgeGrid({ earnedBadges, onBadgesChanged }: BadgeGridPr
                                         <Ionicons
                                             name={earned ? badge.iconName as any : 'lock-closed'}
                                             size={24}
-                                            color={earned ? '#6366f1' : '#d1d5db'}
+                                            color={earned ? '#A04F37' : '#d1d5db'}
                                         />
                                     </View>
                                     <Text
@@ -156,7 +156,7 @@ export default function BadgeGrid({ earnedBadges, onBadgesChanged }: BadgeGridPr
                     style={styles.editShowcaseButton}
                     onPress={() => setEditShowcase(true)}
                 >
-                    <Ionicons name="star-outline" size={16} color="#6366f1" />
+                    <Ionicons name="star-outline" size={16} color="#A04F37" />
                     <Text style={styles.editShowcaseText}>Edit Showcase</Text>
                 </TouchableOpacity>
             )}
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     editText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     showcaseRow: {
         flexDirection: 'row',
@@ -200,12 +200,12 @@ const styles = StyleSheet.create({
         width: 56,
         height: 56,
         borderRadius: 28,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 6,
         borderWidth: 2,
-        borderColor: '#c7d2fe',
+        borderColor: '#D9C7B4',
     },
     showcaseName: {
         fontSize: 11,
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 10,
         paddingHorizontal: 14,
         paddingVertical: 10,
@@ -226,13 +226,13 @@ const styles = StyleSheet.create({
     },
     editBannerText: {
         fontSize: 13,
-        color: '#4338ca',
+        color: '#7D3825',
         flex: 1,
     },
     doneText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
         marginLeft: 12,
     },
     // Category
@@ -267,14 +267,14 @@ const styles = StyleSheet.create({
         backgroundColor: '#fafbff',
     },
     badgeCellFeatured: {
-        borderColor: '#6366f1',
+        borderColor: '#A04F37',
         borderWidth: 2,
     },
     badgeIcon: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 8,
@@ -319,6 +319,6 @@ const styles = StyleSheet.create({
     editShowcaseText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 });

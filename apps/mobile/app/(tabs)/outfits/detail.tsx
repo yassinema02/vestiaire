@@ -88,7 +88,7 @@ export default function OutfitDetailScreen() {
     if (isLoading || !currentOutfit) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#6366f1" />
+                <ActivityIndicator size="large" color="#A04F37" />
             </View>
         );
     }
@@ -127,7 +127,7 @@ export default function OutfitDetailScreen() {
                 <View style={styles.metaRow}>
                     {currentOutfit.is_ai_generated && (
                         <View style={styles.aiBadge}>
-                            <Ionicons name="sparkles" size={14} color="#6366f1" />
+                            <Ionicons name="sparkles" size={14} color="#A04F37" />
                             <Text style={styles.aiBadgeText}>AI Generated</Text>
                         </View>
                     )}
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
-        backgroundColor: '#f5f3ff',
+        backgroundColor: '#F8EEE7',
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 8,
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     aiBadgeText: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     occasionBadge: {
         backgroundColor: '#fef3c7',

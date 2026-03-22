@@ -5,16 +5,13 @@
  * Story 8.2: URL Product Scraping
  */
 
-import Constants from 'expo-constants';
 import { supabase } from './supabase';
 import { requireUserId } from './auth-helpers';
 import { ShoppingScan, ProductAnalysis, AiInsight, ScrapedProduct } from '../types/shopping';
 import { WardrobeItem, itemsService } from './items';
 import { PRODUCT_ANALYSIS_PROMPT } from '../constants/prompts';
-import { trackedGenerateContent } from './aiUsageLogger';
+import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 import { optimizeForAI } from './imageOptimizer';
-
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 
 const SCAN_BUCKET = 'shopping-scans';
 
@@ -148,14 +145,13 @@ export const shoppingService = {
     },
 
     /**
-     * Analyze a product image using Gemini directly
-     * (Edge Function approach deferred until deployed; using client-side Gemini like aiCategorization.ts)
+     * Analyze a product image through the server-side AI proxy.
      */
     analyzeProduct: async (
         imageUri: string
     ): Promise<{ analysis: ProductAnalysis | null; error: Error | null }> => {
-        if (!GEMINI_API_KEY || GEMINI_API_KEY === 'your_api_key_here') {
-            return { analysis: null, error: new Error('Gemini API key not configured') };
+        if (!isGeminiConfigured()) {
+            return { analysis: null, error: new Error('AI proxy not configured') };
         }
 
         try {
@@ -186,7 +182,7 @@ export const shoppingService = {
             const prompt = PRODUCT_ANALYSIS_PROMPT;
 
             const result = await trackedGenerateContent({
-                model: 'gemini-2.0-flash',
+                model: 'gemini-2.5-flash',
                 contents: [{
                     role: 'user',
                     parts: [

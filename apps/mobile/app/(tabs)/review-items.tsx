@@ -136,7 +136,7 @@ export default function ReviewItemsScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.importingContainer}>
-          <ActivityIndicator size="large" color="#6366f1" />
+          <ActivityIndicator size="large" color="#A04F37" />
           <Text style={styles.importingTitle}>Adding items to wardrobe...</Text>
           {importProgress && (
             <Text style={styles.importingProgress}>
@@ -282,7 +282,7 @@ export default function ReviewItemsScreen() {
       <View style={styles.batchBar}>
         <View style={styles.batchButtons}>
           <TouchableOpacity style={styles.batchButton} onPress={selectAll}>
-            <Ionicons name="checkmark-done" size={16} color="#6366f1" />
+            <Ionicons name="checkmark-done" size={16} color="#A04F37" />
             <Text style={styles.batchButtonText}>Keep All</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.batchButton} onPress={deselectAll}>
@@ -547,14 +547,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   categoryBadge: {
-    backgroundColor: '#eef2ff',
+    backgroundColor: '#F4E2D6',
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   categoryBadgeText: {
     fontSize: 11,
-    color: '#6366f1',
+    color: '#A04F37',
     fontWeight: '500',
   },
   needsReviewBadge: {
@@ -644,7 +644,7 @@ const styles = StyleSheet.create({
   batchButtonText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#6366f1',
+    color: '#A04F37',
   },
   counterText: {
     fontSize: 12,
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#6366f1',
+    backgroundColor: '#A04F37',
   },
   primaryButtonDisabled: {
     backgroundColor: '#c7c8cc',
@@ -751,7 +751,7 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: '100%',
     borderRadius: 4,
-    backgroundColor: '#6366f1',
+    backgroundColor: '#A04F37',
   },
 
   // Edit Modal
@@ -772,7 +772,7 @@ const styles = StyleSheet.create({
   },
   modalCancel: { fontSize: 16, color: '#6b7280' },
   modalTitle: { fontSize: 17, fontWeight: '600', color: '#1f2937' },
-  modalSave: { fontSize: 16, fontWeight: '600', color: '#6366f1' },
+  modalSave: { fontSize: 16, fontWeight: '600', color: '#A04F37' },
   modalContent: { flex: 1, padding: 20 },
   modalImageContainer: {
     height: 200,
@@ -808,7 +808,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-  chipSelected: { backgroundColor: '#6366f1', borderColor: '#6366f1' },
+  chipSelected: { backgroundColor: '#A04F37', borderColor: '#A04F37' },
   chipText: { fontSize: 13, color: '#4b5563', textTransform: 'capitalize' },
   chipTextSelected: { color: '#fff', fontWeight: '500' },
   colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -821,5 +821,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  colorChipSelected: { borderColor: '#6366f1', borderWidth: 3 },
+  colorChipSelected: { borderColor: '#A04F37', borderWidth: 3 },
 });

@@ -297,11 +297,11 @@ const styles = StyleSheet.create({
     },
     todayBorder: {
         borderWidth: 2,
-        borderColor: '#6366f1',
+        borderColor: '#A04F37',
     },
     todayBorderSmall: {
         borderWidth: 1,
-        borderColor: '#6366f1',
+        borderColor: '#A04F37',
     },
     monthLabel: {
         fontSize: 9,

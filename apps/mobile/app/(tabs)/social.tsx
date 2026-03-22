@@ -165,7 +165,7 @@ export default function SocialScreen() {
                     onPress={() => handleSquadPress(squad)}
                 >
                     <View style={styles.squadChipIcon}>
-                        <Ionicons name="people" size={16} color="#6366f1" />
+                        <Ionicons name="people" size={16} color="#A04F37" />
                     </View>
                     <Text style={styles.squadChipName} numberOfLines={1}>
                         {squad.name}
@@ -174,7 +174,7 @@ export default function SocialScreen() {
                 </TouchableOpacity>
             ))}
             <TouchableOpacity style={styles.squadChipAdd} onPress={handleJoinSquad}>
-                <Ionicons name="enter-outline" size={16} color="#6366f1" />
+                <Ionicons name="enter-outline" size={16} color="#A04F37" />
                 <Text style={styles.squadChipAddText}>Join</Text>
             </TouchableOpacity>
         </ScrollView>
@@ -258,12 +258,12 @@ export default function SocialScreen() {
                     <Text style={styles.title}>Style Squads</Text>
                     <View style={styles.headerActions}>
                         <TouchableOpacity style={styles.headerBtn} onPress={handleCreateSquad}>
-                            <Ionicons name="add" size={22} color="#6366f1" />
+                            <Ionicons name="add" size={22} color="#A04F37" />
                         </TouchableOpacity>
                     </View>
                 </View>
                 <TouchableOpacity style={styles.joinBar} onPress={handleJoinSquad}>
-                    <Ionicons name="enter-outline" size={20} color="#6366f1" />
+                    <Ionicons name="enter-outline" size={20} color="#A04F37" />
                     <Text style={styles.joinBarText}>Join with Code</Text>
                 </TouchableOpacity>
                 {renderNoSquads()}
@@ -278,10 +278,10 @@ export default function SocialScreen() {
                 <Text style={styles.title}>Style Squads</Text>
                 <View style={styles.headerActions}>
                     <TouchableOpacity style={styles.headerBtn} onPress={handlePostOotd}>
-                        <Ionicons name="camera" size={20} color="#6366f1" />
+                        <Ionicons name="camera" size={20} color="#A04F37" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.headerBtn} onPress={handleCreateSquad}>
-                        <Ionicons name="add" size={22} color="#6366f1" />
+                        <Ionicons name="add" size={22} color="#A04F37" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -311,8 +311,8 @@ export default function SocialScreen() {
                         <RefreshControl
                             refreshing={refreshing}
                             onRefresh={handleRefresh}
-                            tintColor="#6366f1"
-                            colors={['#6366f1']}
+                            tintColor="#A04F37"
+                            colors={['#A04F37']}
                         />
                     }
                     showsVerticalScrollIndicator={false}
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 12,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     joinBarText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 
     // Compact squad row
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
         width: 24,
         height: 24,
         borderRadius: 12,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     squadChipAddText: {
         fontSize: 13,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 
     // Filter chips
@@ -462,8 +462,8 @@ const styles = StyleSheet.create({
         borderColor: '#e5e7eb',
     },
     filterChipActive: {
-        backgroundColor: '#6366f1',
-        borderColor: '#6366f1',
+        backgroundColor: '#A04F37',
+        borderColor: '#A04F37',
     },
     filterChipText: {
         fontSize: 13,
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
     emptyButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingVertical: 12,
         paddingHorizontal: 20,
         borderRadius: 12,

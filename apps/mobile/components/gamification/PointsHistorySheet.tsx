@@ -83,7 +83,7 @@ export default function PointsHistorySheet({ visible, onClose }: PointsHistorySh
 
                     {isLoading ? (
                         <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color="#6366f1" />
+                            <ActivityIndicator size="large" color="#A04F37" />
                         </View>
                     ) : entries.length === 0 ? (
                         <View style={styles.emptyState}>
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
         marginTop: 1,
     },
     pointsBadge: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 8,
         paddingHorizontal: 10,
         paddingVertical: 4,
@@ -221,6 +221,6 @@ const styles = StyleSheet.create({
     pointsText: {
         fontSize: 14,
         fontWeight: '700',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 });

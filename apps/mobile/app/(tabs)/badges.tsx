@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     countBadge: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 12,
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     countText: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     scroll: {
         flex: 1,

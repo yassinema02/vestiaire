@@ -200,10 +200,10 @@ export function ForecastWidget() {
             <View style={styles.container}>
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>
-                        <Ionicons name="calendar-outline" size={20} color="#6366f1" />
+                        <Ionicons name="calendar-outline" size={20} color="#A04F37" />
                         <Text style={styles.headerTitle}>5-Day Forecast</Text>
                     </View>
-                    <ActivityIndicator size="small" color="#6366f1" />
+                    <ActivityIndicator size="small" color="#A04F37" />
                 </View>
             </View>
         );
@@ -229,12 +229,12 @@ export function ForecastWidget() {
             {/* Header (always visible) */}
             <TouchableOpacity style={styles.header} onPress={toggleExpanded} activeOpacity={0.7}>
                 <View style={styles.headerLeft}>
-                    <Ionicons name="calendar-outline" size={20} color="#6366f1" />
+                    <Ionicons name="calendar-outline" size={20} color="#A04F37" />
                     <Text style={styles.headerTitle}>5-Day Forecast</Text>
                 </View>
                 <View style={styles.headerRight}>
                     {isForecastLoading && (
-                        <ActivityIndicator size="small" color="#6366f1" style={styles.loadingIndicator} />
+                        <ActivityIndicator size="small" color="#A04F37" style={styles.loadingIndicator} />
                     )}
                     <Ionicons
                         name={isExpanded ? 'chevron-up' : 'chevron-down'}
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     categoryChip: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 16,
         paddingVertical: 6,
         paddingHorizontal: 12,
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     categoryText: {
         fontSize: 13,
         fontWeight: '500',
-        color: '#4f46e5',
+        color: '#7D3825',
     },
     tipsSection: {
         gap: 8,
@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
         lineHeight: 18,
     },
     suggestionButton: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 12,
         paddingVertical: 14,
         flexDirection: 'row',

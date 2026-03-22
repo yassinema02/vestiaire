@@ -74,7 +74,7 @@ export default function DonationHistoryScreen() {
                                 <Text style={styles.statLabel}>Weight</Text>
                             </View>
                             <View style={styles.statItem}>
-                                <Text style={[styles.statValue, { color: '#6366f1' }]}>
+                                <Text style={[styles.statValue, { color: '#A04F37' }]}>
                                     £{stats.totalEstimatedValue.toFixed(0)}
                                 </Text>
                                 <Text style={styles.statLabel}>Est. Value</Text>
@@ -91,7 +91,7 @@ export default function DonationHistoryScreen() {
 
                         {stats.thisYearValue > 0 && (
                             <View style={styles.sustainRow}>
-                                <Ionicons name="cash-outline" size={16} color="#6366f1" />
+                                <Ionicons name="cash-outline" size={16} color="#A04F37" />
                                 <Text style={styles.sustainText}>
                                     £{stats.thisYearValue.toFixed(0)} donated this year (tax est.)
                                 </Text>
@@ -274,6 +274,6 @@ const styles = StyleSheet.create({
     valueText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 });

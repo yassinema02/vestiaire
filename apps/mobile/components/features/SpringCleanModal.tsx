@@ -108,7 +108,7 @@ export default function SpringCleanModal({ visible, items, onDismiss, onComplete
                 {/* Step 1: Overview */}
                 {step === 'overview' && (
                     <View style={styles.stepContent}>
-                        <Ionicons name="sparkles" size={48} color="#6366f1" />
+                        <Ionicons name="sparkles" size={48} color="#A04F37" />
                         <Text style={styles.overviewTitle}>Time for a Spring Clean!</Text>
                         <Text style={styles.overviewSubtitle}>
                             You have {sortedItems.length} neglected item{sortedItems.length !== 1 ? 's' : ''}.{'\n'}
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#e5e7eb',
     },
     stepDotActive: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
     },
     stepContent: {
         flex: 1,
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
         marginTop: 16,
     },
     startButton: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 48,
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     doneButton: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 48,

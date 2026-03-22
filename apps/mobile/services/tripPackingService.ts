@@ -9,7 +9,7 @@ import { TripEvent, PackingList, PackingDay, PackingItem } from '../types/packin
 import { CalendarEventRow, eventSyncService } from './eventSyncService';
 import { generateEventOutfit, generateFallbackOutfit } from './aiOutfitService';
 import { WardrobeItem } from './items';
-import { OccasionType } from '../types/context';
+import { OccasionType } from '../utils/occasionDetector';
 
 const PACKING_LIST_PREFIX = 'packing_list_';
 

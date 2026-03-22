@@ -50,7 +50,7 @@ export const extractionCategorizationService = {
         const idx = VALID_COLOR_NAMES.indexOf(c.toLowerCase());
         return idx >= 0 ? COLORS[idx].name : null;
       })
-      .filter((c): c is string => c !== null);
+      .filter((c): c is (typeof COLORS)[number]['name'] => c !== null);
   },
 
   /**

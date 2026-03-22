@@ -7,7 +7,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') || '*';
 
@@ -83,7 +83,7 @@ Rules:
 - Focus on the PRODUCT, not the model wearing it or background
 - If the image is not a clothing/fashion item, set confidence to 0 and return reasonable defaults`;
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
     }

@@ -149,7 +149,7 @@ export const EventOutfitCard: React.FC<EventOutfitCardProps> = ({
                 <View style={styles.outfitSection}>
                     {isLoading ? (
                         <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="small" color="#6366f1" />
+                            <ActivityIndicator size="small" color="#A04F37" />
                             <Text style={styles.loadingText}>Generating outfit...</Text>
                         </View>
                     ) : suggestion ? (
@@ -179,7 +179,7 @@ export const EventOutfitCard: React.FC<EventOutfitCardProps> = ({
                             {/* Actions */}
                             <View style={styles.actionRow}>
                                 <TouchableOpacity style={styles.regenerateBtn} onPress={handleRegenerate}>
-                                    <Ionicons name="refresh-outline" size={16} color="#6366f1" />
+                                    <Ionicons name="refresh-outline" size={16} color="#A04F37" />
                                     <Text style={styles.regenerateText}>Regenerate</Text>
                                 </TouchableOpacity>
                                 {onSaveOutfit && (
@@ -299,12 +299,12 @@ const styles = StyleSheet.create({
         paddingVertical: 7,
         paddingHorizontal: 12,
         borderRadius: 8,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
     },
     regenerateText: {
         fontSize: 13,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     saveBtn: {
         flexDirection: 'row',
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     },
     changeLink: {
         fontSize: 12,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500',
     },
 });

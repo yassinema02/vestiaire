@@ -122,7 +122,7 @@ export default function OutfitsScreen() {
                     <View style={styles.outfitMeta}>
                         {outfit.is_ai_generated && (
                             <View style={styles.aiBadge}>
-                                <Ionicons name="sparkles" size={12} color="#6366f1" />
+                                <Ionicons name="sparkles" size={12} color="#A04F37" />
                                 <Text style={styles.aiBadgeText}>AI</Text>
                             </View>
                         )}
@@ -195,7 +195,7 @@ export default function OutfitsScreen() {
             <View style={styles.header}>
                 <Text style={styles.title}>Outfits</Text>
                 <TouchableOpacity style={styles.addButton} onPress={handleCreateOutfit}>
-                    <Ionicons name="add" size={22} color="#6366f1" />
+                    <Ionicons name="add" size={22} color="#A04F37" />
                 </TouchableOpacity>
             </View>
 
@@ -210,7 +210,7 @@ export default function OutfitsScreen() {
                         Swipe through AI-generated looks
                     </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={24} color="#6366f1" />
+                <Ionicons name="chevron-forward" size={24} color="#A04F37" />
             </TouchableOpacity>
 
             {/* Filter Bar */}
@@ -218,7 +218,7 @@ export default function OutfitsScreen() {
 
             {isLoading ? (
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#6366f1" />
+                    <ActivityIndicator size="large" color="#A04F37" />
                 </View>
             ) : filteredOutfits.length === 0 ? (
                 <View style={styles.emptyContainer}>
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 12,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 12,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
@@ -381,8 +381,8 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     countBadge: {
-        backgroundColor: '#eef2ff',
-        color: '#6366f1',
+        backgroundColor: '#F4E2D6',
+        color: '#A04F37',
         fontSize: 13,
         fontWeight: '600',
         paddingHorizontal: 8,
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     emptyButton: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 12,
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 3,
-        backgroundColor: '#f5f3ff',
+        backgroundColor: '#F8EEE7',
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 4,
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     aiBadgeText: {
         fontSize: 11,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     occasionText: {
         fontSize: 13,

@@ -12,7 +12,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET');
 
-serve(async (req) => {
+serve(async (req: Request) => {
     try {
         // 1. Verify webhook signature/secret
         const receivedSecret = req.headers.get('x-webhook-secret');
@@ -82,21 +82,23 @@ serve(async (req) => {
         }
 
         // 5. Get push tokens for members
-        const userIds = members.map((m) => m.user_id);
+        const userIds = members.map((member: { user_id: string }) => member.user_id);
         const { data: profiles } = await supabase
             .from('profiles')
             .select('push_token')
             .in('id', userIds)
             .not('push_token', 'is', null);
 
-        const tokens = (profiles || []).map((p) => p.push_token).filter(Boolean);
+        const tokens = (profiles || [])
+            .map((profile: { push_token: string | null }) => profile.push_token)
+            .filter((token: string | null): token is string => Boolean(token));
 
         if (tokens.length === 0) {
             return new Response(JSON.stringify({ sent: 0, reason: 'no tokens' }), { status: 200 });
         }
 
         // 6. Send via Expo Push Notification API with timeout
-        const messages = tokens.map((token) => ({
+        const messages = tokens.map((token: string) => ({
             to: token,
             title: 'Style Squad',
             body: `${authorName} just posted their OOTD!`,

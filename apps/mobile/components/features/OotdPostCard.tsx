@@ -151,7 +151,7 @@ export default function OotdPostCard({ post, squadName, isReacted, onPhotoPress,
                         onPress={onStealLookPress}
                         activeOpacity={0.7}
                     >
-                        <Ionicons name="sparkles" size={14} color="#6366f1" />
+                        <Ionicons name="sparkles" size={14} color="#A04F37" />
                         <Text style={styles.stealBtnText}>Steal</Text>
                     </TouchableOpacity>
                 )}
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 8,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     avatarText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     headerInfo: {
         flex: 1,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     engagementCountActive: {
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '600',
     },
     stealBtn: {
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 4,
         marginLeft: 'auto',
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 12,
@@ -287,6 +287,6 @@ const styles = StyleSheet.create({
     stealBtnText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 });

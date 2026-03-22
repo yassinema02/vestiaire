@@ -156,7 +156,7 @@ export default function CreateOotdScreen() {
                                 />
                                 {isSelected && (
                                     <View style={styles.checkmark}>
-                                        <Ionicons name="checkmark-circle" size={24} color="#6366f1" />
+                                        <Ionicons name="checkmark-circle" size={24} color="#A04F37" />
                                     </View>
                                 )}
                                 <Text style={styles.gridItemName} numberOfLines={1}>
@@ -221,11 +221,11 @@ export default function CreateOotdScreen() {
                         <Text style={styles.photoPlaceholderText}>Add a photo of your outfit</Text>
                         <View style={styles.photoButtons}>
                             <TouchableOpacity style={styles.photoButton} onPress={handleCamera}>
-                                <Ionicons name="camera" size={20} color="#6366f1" />
+                                <Ionicons name="camera" size={20} color="#A04F37" />
                                 <Text style={styles.photoButtonText}>Camera</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.photoButton} onPress={handleGallery}>
-                                <Ionicons name="images" size={20} color="#6366f1" />
+                                <Ionicons name="images" size={20} color="#A04F37" />
                                 <Text style={styles.photoButtonText}>Gallery</Text>
                             </TouchableOpacity>
                         </View>
@@ -236,11 +236,11 @@ export default function CreateOotdScreen() {
                 {photoUri && (
                     <View style={styles.photoSourceRow}>
                         <TouchableOpacity style={styles.photoSourceBtn} onPress={handleCamera}>
-                            <Ionicons name="camera" size={18} color="#6366f1" />
+                            <Ionicons name="camera" size={18} color="#A04F37" />
                             <Text style={styles.photoSourceText}>Retake</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.photoSourceBtn} onPress={handleGallery}>
-                            <Ionicons name="images" size={18} color="#6366f1" />
+                            <Ionicons name="images" size={18} color="#A04F37" />
                             <Text style={styles.photoSourceText}>Gallery</Text>
                         </TouchableOpacity>
                     </View>
@@ -270,7 +270,7 @@ export default function CreateOotdScreen() {
                             style={styles.addTagBtn}
                             onPress={() => setShowItemPicker(true)}
                         >
-                            <Ionicons name="add" size={18} color="#6366f1" />
+                            <Ionicons name="add" size={18} color="#A04F37" />
                             <Text style={styles.addTagText}>Add Item</Text>
                         </TouchableOpacity>
                     </View>
@@ -306,7 +306,7 @@ export default function CreateOotdScreen() {
                                 <Ionicons
                                     name={isSelected ? 'checkbox' : 'square-outline'}
                                     size={22}
-                                    color={isSelected ? '#6366f1' : '#9ca3af'}
+                                    color={isSelected ? '#A04F37' : '#9ca3af'}
                                 />
                                 <Text style={styles.squadRowName}>{squad.name}</Text>
                                 <Text style={styles.squadRowMeta}>
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     postBtn: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 10,
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 10,
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
     photoButtonText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     photoSourceRow: {
         flexDirection: 'row',
@@ -451,12 +451,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 16,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
     },
     photoSourceText: {
         fontSize: 13,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 
     // Sections
@@ -507,13 +507,13 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#6366f1',
+        borderColor: '#A04F37',
         borderStyle: 'dashed',
     },
     addTagText: {
         fontSize: 13,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 
     // Caption
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
     modalDone: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     itemGrid: {
         padding: 12,
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
     },
     gridItemSelected: {
         borderWidth: 2,
-        borderColor: '#6366f1',
+        borderColor: '#A04F37',
     },
     gridItemImage: {
         width: 80,

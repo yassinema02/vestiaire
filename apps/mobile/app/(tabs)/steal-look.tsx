@@ -110,7 +110,7 @@ export default function StealLookScreen() {
                     <View style={styles.headerSpacer} />
                 </View>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#6366f1" />
+                    <ActivityIndicator size="large" color="#A04F37" />
                     <Text style={styles.loadingText}>Analyzing look...</Text>
                     <Text style={styles.loadingSubtext}>
                         Finding matches in your wardrobe
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     },
     retryBtn: {
         marginTop: 16,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 10,
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     scoreValue: {
         fontSize: 36,
         fontWeight: '800',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     scoreLabel: {
         fontSize: 15,
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 14,
         paddingVertical: 16,
         marginTop: 8,

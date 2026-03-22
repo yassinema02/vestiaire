@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 10,
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     commentAvatarText: {
         fontSize: 10,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     commentBody: {
         flex: 1,
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
         color: '#9ca3af',
     },
     postBtn: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingHorizontal: 16,
         paddingVertical: 6,
         borderRadius: 14,

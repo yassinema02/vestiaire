@@ -3,12 +3,9 @@
  * Uses Google Gemini Vision to analyze clothing and extract metadata
  */
 
-import Constants from 'expo-constants';
 import { CLOTHING_ANALYSIS_PROMPT } from '../constants/prompts';
-import { trackedGenerateContent } from './aiUsageLogger';
+import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 import { optimizeForAI } from './imageOptimizer';
-
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 
 // Category taxonomy
 export const CATEGORIES = {
@@ -80,7 +77,7 @@ export interface ClothingAnalysis {
  * Check if AI categorization is configured
  */
 export const isCategorizationConfigured = (): boolean => {
-    return !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
+    return isGeminiConfigured();
 };
 
 /**
@@ -90,7 +87,7 @@ export const analyzeClothing = async (
     imageUrl: string
 ): Promise<{ analysis: ClothingAnalysis | null; error: Error | null }> => {
     if (!isCategorizationConfigured()) {
-        console.warn('AI categorization not configured - missing Gemini API key');
+        console.warn('AI categorization not configured - missing AI proxy configuration');
         return {
             analysis: null,
             error: new Error('AI categorization not configured'),
@@ -121,7 +118,7 @@ export const analyzeClothing = async (
         });
 
         const result = await trackedGenerateContent({
-            model: 'gemini-2.0-flash',
+            model: 'gemini-2.5-flash',
             contents: [{
                 role: 'user',
                 parts: [

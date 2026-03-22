@@ -217,7 +217,7 @@ export default function AddScreen() {
             <View style={styles.optionsContainer}>
                 <TouchableOpacity style={styles.optionCard} onPress={handleCameraPress}>
                     <View style={styles.optionIconContainer}>
-                        <Ionicons name="camera-outline" size={48} color="#6366f1" />
+                        <Ionicons name="camera-outline" size={48} color="#A04F37" />
                     </View>
                     <Text style={styles.optionTitle}>Take a Photo</Text>
                     <Text style={styles.optionSubtitle}>Use your camera to capture the item</Text>
@@ -225,7 +225,7 @@ export default function AddScreen() {
 
                 <TouchableOpacity style={styles.optionCard} onPress={handleGalleryPress}>
                     <View style={styles.optionIconContainer}>
-                        <Ionicons name="images-outline" size={48} color="#6366f1" />
+                        <Ionicons name="images-outline" size={48} color="#A04F37" />
                     </View>
                     <Text style={styles.optionTitle}>Choose from Gallery</Text>
                     <Text style={styles.optionSubtitle}>Select from your photo library</Text>
@@ -281,7 +281,7 @@ export default function AddScreen() {
                             disabled={isProcessing}
                         >
                             {isProcessing ? (
-                                <ActivityIndicator color="#6366f1" size="large" />
+                                <ActivityIndicator color="#A04F37" size="large" />
                             ) : (
                                 <View style={styles.captureButtonInner} />
                             )}
@@ -336,7 +336,7 @@ export default function AddScreen() {
                         setViewMode('options');
                     }}
                 >
-                    <Ionicons name="refresh-outline" size={20} color="#6366f1" />
+                    <Ionicons name="refresh-outline" size={20} color="#A04F37" />
                     <Text style={styles.retakeButtonText}>Retake</Text>
                 </TouchableOpacity>
 
@@ -352,7 +352,7 @@ export default function AddScreen() {
     const renderUploading = () => (
         <View style={styles.uploadingContainer}>
             <View style={styles.uploadingContent}>
-                <ActivityIndicator size="large" color="#6366f1" />
+                <ActivityIndicator size="large" color="#A04F37" />
                 <Text style={styles.uploadingTitle}>Uploading...</Text>
                 <Text style={styles.uploadingSubtitle}>
                     {uploadProgress < 100 ? `${uploadProgress}%` : 'Processing...'}
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
@@ -557,13 +557,13 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         backgroundColor: '#fff',
         borderWidth: 1,
-        borderColor: '#6366f1',
+        borderColor: '#A04F37',
         gap: 8,
     },
     retakeButtonText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     usePhotoButton: {
         flex: 2,
@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         padding: 16,
         borderRadius: 12,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         gap: 8,
     },
     usePhotoButtonText: {
@@ -612,7 +612,7 @@ const styles = StyleSheet.create({
     },
     progressFill: {
         height: '100%',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 4,
     },
 });

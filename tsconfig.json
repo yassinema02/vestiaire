@@ -1,4 +1,16 @@
 {
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/mobile"
+    },
+    {
+      "path": "./packages/shared"
+    },
+    {
+      "path": "./supabase/functions"
+    }
+  ],
   "compilerOptions": {},
   "extends": "expo/tsconfig.base"
 }

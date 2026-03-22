@@ -176,7 +176,7 @@ export default function ListingHistoryScreen() {
                         <Text style={styles.statLabel}>Sold</Text>
                     </View>
                     <View style={styles.statCard}>
-                        <Text style={[styles.statValue, { color: '#6366f1' }]}>
+                        <Text style={[styles.statValue, { color: '#A04F37' }]}>
                             {stats.totalRevenue > 0 ? `$${stats.totalRevenue.toFixed(0)}` : '$0'}
                         </Text>
                         <Text style={styles.statLabel}>Revenue</Text>
@@ -206,7 +206,7 @@ export default function ListingHistoryScreen() {
                 {/* Content */}
                 {isLoading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#6366f1" />
+                        <ActivityIndicator size="large" color="#A04F37" />
                     </View>
                 ) : listings.length === 0 ? (
                     <View style={styles.emptyState}>
@@ -356,8 +356,8 @@ function ListingCard({
                             style={styles.actionBtn}
                             onPress={() => onRegenerate(item)}
                         >
-                            <Ionicons name="refresh-outline" size={16} color="#6366f1" />
-                            <Text style={[styles.actionBtnText, { color: '#6366f1' }]}>Re-generate</Text>
+                            <Ionicons name="refresh-outline" size={16} color="#A04F37" />
+                            <Text style={[styles.actionBtnText, { color: '#A04F37' }]}>Re-generate</Text>
                         </TouchableOpacity>
                     )}
                     <TouchableOpacity
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     filterChipActive: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
     },
     filterChipText: {
         fontSize: 13,

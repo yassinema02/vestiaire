@@ -64,7 +64,7 @@ export default function HealthScoreCard({ healthScore, onSpringClean }: HealthSc
 
             {/* Comparison */}
             <View style={styles.infoRow}>
-                <Ionicons name="bar-chart-outline" size={16} color="#6366f1" />
+                <Ionicons name="bar-chart-outline" size={16} color="#A04F37" />
                 <Text style={styles.infoText}>{comparisonLabel}</Text>
             </View>
 
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 6,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 10,
         paddingVertical: 12,
         marginTop: 8,

@@ -80,7 +80,7 @@ export default function LevelUpModal({ visible, newLevel, onDismiss }: LevelUpMo
                     <Text style={styles.levelBadge}>Level {newLevel}</Text>
 
                     <View style={styles.unlockRow}>
-                        <Ionicons name="ribbon-outline" size={18} color="#6366f1" />
+                        <Ionicons name="ribbon-outline" size={18} color="#A04F37" />
                         <Text style={styles.unlockText}>New badge unlocked!</Text>
                     </View>
 
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '100%',
         maxWidth: 320,
-        shadowColor: '#6366f1',
+        shadowColor: '#A04F37',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.2,
         shadowRadius: 24,
@@ -138,13 +138,13 @@ const styles = StyleSheet.create({
     levelName: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     levelBadge: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6366f1',
-        backgroundColor: '#eef2ff',
+        color: '#A04F37',
+        backgroundColor: '#F4E2D6',
         paddingHorizontal: 14,
         paddingVertical: 6,
         borderRadius: 12,
@@ -162,12 +162,12 @@ const styles = StyleSheet.create({
     },
     unlockText: {
         fontSize: 14,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500',
     },
     button: {
         marginTop: 24,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 48,

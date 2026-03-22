@@ -268,7 +268,7 @@ export default function ItemDetailScreen() {
                     <View style={{ width: 40 }} />
                 </View>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#6366f1" />
+                    <ActivityIndicator size="large" color="#A04F37" />
                 </View>
             </View>
         );
@@ -340,7 +340,7 @@ export default function ItemDetailScreen() {
                             onPress={() => navigateToItem('prev')}
                             disabled={currentIndex === 0}
                         >
-                            <Ionicons name="chevron-back" size={20} color={currentIndex === 0 ? '#d1d5db' : '#6366f1'} />
+                            <Ionicons name="chevron-back" size={20} color={currentIndex === 0 ? '#d1d5db' : '#A04F37'} />
                             <Text style={[styles.navButtonText, currentIndex === 0 && styles.navButtonTextDisabled]}>Previous</Text>
                         </TouchableOpacity>
                         <Text style={styles.navCounter}>{currentIndex + 1} / {allItemIds.length}</Text>
@@ -350,7 +350,7 @@ export default function ItemDetailScreen() {
                             disabled={currentIndex === allItemIds.length - 1}
                         >
                             <Text style={[styles.navButtonText, currentIndex === allItemIds.length - 1 && styles.navButtonTextDisabled]}>Next</Text>
-                            <Ionicons name="chevron-forward" size={20} color={currentIndex === allItemIds.length - 1 ? '#d1d5db' : '#6366f1'} />
+                            <Ionicons name="chevron-forward" size={20} color={currentIndex === allItemIds.length - 1 ? '#d1d5db' : '#A04F37'} />
                         </TouchableOpacity>
                     </View>
                 )}
@@ -481,7 +481,7 @@ export default function ItemDetailScreen() {
                                         { text: 'Cancel', style: 'cancel' },
                                         {
                                             text: 'Donate',
-                                            onPress: async (charityName) => {
+                                            onPress: async (charityName?: string) => {
                                                 await donationService.logDonation(item.id, charityName || undefined);
                                                 loadItem();
                                             },
@@ -503,7 +503,7 @@ export default function ItemDetailScreen() {
                 <View style={styles.wearHistoryCard}>
                     <Text style={styles.cardTitle}>Wear History</Text>
                     {isLoadingHistory ? (
-                        <ActivityIndicator size="small" color="#6366f1" style={{ paddingVertical: 16 }} />
+                        <ActivityIndicator size="small" color="#A04F37" style={{ paddingVertical: 16 }} />
                     ) : wearHistory.length === 0 ? (
                         <Text style={styles.noHistoryText}>No wear logs yet</Text>
                     ) : (
@@ -548,7 +548,7 @@ export default function ItemDetailScreen() {
                         <Text style={styles.cardTitle}>Details</Text>
                         {!isEditing ? (
                             <TouchableOpacity onPress={() => setIsEditing(true)} style={styles.editButton}>
-                                <Ionicons name="pencil" size={16} color="#6366f1" />
+                                <Ionicons name="pencil" size={16} color="#A04F37" />
                                 <Text style={styles.editButtonText}>Edit</Text>
                             </TouchableOpacity>
                         ) : (
@@ -852,7 +852,7 @@ const styles = StyleSheet.create({
     },
     navButtonText: {
         fontSize: 14,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500'
     },
     navButtonTextDisabled: {
@@ -891,7 +891,7 @@ const styles = StyleSheet.create({
     statValue: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#6366f1'
+        color: '#A04F37'
     },
     statLabel: {
         fontSize: 12,
@@ -926,7 +926,7 @@ const styles = StyleSheet.create({
     },
     editButtonText: {
         fontSize: 14,
-        color: '#6366f1',
+        color: '#A04F37',
         marginLeft: 4,
         fontWeight: '500'
     },
@@ -943,7 +943,7 @@ const styles = StyleSheet.create({
         color: '#6b7280'
     },
     saveButton: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingHorizontal: 16,
         paddingVertical: 6,
         borderRadius: 8,
@@ -1022,8 +1022,8 @@ const styles = StyleSheet.create({
         borderColor: '#e5e7eb'
     },
     chipSelected: {
-        backgroundColor: '#6366f1',
-        borderColor: '#6366f1'
+        backgroundColor: '#A04F37',
+        borderColor: '#A04F37'
     },
     chipText: {
         fontSize: 13,
@@ -1197,7 +1197,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 6,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingVertical: 12,
         borderRadius: 10,
     },
@@ -1274,7 +1274,7 @@ const styles = StyleSheet.create({
     },
     wearSummary: {
         fontSize: 14,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500',
         marginBottom: 12,
     },

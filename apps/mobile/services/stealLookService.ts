@@ -4,14 +4,11 @@
  * Story 9.5: "Steal This Look"
  */
 
-import Constants from 'expo-constants';
 import { OotdPostWithAuthor, StealMatchResult, StealLookResult } from '../types/social';
 import { ootdService } from './ootdService';
 import { itemsService, WardrobeItem } from './items';
 import { buildStealLookPrompt } from '../constants/prompts';
-import { trackedGenerateContent } from './aiUsageLogger';
-
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
+import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 
 interface TaggedItemInfo {
     id: string;
@@ -53,7 +50,7 @@ async function analyzeLook(
 
         // 3. Match items - try AI first, fallback to attribute-based
         let matches: StealMatchResult[];
-        const aiConfigured = !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
+        const aiConfigured = isGeminiConfigured();
 
         if (aiConfigured) {
             try {
@@ -141,8 +138,8 @@ async function matchWithAI(
     );
 
     const result = await trackedGenerateContent({
-        model: 'gemini-2.0-flash',
-        contents: prompt,
+        model: 'gemini-2.5-flash',
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
     }, 'steal_look');
 
     const text = result.text;

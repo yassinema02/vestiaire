@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     },
     wrongText: {
         fontSize: 12,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500',
     },
 
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     },
     typeOptionSelected: {
         borderWidth: 2,
-        borderColor: '#6366f1',
+        borderColor: '#A04F37',
     },
     typeIcon: {
         width: 44,

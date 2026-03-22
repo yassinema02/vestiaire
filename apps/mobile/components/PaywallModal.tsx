@@ -93,7 +93,7 @@ export default function PaywallModal({
 
                     {/* Header */}
                     <View style={styles.iconWrap}>
-                        <Ionicons name="rocket" size={32} color="#6366f1" />
+                        <Ionicons name="rocket" size={32} color="#A04F37" />
                     </View>
                     <Text style={styles.title}>Upgrade to Premium</Text>
                     <Text style={styles.subtitle}>
@@ -112,7 +112,7 @@ export default function PaywallModal({
                         {PREMIUM_BENEFITS.map((b, i) => (
                             <View key={i} style={styles.benefitRow}>
                                 <View style={styles.benefitCheck}>
-                                    <Ionicons name={b.icon as any} size={16} color="#6366f1" />
+                                    <Ionicons name={b.icon as any} size={16} color="#A04F37" />
                                 </View>
                                 <Text style={styles.benefitText}>{b.label}</Text>
                             </View>
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
         width: 64,
         height: 64,
         borderRadius: 20,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 10,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     },
     upgradeButton: {
         width: '100%',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 14,
         paddingVertical: 16,
         alignItems: 'center',
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     },
     upgradePrice: {
         fontSize: 13,
-        color: '#c7d2fe',
+        color: '#D9C7B4',
         marginTop: 2,
     },
     resetText: {

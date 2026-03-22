@@ -200,7 +200,7 @@ export default function ScanConfirmScreen() {
     if (isAnalyzing && analysisProgress === 'scoring') {
         return (
             <View style={[styles.container, styles.centerContainer]}>
-                <ActivityIndicator size="large" color="#6366f1" />
+                <ActivityIndicator size="large" color="#A04F37" />
                 <Text style={styles.scoringText}>Checking wardrobe compatibility...</Text>
             </View>
         );
@@ -227,7 +227,7 @@ export default function ScanConfirmScreen() {
                 </View>
             ) : (
                 <View style={styles.aiBadge}>
-                    <Ionicons name="sparkles" size={16} color="#6366f1" />
+                    <Ionicons name="sparkles" size={16} color="#A04F37" />
                     <Text style={styles.aiBadgeText}>AI extracted this data</Text>
                 </View>
             )}
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     },
     scoringText: {
         fontSize: 15,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500',
     },
     header: {
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         alignSelf: 'center',
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 20,
         paddingHorizontal: 14,
         paddingVertical: 6,
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     },
     aiBadgeText: {
         fontSize: 13,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500',
     },
 
@@ -503,8 +503,8 @@ const styles = StyleSheet.create({
         borderColor: '#e5e7eb',
     },
     chipSelected: {
-        backgroundColor: '#6366f1',
-        borderColor: '#6366f1',
+        backgroundColor: '#A04F37',
+        borderColor: '#A04F37',
     },
     chipText: {
         fontSize: 13,
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#e5e7eb',
     },
     formalityDotActive: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
     },
     formalityEndLabel: {
         fontSize: 11,

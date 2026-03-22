@@ -243,7 +243,7 @@ export default function ScanResultsScreen() {
                             onPress={() => router.push('/(tabs)/add')}
                             activeOpacity={0.8}
                         >
-                            <Ionicons name="add-circle-outline" size={18} color="#6366f1" />
+                            <Ionicons name="add-circle-outline" size={18} color="#A04F37" />
                             <Text style={styles.addItemsCtaText}>Add Items</Text>
                         </TouchableOpacity>
                     </View>
@@ -339,7 +339,7 @@ export default function ScanResultsScreen() {
                         };
                         const bgMap: Record<string, string> = {
                             match: '#ecfdf5',
-                            gap: '#f5f3ff',
+                            gap: '#F8EEE7',
                             tip: '#eff6ff',
                             warning: '#fff7ed',
                         };
@@ -439,7 +439,7 @@ export default function ScanResultsScreen() {
                             <Ionicons
                                 name={showAllMatches ? 'chevron-up' : 'chevron-down'}
                                 size={16}
-                                color="#6366f1"
+                                color="#A04F37"
                             />
                         </TouchableOpacity>
                     )}
@@ -459,7 +459,7 @@ export default function ScanResultsScreen() {
                             onPress={() => router.push('/(tabs)/add')}
                             activeOpacity={0.8}
                         >
-                            <Ionicons name="add-circle-outline" size={18} color="#6366f1" />
+                            <Ionicons name="add-circle-outline" size={18} color="#A04F37" />
                             <Text style={styles.addItemsCtaText}>Add Items</Text>
                         </TouchableOpacity>
                     </View>
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     emptyButton: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 12,
         paddingHorizontal: 24,
         paddingVertical: 12,
@@ -685,7 +685,7 @@ const styles = StyleSheet.create({
     addItemsCta: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 10,
         paddingHorizontal: 16,
         paddingVertical: 10,
@@ -695,7 +695,7 @@ const styles = StyleSheet.create({
     addItemsCtaText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     productName: {
         fontSize: 16,
@@ -798,14 +798,14 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     reasonBadge: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 8,
         paddingHorizontal: 6,
         paddingVertical: 2,
     },
     reasonText: {
         fontSize: 10,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500',
     },
     categoryGroup: {
@@ -838,7 +838,7 @@ const styles = StyleSheet.create({
     seeAllText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     noMatchesSection: {
         alignItems: 'center',
@@ -864,7 +864,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 14,
         padding: 16,
         gap: 8,

@@ -135,7 +135,7 @@ export default function NotificationsScreen() {
             >
                 {/* Info Banner */}
                 <View style={styles.infoBanner}>
-                    <Ionicons name="information-circle" size={20} color="#6366f1" />
+                    <Ionicons name="information-circle" size={20} color="#A04F37" />
                     <Text style={styles.infoBannerText}>
                         Push notifications will activate when running a development build. Your preferences are saved for when they're enabled.
                     </Text>
@@ -147,7 +147,7 @@ export default function NotificationsScreen() {
 
                     <View style={styles.toggleRow}>
                         <View style={styles.toggleInfo}>
-                            <Ionicons name="shirt-outline" size={22} color="#6366f1" />
+                            <Ionicons name="shirt-outline" size={22} color="#A04F37" />
                             <View style={styles.toggleText}>
                                 <Text style={styles.toggleLabel}>Outfit Suggestions</Text>
                                 <Text style={styles.toggleDescription}>
@@ -158,8 +158,8 @@ export default function NotificationsScreen() {
                         <Switch
                             value={prefs.outfitSuggestions}
                             onValueChange={() => togglePref('outfitSuggestions')}
-                            trackColor={{ false: '#d1d5db', true: '#c7d2fe' }}
-                            thumbColor={prefs.outfitSuggestions ? '#6366f1' : '#f4f3f4'}
+                            trackColor={{ false: '#d1d5db', true: '#D9C7B4' }}
+                            thumbColor={prefs.outfitSuggestions ? '#A04F37' : '#f4f3f4'}
                         />
                     </View>
 
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     },
     infoBanner: {
         flexDirection: 'row',
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 12,
         padding: 14,
         gap: 10,
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     infoBannerText: {
         flex: 1,
         fontSize: 13,
-        color: '#4338ca',
+        color: '#7D3825',
         lineHeight: 18,
     },
     section: {

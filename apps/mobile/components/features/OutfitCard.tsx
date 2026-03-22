@@ -96,7 +96,7 @@ export const OutfitCard: React.FC<OutfitCardProps> = ({
             {/* Rationale */}
             <View style={styles.rationaleSection}>
                 <View style={styles.rationaleHeader}>
-                    <Ionicons name="sparkles" size={16} color="#6366f1" />
+                    <Ionicons name="sparkles" size={16} color="#A04F37" />
                     <Text style={styles.rationaleTitle}>Why this outfit?</Text>
                 </View>
                 <Text style={styles.rationaleText}>{suggestion.rationale}</Text>
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 4,
     },
     rationaleSection: {
-        backgroundColor: '#f5f3ff',
+        backgroundColor: '#F8EEE7',
         borderRadius: 12,
         padding: 12,
         marginBottom: 16,
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     rationaleTitle: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     rationaleText: {
         fontSize: 13,
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingVertical: 12,
         borderRadius: 12,
     },

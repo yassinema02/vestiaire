@@ -94,7 +94,7 @@ describe('extractionStore - background & retry (Story 10.6)', () => {
     it('does nothing if retryCount >= 2', async () => {
       useExtractionStore.setState({
         retryCount: 2,
-        currentJob: { id: 'job-1', user_id: 'u1', status: 'completed', total_photos: 5, processed_photos: 3, photo_urls: [], detected_items: null, error_message: null, items_added_count: 0, created_at: '', updated_at: '' },
+        currentJob: { id: 'job-1', user_id: 'u1', status: 'completed', total_photos: 5, processed_photos: 3, photo_urls: [], detected_items: null, error_message: null, items_added_count: 0, created_at: '', started_at: null, completed_at: null },
       });
       await useExtractionStore.getState().retryFailedPhotos();
       expect(useExtractionStore.getState().retryCount).toBe(2); // unchanged
@@ -106,8 +106,8 @@ describe('extractionStore - background & retry (Story 10.6)', () => {
         currentJob: {
           id: 'job-1', user_id: 'u1', status: 'completed', total_photos: 5, processed_photos: 3,
           photo_urls: ['a.jpg', 'b.jpg'],
-          detected_items: { total_items_detected: 2, failed_photos: 1, photos: [{ photo_url: 'a.jpg', detected_items: [], error: 'failed' }] },
-          error_message: null, items_added_count: 0, created_at: '', updated_at: '',
+          detected_items: { total_items_detected: 2, failed_photos: 1, photos: [{ photo_url: 'a.jpg', photo_index: 0, detected_items: [], error: 'failed' }] },
+          error_message: null, items_added_count: 0, created_at: '', started_at: null, completed_at: null,
         },
       });
       await useExtractionStore.getState().retryFailedPhotos();
@@ -120,8 +120,8 @@ describe('extractionStore - background & retry (Story 10.6)', () => {
         currentJob: {
           id: 'job-1', user_id: 'u1', status: 'completed', total_photos: 5, processed_photos: 3,
           photo_urls: ['a.jpg'],
-          detected_items: { total_items_detected: 2, failed_photos: 1, photos: [{ photo_url: 'a.jpg', detected_items: [], error: 'failed' }] },
-          error_message: null, items_added_count: 0, created_at: '', updated_at: '',
+          detected_items: { total_items_detected: 2, failed_photos: 1, photos: [{ photo_url: 'a.jpg', photo_index: 0, detected_items: [], error: 'failed' }] },
+          error_message: null, items_added_count: 0, created_at: '', started_at: null, completed_at: null,
         },
       });
       await useExtractionStore.getState().retryFailedPhotos();

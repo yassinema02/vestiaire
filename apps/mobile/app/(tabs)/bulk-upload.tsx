@@ -169,7 +169,7 @@ export default function BulkUploadScreen() {
             <View style={styles.thumbnailContainer}>
               <Image source={{ uri: item }} style={styles.thumbnail} />
               <View style={styles.checkOverlay}>
-                <Ionicons name="checkmark-circle" size={20} color="#6366f1" />
+                <Ionicons name="checkmark-circle" size={20} color="#A04F37" />
               </View>
             </View>
           )}
@@ -185,7 +185,7 @@ export default function BulkUploadScreen() {
 
       <View style={styles.bottomActions}>
         <TouchableOpacity style={styles.selectButton} onPress={selectPhotos}>
-          <Ionicons name="images" size={20} color="#6366f1" />
+          <Ionicons name="images" size={20} color="#A04F37" />
           <Text style={styles.selectButtonText}>
             {selectedPhotos.length > 0 ? 'Change Selection' : 'Select Photos'}
           </Text>
@@ -229,7 +229,7 @@ export default function BulkUploadScreen() {
         <View style={styles.progressSection}>
           {/* Pulsing spinner */}
           <Animated.View style={{ opacity: pulseAnim, marginBottom: 16 }}>
-            <Ionicons name="sync" size={40} color="#6366f1" />
+            <Ionicons name="sync" size={40} color="#A04F37" />
           </Animated.View>
 
           <Text style={styles.phaseTitle}>
@@ -271,7 +271,7 @@ export default function BulkUploadScreen() {
           {/* Continue using app button */}
           <TouchableOpacity style={styles.backgroundButton} onPress={handleBackground}>
             <Text style={styles.backgroundButtonText}>Continue using app</Text>
-            <Ionicons name="arrow-forward" size={16} color="#6366f1" />
+            <Ionicons name="arrow-forward" size={16} color="#A04F37" />
           </TouchableOpacity>
         </View>
       </View>
@@ -385,7 +385,7 @@ export default function BulkUploadScreen() {
                   .sort(([, a], [, b]) => b - a)
                   .map(([category, count]) => (
                     <View key={category} style={styles.summaryRow}>
-                      <Ionicons name={getCategoryIcon(category)} size={16} color="#6366f1" />
+                      <Ionicons name={getCategoryIcon(category)} size={16} color="#A04F37" />
                       <Text style={styles.summaryText}>{count} {category}</Text>
                     </View>
                   ))}
@@ -546,9 +546,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#6366f1',
+    borderColor: '#A04F37',
   },
-  selectButtonText: { fontSize: 15, fontWeight: '600', color: '#6366f1' },
+  selectButtonText: { fontSize: 15, fontWeight: '600', color: '#A04F37' },
   estimateText: { fontSize: 13, color: '#6b7280', textAlign: 'center' },
 
   // Progress
@@ -560,10 +560,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#e5e7eb',
     overflow: 'hidden',
   },
-  progressBarFill: { height: '100%', borderRadius: 4, backgroundColor: '#6366f1' },
+  progressBarFill: { height: '100%', borderRadius: 4, backgroundColor: '#A04F37' },
   progressText: { fontSize: 15, color: '#4b5563' },
   percentageText: { fontSize: 14, color: '#6b7280' },
-  detailText: { fontSize: 14, color: '#6366f1', fontWeight: '500' },
+  detailText: { fontSize: 14, color: '#A04F37', fontWeight: '500' },
   remainingText: { fontSize: 14, color: '#6b7280', marginTop: 4 },
   funFactContainer: {
     flexDirection: 'row',
@@ -583,9 +583,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#6366f1',
+    borderColor: '#A04F37',
   },
-  backgroundButtonText: { fontSize: 14, fontWeight: '600', color: '#6366f1' },
+  backgroundButtonText: { fontSize: 14, fontWeight: '600', color: '#A04F37' },
 
   // Bg Removal stats
   bgStatsRow: { flexDirection: 'row', gap: 16, marginTop: 4 },
@@ -643,7 +643,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#6366f1',
+    backgroundColor: '#A04F37',
   },
   primaryButtonText: { fontSize: 15, fontWeight: '600', color: '#fff' },
   secondaryButton: {

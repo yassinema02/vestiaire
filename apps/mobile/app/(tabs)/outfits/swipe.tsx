@@ -137,7 +137,7 @@ export default function OutfitSwipeScreen() {
 
                                 <View style={styles.rationaleBox}>
                                     <View style={styles.rationaleHeader}>
-                                        <Ionicons name="sparkles" size={18} color="#6366f1" />
+                                        <Ionicons name="sparkles" size={18} color="#A04F37" />
                                         <Text style={styles.rationaleTitle}>Why this outfit?</Text>
                                     </View>
                                     <Text style={styles.rationaleText}>
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
         textTransform: 'capitalize',
     },
     rationaleBox: {
-        backgroundColor: '#f5f3ff',
+        backgroundColor: '#F8EEE7',
         borderRadius: 12,
         padding: 16,
         marginBottom: 24,
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     rationaleTitle: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     rationaleText: {
         fontSize: 14,

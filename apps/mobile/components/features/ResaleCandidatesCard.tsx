@@ -16,7 +16,7 @@ interface ResaleCandidatesCardProps {
 function getScoreColor(score: number): string {
     if (score >= 80) return '#22c55e';
     if (score >= 60) return '#f59e0b';
-    return '#6366f1';
+    return '#A04F37';
 }
 
 export default function ResaleCandidatesCard({ candidates }: ResaleCandidatesCardProps) {

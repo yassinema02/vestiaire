@@ -3,10 +3,9 @@
  * Generates outfit suggestions using Gemini AI with wardrobe, weather, and calendar context
  */
 
-import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { buildOutfitSuggestionPrompt, buildEventOutfitPrompt as buildEventOutfitPromptTemplate } from '../constants/prompts';
-import { trackedGenerateContent } from './aiUsageLogger';
+import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 import { WardrobeItem } from './items';
 import { buildCurrentContext, formatContextForPrompt } from './contextService';
 import { Outfit, OutfitPosition } from '../types/outfit';
@@ -14,8 +13,6 @@ import { OccasionType } from '../utils/occasionDetector';
 import { getTimeOfDay, TimeOfDay } from '../types/context';
 import { useWeatherStore } from '../stores/weatherStore';
 import { CalendarEventRow } from './eventSyncService';
-
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 
 /**
  * AI-generated outfit suggestion
@@ -50,7 +47,7 @@ interface ItemSummary {
  * Check if AI outfit generation is configured
  */
 export const isOutfitGenerationConfigured = (): boolean => {
-    return !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
+    return isGeminiConfigured();
 };
 
 /**
@@ -88,7 +85,7 @@ export const generateOutfitSuggestions = async (
     wardrobeItems: WardrobeItem[]
 ): Promise<{ suggestions: OutfitSuggestion[] | null; error: Error | null }> => {
     if (!isOutfitGenerationConfigured()) {
-        console.warn('AI outfit generation not configured - missing Gemini API key');
+        console.warn('AI outfit generation not configured - missing AI proxy configuration');
         return {
             suggestions: null,
             error: new Error('AI outfit generation not configured'),
@@ -119,8 +116,8 @@ export const generateOutfitSuggestions = async (
 
         // Call Gemini
         const result = await trackedGenerateContent({
-            model: 'gemini-2.0-flash',
-            contents: prompt,
+            model: 'gemini-2.5-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
         }, 'outfit_gen');
 
         const text = result.text;
@@ -264,7 +261,7 @@ export const getEventTimeOfDay = (startTime: string): TimeOfDay => {
  */
 const buildEventOutfitPromptLocal = (
     items: ItemSummary[],
-    event: { title: string; event_type: string; formality_score: number; start_time: string; location?: string | null },
+    event: { title: string; event_type: string | null; formality_score: number | null; start_time: string; location?: string | null },
     weather?: { temperature: number; condition: string } | null
 ): string => {
     const itemsJson = JSON.stringify(items, null, 2);
@@ -369,8 +366,8 @@ export const generateEventOutfit = async (
         const prompt = buildEventOutfitPromptLocal(itemSummaries, event, weather);
 
         const result = await trackedGenerateContent({
-            model: 'gemini-2.0-flash',
-            contents: prompt,
+            model: 'gemini-2.5-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
         }, 'event_outfit_gen');
 
         const text = result.text;

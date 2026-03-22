@@ -198,7 +198,7 @@ export default function SquadDetailScreen() {
         return (
             <View style={styles.container}>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#6366f1" />
+                    <ActivityIndicator size="large" color="#A04F37" />
                 </View>
             </View>
         );
@@ -216,7 +216,7 @@ export default function SquadDetailScreen() {
                     </Text>
                 </View>
                 <TouchableOpacity onPress={handleShareCode} style={styles.backButton}>
-                    <Ionicons name="share-outline" size={22} color="#6366f1" />
+                    <Ionicons name="share-outline" size={22} color="#A04F37" />
                 </TouchableOpacity>
             </View>
 
@@ -241,11 +241,11 @@ export default function SquadDetailScreen() {
                     <Text style={styles.inviteCode}>{activeSquad.invite_code}</Text>
                     <View style={styles.inviteActions}>
                         <TouchableOpacity style={styles.inviteAction} onPress={handleCopyCode}>
-                            <Ionicons name="copy-outline" size={18} color="#6366f1" />
+                            <Ionicons name="copy-outline" size={18} color="#A04F37" />
                             <Text style={styles.inviteActionText}>Copy Code</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.inviteAction} onPress={handleShareCode}>
-                            <Ionicons name="chatbubble-outline" size={18} color="#6366f1" />
+                            <Ionicons name="chatbubble-outline" size={18} color="#A04F37" />
                             <Text style={styles.inviteActionText}>Share via SMS</Text>
                         </TouchableOpacity>
                     </View>
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     inviteCode: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#6366f1',
+        color: '#A04F37',
         letterSpacing: 4,
         marginBottom: 16,
     },
@@ -412,12 +412,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
     },
     inviteActionText: {
         fontSize: 13,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 
     // Members section
@@ -433,8 +433,8 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     sectionCount: {
-        backgroundColor: '#eef2ff',
-        color: '#6366f1',
+        backgroundColor: '#F4E2D6',
+        color: '#A04F37',
         fontSize: 13,
         fontWeight: '600',
         paddingHorizontal: 8,
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
     avatarText: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     memberInfo: {
         flex: 1,
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 8,
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     postAvatarText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     postAuthorInfo: {
         flex: 1,

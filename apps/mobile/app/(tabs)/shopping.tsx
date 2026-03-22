@@ -191,7 +191,7 @@ export default function ShoppingScreen() {
                     <Ionicons
                         name="camera-outline"
                         size={16}
-                        color={activeTab === 'screenshot' ? '#6366f1' : '#6b7280'}
+                        color={activeTab === 'screenshot' ? '#A04F37' : '#6b7280'}
                     />
                     <Text style={[styles.tabText, activeTab === 'screenshot' && styles.tabTextActive]}>
                         Screenshot
@@ -205,7 +205,7 @@ export default function ShoppingScreen() {
                     <Ionicons
                         name="link-outline"
                         size={16}
-                        color={activeTab === 'url' ? '#6366f1' : '#6b7280'}
+                        color={activeTab === 'url' ? '#A04F37' : '#6b7280'}
                     />
                     <Text style={[styles.tabText, activeTab === 'url' && styles.tabTextActive]}>
                         Paste URL
@@ -238,7 +238,7 @@ export default function ShoppingScreen() {
                                 activeOpacity={0.7}
                             >
                                 <View style={styles.inputIconContainer}>
-                                    <Ionicons name="images-outline" size={32} color="#6366f1" />
+                                    <Ionicons name="images-outline" size={32} color="#A04F37" />
                                 </View>
                                 <Text style={styles.inputTitle}>Upload Screenshot</Text>
                                 <Text style={styles.inputSubtitle}>Pick from your gallery</Text>
@@ -250,7 +250,7 @@ export default function ShoppingScreen() {
                                 activeOpacity={0.7}
                             >
                                 <View style={styles.inputIconContainer}>
-                                    <Ionicons name="camera-outline" size={32} color="#6366f1" />
+                                    <Ionicons name="camera-outline" size={32} color="#A04F37" />
                                 </View>
                                 <Text style={styles.inputTitle}>Take Photo</Text>
                                 <Text style={styles.inputSubtitle}>Snap a product photo</Text>
@@ -335,7 +335,7 @@ export default function ShoppingScreen() {
             {isAnalyzing && (
                 <View style={styles.loadingSection}>
                     <View style={styles.loadingCard}>
-                        <ActivityIndicator size="large" color="#6366f1" />
+                        <ActivityIndicator size="large" color="#A04F37" />
                         <Text style={styles.loadingText}>
                             {PROGRESS_MESSAGES[analysisProgress]}
                         </Text>
@@ -370,7 +370,7 @@ export default function ShoppingScreen() {
                                 onPress={handleRetry}
                                 activeOpacity={0.8}
                             >
-                                <Ionicons name="refresh" size={18} color="#6366f1" />
+                                <Ionicons name="refresh" size={18} color="#A04F37" />
                                 <Text style={styles.retryButtonText}>Try Again</Text>
                             </TouchableOpacity>
                             {activeTab === 'url' && (
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     tabActive: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
     },
     tabText: {
         fontSize: 14,
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
         color: '#6b7280',
     },
     tabTextActive: {
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '600',
     },
 
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
         width: 64,
         height: 64,
         borderRadius: 32,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 12,
@@ -635,11 +635,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 14,
         padding: 16,
         gap: 8,
-        shadowColor: '#6366f1',
+        shadowColor: '#A04F37',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
     },
     loadingText: {
         fontSize: 15,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500',
         marginTop: 16,
     },
@@ -683,7 +683,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#e5e7eb',
     },
     dotActive: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
     },
     errorSection: {
         paddingHorizontal: 24,
@@ -717,7 +717,7 @@ const styles = StyleSheet.create({
     retryButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 10,
         paddingHorizontal: 20,
         paddingVertical: 10,
@@ -726,7 +726,7 @@ const styles = StyleSheet.create({
     retryButtonText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     switchButton: {
         flexDirection: 'row',

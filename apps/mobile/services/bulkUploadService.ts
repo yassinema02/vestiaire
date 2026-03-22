@@ -51,7 +51,7 @@ export const bulkUploadService = {
         const filename = `${userId}/${timestamp}_${i}.jpg`;
 
         const response = await fetch(photos[i]);
-        const arrayBuffer = await new Response(response).arrayBuffer();
+        const arrayBuffer = await response.arrayBuffer();
 
         const { data, error } = await supabase.storage
           .from(EXTRACTION_BUCKET)

@@ -129,17 +129,17 @@ export default function WearCalendarScreen() {
             {/* Month Navigation */}
             <View style={styles.monthNav}>
                 <TouchableOpacity style={styles.navArrow} onPress={goToPrevMonth}>
-                    <Ionicons name="chevron-back" size={22} color="#6366f1" />
+                    <Ionicons name="chevron-back" size={22} color="#A04F37" />
                 </TouchableOpacity>
                 <Text style={styles.monthTitle}>{MONTH_NAMES[month]} {year}</Text>
                 <TouchableOpacity style={styles.navArrow} onPress={goToNextMonth}>
-                    <Ionicons name="chevron-forward" size={22} color="#6366f1" />
+                    <Ionicons name="chevron-forward" size={22} color="#A04F37" />
                 </TouchableOpacity>
             </View>
 
             {isLoading ? (
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#6366f1" />
+                    <ActivityIndicator size="large" color="#A04F37" />
                 </View>
             ) : (
                 <>
@@ -204,7 +204,7 @@ export default function WearCalendarScreen() {
 
                     {/* Monthly Stats */}
                     <View style={styles.statsCard}>
-                        <Ionicons name="calendar-outline" size={18} color="#6366f1" />
+                        <Ionicons name="calendar-outline" size={18} color="#A04F37" />
                         <Text style={styles.statsText}>
                             You logged <Text style={styles.statsBold}>{totalLogs}</Text> outfit{totalLogs !== 1 ? 's' : ''} this month
                         </Text>
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -323,11 +323,11 @@ const styles = StyleSheet.create({
         padding: 2,
     },
     dayCellToday: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 12,
     },
     dayCellSelected: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 12,
     },
     dayNumber: {
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     dayNumberSelected: {
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '700',
     },
     dayNumberInactive: {
@@ -380,6 +380,6 @@ const styles = StyleSheet.create({
     },
     statsBold: {
         fontWeight: '700',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 });

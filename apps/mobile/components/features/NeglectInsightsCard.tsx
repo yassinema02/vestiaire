@@ -88,7 +88,7 @@ export default function NeglectInsightsCard({ stats, thresholdDays }: NeglectIns
                     onPress={() => router.push('/(tabs)/wardrobe')}
                 >
                     <Text style={styles.viewAllText}>View All Neglected Items</Text>
-                    <Ionicons name="chevron-forward" size={16} color="#6366f1" />
+                    <Ionicons name="chevron-forward" size={16} color="#A04F37" />
                 </TouchableOpacity>
             )}
         </View>
@@ -189,6 +189,6 @@ const styles = StyleSheet.create({
     viewAllText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 });

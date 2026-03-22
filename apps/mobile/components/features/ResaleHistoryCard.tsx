@@ -49,7 +49,7 @@ export default function ResaleHistoryCard({ totalListed, totalSold, totalRevenue
                 onPress={() => router.push('/(tabs)/listing-history')}
             >
                 <Text style={styles.viewText}>View Full History</Text>
-                <Ionicons name="chevron-forward" size={16} color="#6366f1" />
+                <Ionicons name="chevron-forward" size={16} color="#A04F37" />
             </TouchableOpacity>
         </View>
     );
@@ -114,6 +114,6 @@ const styles = StyleSheet.create({
     viewText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 });

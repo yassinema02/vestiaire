@@ -136,15 +136,15 @@ export const SwipeableOutfitCard: React.FC<SwipeableOutfitCardProps> = ({
 
     return (
         <GestureDetector gesture={gesture}>
-            <Animated.View style={[styles.card, cardStyle]}>
+            <Animated.View style={[styles.card, cardStyle] as any}>
                 {/* Like indicator */}
-                <Animated.View style={[styles.actionIndicator, styles.likeIndicator, likeOpacity]}>
+                <Animated.View style={[styles.actionIndicator, styles.likeIndicator, likeOpacity] as any}>
                     <Ionicons name="heart" size={48} color="#10b981" />
                     <Text style={styles.likeText}>SAVE</Text>
                 </Animated.View>
 
                 {/* Nope indicator */}
-                <Animated.View style={[styles.actionIndicator, styles.nopeIndicator, nopeOpacity]}>
+                <Animated.View style={[styles.actionIndicator, styles.nopeIndicator, nopeOpacity] as any}>
                     <Ionicons name="close" size={48} color="#ef4444" />
                     <Text style={styles.nopeText}>SKIP</Text>
                 </Animated.View>
@@ -175,7 +175,7 @@ export const SwipeableOutfitCard: React.FC<SwipeableOutfitCardProps> = ({
                 {/* Rationale */}
                 <View style={styles.rationaleSection}>
                     <View style={styles.rationaleHeader}>
-                        <Ionicons name="sparkles" size={16} color="#6366f1" />
+                        <Ionicons name="sparkles" size={16} color="#A04F37" />
                         <Text style={styles.rationaleTitle}>Why this outfit?</Text>
                     </View>
                     <Text style={styles.rationaleText} numberOfLines={3}>
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     rationaleSection: {
-        backgroundColor: '#f5f3ff',
+        backgroundColor: '#F8EEE7',
         borderRadius: 12,
         padding: 12,
         marginBottom: 12,
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     rationaleTitle: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     rationaleText: {
         fontSize: 13,

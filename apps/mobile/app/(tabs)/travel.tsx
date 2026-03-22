@@ -132,7 +132,7 @@ export default function TravelScreen() {
 
             {isLoading ? (
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#6366f1" />
+                    <ActivityIndicator size="large" color="#A04F37" />
                 </View>
             ) : trips.length === 0 ? (
                 <View style={styles.emptyContainer}>
@@ -179,7 +179,7 @@ export default function TravelScreen() {
                     {/* Trip info card */}
                     {selectedTrip && (
                         <View style={styles.tripCard}>
-                            <Ionicons name="airplane" size={20} color="#6366f1" />
+                            <Ionicons name="airplane" size={20} color="#A04F37" />
                             <View style={styles.tripCardInfo}>
                                 <Text style={styles.tripCardTitle}>{selectedTrip.title}</Text>
                                 <Text style={styles.tripCardDates}>
@@ -326,7 +326,7 @@ export default function TravelScreen() {
                                     <Text style={styles.exportBtnText}>Export List</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.regenerateBtn} onPress={handleRegenerate}>
-                                    <Ionicons name="refresh-outline" size={16} color="#6366f1" />
+                                    <Ionicons name="refresh-outline" size={16} color="#A04F37" />
                                     <Text style={styles.regenerateBtnText}>Regenerate</Text>
                                 </TouchableOpacity>
                             </View>
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     tripChipSelected: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
     },
     tripChipText: {
         fontSize: 13,
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
         color: '#6b7280',
     },
     tripChipTextSelected: {
-        color: '#6366f1',
+        color: '#A04F37',
     },
 
     // Trip card
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 10,
         padding: 12,
         marginBottom: 16,
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
     },
     packedProgress: {
         fontSize: 13,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500',
     },
 
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
     dayNumber: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     dayDate: {
         fontSize: 13,
@@ -623,13 +623,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 6,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 10,
         paddingVertical: 12,
     },
     regenerateBtnText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 });

@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     createSubmit: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',
@@ -282,13 +282,13 @@ const styles = StyleSheet.create({
     codeValue: {
         fontSize: 36,
         fontWeight: 'bold',
-        color: '#6366f1',
+        color: '#A04F37',
         letterSpacing: 6,
     },
     shareButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingVertical: 14,
         paddingHorizontal: 28,
         borderRadius: 12,

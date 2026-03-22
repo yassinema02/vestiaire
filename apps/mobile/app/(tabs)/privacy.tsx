@@ -125,7 +125,7 @@ export default function PrivacyScreen() {
                     activeOpacity={0.7}
                 >
                     <View style={styles.sectionHeaderLeft}>
-                        <Ionicons name="server-outline" size={22} color="#6366f1" />
+                        <Ionicons name="server-outline" size={22} color="#A04F37" />
                         <Text style={styles.sectionHeaderText}>Data We Store</Text>
                     </View>
                     <Ionicons
@@ -169,8 +169,8 @@ export default function PrivacyScreen() {
                         <Switch
                             value={analyticsOptOut}
                             onValueChange={toggleAnalytics}
-                            trackColor={{ false: '#d1d5db', true: '#c7d2fe' }}
-                            thumbColor={analyticsOptOut ? '#6366f1' : '#f4f3f4'}
+                            trackColor={{ false: '#d1d5db', true: '#D9C7B4' }}
+                            thumbColor={analyticsOptOut ? '#A04F37' : '#f4f3f4'}
                         />
                     </View>
                 </View>

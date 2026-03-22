@@ -5,7 +5,6 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
 import { WardrobeItem } from './items';
 import { CATEGORIES } from './aiCategorization';
 import { WardrobeGap, GapCategory, GapSeverity, GapAnalysisResult } from '../types/gapAnalysis';
@@ -13,9 +12,7 @@ import { UserProfile } from '../types/userProfile';
 import { requireUserId } from './auth-helpers';
 import { userProfileService } from './userProfileService';
 import { buildGapAnalysisPrompt } from '../constants/prompts';
-import { trackedGenerateContent } from './aiUsageLogger';
-
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
+import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const MAX_AI_GAPS = 8;
 
@@ -196,16 +193,16 @@ function buildWardrobeSummary(items: WardrobeItem[], profile?: UserProfile): str
 // Prompt moved to constants/prompts.ts as buildGapAnalysisPrompt()
 
 async function analyzeGapsWithAI(items: WardrobeItem[], profile?: UserProfile): Promise<WardrobeGap[]> {
-    if (!GEMINI_API_KEY) return [];
+    if (!isGeminiConfigured()) return [];
 
     const summary = buildWardrobeSummary(items, profile);
 
     const result = await trackedGenerateContent({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         contents: [{ role: 'user', parts: [{ text: buildGapAnalysisPrompt(MAX_AI_GAPS) + summary }] }],
     }, 'gap_analysis');
 
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = ((result.candidates?.[0] as any)?.content?.parts?.[0]?.text as string | undefined) || '';
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (!jsonMatch) return [];
 

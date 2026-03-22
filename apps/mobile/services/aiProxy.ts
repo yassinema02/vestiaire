@@ -4,20 +4,48 @@
  */
 
 import { supabase } from './supabase';
+import type { AIFeature } from './aiUsageLogger';
 
-/**
- * Call Gemini AI through the server-side proxy.
- * @param prompt - The text prompt
- * @param imageBase64 - Optional base64-encoded image data
- * @returns The AI response text
- */
-export async function callGeminiProxy(prompt: string, imageBase64?: string): Promise<string> {
-    const { data, error } = await supabase.functions.invoke('ai-proxy', {
-        body: { prompt, image: imageBase64 },
-    });
-
-    if (error) throw new Error(error.message || 'AI proxy request failed');
-    if (!data?.text) throw new Error('No response from AI');
-    return data.text;
+export interface AIProxyGenerateContentParams {
+    model: string;
+    contents: unknown;
 }
 
+export interface AIProxyGenerateContentResponse {
+    text: string | null;
+    candidates?: Array<Record<string, unknown>>;
+    usageMetadata?: {
+        promptTokenCount?: number | null;
+        candidatesTokenCount?: number | null;
+    } | null;
+}
+
+/**
+ * Invoke the server-side AI proxy with a Gemini generateContent payload.
+ */
+export async function callGeminiProxy(
+    params: AIProxyGenerateContentParams,
+    feature: AIFeature
+): Promise<AIProxyGenerateContentResponse> {
+    const { data, error } = await supabase.functions.invoke('ai-proxy', {
+        body: {
+            feature,
+            model: params.model,
+            contents: params.contents,
+        },
+    });
+
+    if (error) {
+        // Log full error details for debugging
+        console.error('[aiProxy] Edge Function error:', {
+            message: error.message,
+            name: error.name,
+            context: (error as any).context,
+            status: (error as any).status,
+            data,
+        });
+        throw new Error(data?.detail || data?.error || error.message || 'AI proxy request failed');
+    }
+    if (!data) throw new Error('No response from AI proxy');
+    return data as AIProxyGenerateContentResponse;
+}

@@ -258,7 +258,7 @@ export default function CalendarSettingsScreen() {
                                 {/* Actions */}
                                 <View style={styles.actionRow}>
                                     <TouchableOpacity style={styles.selectButton} onPress={handleOpenCalendarSelector}>
-                                        <Ionicons name="list-outline" size={16} color="#6366f1" />
+                                        <Ionicons name="list-outline" size={16} color="#A04F37" />
                                         <Text style={styles.selectButtonText}>Edit Calendars</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity style={styles.disconnectButton} onPress={handleDisconnectApple}>
@@ -353,9 +353,9 @@ export default function CalendarSettingsScreen() {
                         disabled={isSyncing}
                     >
                         {isSyncing ? (
-                            <ActivityIndicator size="small" color="#6366f1" />
+                            <ActivityIndicator size="small" color="#A04F37" />
                         ) : (
-                            <Ionicons name="sync-outline" size={18} color="#6366f1" />
+                            <Ionicons name="sync-outline" size={18} color="#A04F37" />
                         )}
                         <Text style={styles.syncButtonText}>
                             {isSyncing ? 'Syncing events...' : 'Sync Events Now'}
@@ -384,8 +384,8 @@ export default function CalendarSettingsScreen() {
                             <Switch
                                 value={reminderPrefs.enabled}
                                 onValueChange={handleToggleReminder}
-                                trackColor={{ false: '#d1d5db', true: '#c7d2fe' }}
-                                thumbColor={reminderPrefs.enabled ? '#6366f1' : '#f4f3f4'}
+                                trackColor={{ false: '#d1d5db', true: '#D9C7B4' }}
+                                thumbColor={reminderPrefs.enabled ? '#A04F37' : '#f4f3f4'}
                             />
                         </View>
 
@@ -436,7 +436,7 @@ export default function CalendarSettingsScreen() {
                                                 <Ionicons
                                                     name={checked ? 'checkbox' : 'square-outline'}
                                                     size={22}
-                                                    color={checked ? '#6366f1' : '#9ca3af'}
+                                                    color={checked ? '#A04F37' : '#9ca3af'}
                                                 />
                                                 <Ionicons name={icon as any} size={16} color="#5D4E37" />
                                                 <Text style={styles.typeLabel}>{label}</Text>
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#1f2937',
     },
     googleIcon: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
     },
     providerIconConnectedGoogle: {
         backgroundColor: '#4285F4',
@@ -642,12 +642,12 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 14,
         borderRadius: 8,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
     },
     selectButtonText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     disconnectButton: {
         paddingVertical: 8,
@@ -689,13 +689,13 @@ const styles = StyleSheet.create({
         gap: 8,
         marginTop: 16,
         paddingVertical: 12,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 12,
     },
     syncButtonText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 
     // Reminder Section
@@ -755,7 +755,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f3f4f6',
     },
     timeChipSelected: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
     },
     timeChipText: {
         fontSize: 13,
@@ -763,7 +763,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     timeChipTextSelected: {
-        color: '#6366f1',
+        color: '#A04F37',
     },
     reminderTypesSection: {
         marginTop: 16,

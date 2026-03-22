@@ -3,13 +3,10 @@
  * Uses Gemini 2.5 Flash Image to remove backgrounds from clothing photos
  */
 
-import Constants from 'expo-constants';
 import { decode } from 'base64-arraybuffer';
 import { BACKGROUND_REMOVAL_PROMPT } from '../constants/prompts';
-import { trackedGenerateContent } from './aiUsageLogger';
+import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 import { optimizeForAI } from './imageOptimizer';
-
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 
 export interface BackgroundRemovalResult {
     processedImageBase64: string | null;
@@ -20,7 +17,7 @@ export interface BackgroundRemovalResult {
  * Check if background removal is configured
  */
 export const isBackgroundRemovalConfigured = (): boolean => {
-    return !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
+    return isGeminiConfigured();
 };
 
 /**
@@ -49,7 +46,7 @@ export const removeBackground = async (
     imageUrl: string
 ): Promise<BackgroundRemovalResult> => {
     if (!isBackgroundRemovalConfigured()) {
-        console.warn('Background removal not configured - missing Gemini API key');
+        console.warn('Background removal not configured - missing AI proxy configuration');
         return {
             processedImageBase64: null,
             error: new Error('Background removal not configured'),
@@ -88,7 +85,7 @@ export const removeBackground = async (
         }, 'bg_removal');
 
         // Extract image data from response
-        const parts = response.candidates?.[0]?.content?.parts;
+        const parts = (response.candidates?.[0] as any)?.content?.parts as Array<any> | undefined;
         if (!parts) {
             throw new Error('No response parts from Gemini');
         }

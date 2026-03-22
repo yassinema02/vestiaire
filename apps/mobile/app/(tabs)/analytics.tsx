@@ -297,7 +297,7 @@ export default function AnalyticsScreen() {
                 {/* ===== DASHBOARD SECTION ===== */}
                 {isDashboardLoading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#6366f1" />
+                        <ActivityIndicator size="large" color="#A04F37" />
                     </View>
                 ) : stats && (
                     <>
@@ -368,7 +368,7 @@ export default function AnalyticsScreen() {
                                 <Text style={styles.calendarTitle}>Wear Calendar</Text>
                                 <Text style={styles.calendarSubtitle}>View your outfit history by day</Text>
                             </View>
-                            <Ionicons name="chevron-forward" size={16} color="#6366f1" />
+                            <Ionicons name="chevron-forward" size={16} color="#A04F37" />
                         </TouchableOpacity>
 
                         {/* Neglected Items */}
@@ -484,7 +484,7 @@ export default function AnalyticsScreen() {
                             </ScrollView>
 
                             {isBrandLoading ? (
-                                <ActivityIndicator size="small" color="#6366f1" style={{ marginVertical: 20 }} />
+                                <ActivityIndicator size="small" color="#A04F37" style={{ marginVertical: 20 }} />
                             ) : !brandAnalytics || brandAnalytics.brands.length === 0 ? (
                                 <View style={styles.brandEmptyState}>
                                     <Ionicons name="pricetag-outline" size={36} color="#d1d5db" />
@@ -538,7 +538,7 @@ export default function AnalyticsScreen() {
                             </View>
 
                             {isGapLoading ? (
-                                <ActivityIndicator size="small" color="#6366f1" style={{ marginVertical: 20 }} />
+                                <ActivityIndicator size="small" color="#A04F37" style={{ marginVertical: 20 }} />
                             ) : !gapResult || gapResult.gaps.length === 0 ? (
                                 <View style={styles.gapEmptyState}>
                                     <Text style={styles.gapEmptyEmoji}>🎉</Text>
@@ -916,7 +916,7 @@ export default function AnalyticsScreen() {
 
                 {isLeaderboardLoading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#6366f1" />
+                        <ActivityIndicator size="large" color="#A04F37" />
                     </View>
                 ) : mostWorn.length === 0 ? (
                     <View style={styles.emptyState}>
@@ -1171,7 +1171,7 @@ function WearFrequencyChart({ data }: { data: DailyWearCount[] }) {
                                     styles.bar,
                                     {
                                         height: barHeight,
-                                        backgroundColor: isToday ? '#6366f1' : d.count > 0 ? '#a5b4fc' : '#e5e7eb',
+                                        backgroundColor: isToday ? '#A04F37' : d.count > 0 ? '#E4B7A3' : '#e5e7eb',
                                     },
                                 ]}
                             />
@@ -1431,7 +1431,7 @@ const styles = StyleSheet.create({
     },
     insightBullet: {
         fontSize: 14,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '700',
         marginRight: 8,
         lineHeight: 20,
@@ -1449,18 +1449,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginHorizontal: 16,
         marginBottom: 16,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 14,
         padding: 14,
         gap: 10,
         borderWidth: 1,
-        borderColor: '#c7d2fe',
+        borderColor: '#D9C7B4',
     },
     calendarIconWrap: {
         width: 36,
         height: 36,
         borderRadius: 10,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -1474,7 +1474,7 @@ const styles = StyleSheet.create({
     },
     calendarSubtitle: {
         fontSize: 12,
-        color: '#6366f1',
+        color: '#A04F37',
         marginTop: 1,
     },
 
@@ -1597,7 +1597,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     timeChipActive: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
     },
     timeChipText: {
         fontSize: 13,
@@ -1978,7 +1978,7 @@ const styles = StyleSheet.create({
     },
     undismissText: {
         fontSize: 12,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '600',
     },
     gapTimestamp: {
@@ -2028,7 +2028,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: -6,
         right: -4,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 6,
         paddingHorizontal: 4,
         paddingVertical: 1,
@@ -2130,7 +2130,7 @@ const styles = StyleSheet.create({
         color: '#374151',
     },
     seasonWearBadge: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 6,
         paddingHorizontal: 8,
         paddingVertical: 3,
@@ -2138,7 +2138,7 @@ const styles = StyleSheet.create({
     seasonWearBadgeText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     neglectedToggle: {
         paddingVertical: 6,
@@ -2375,7 +2375,7 @@ const styles = StyleSheet.create({
     listCountText: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     listCountLabel: {
         fontSize: 10,

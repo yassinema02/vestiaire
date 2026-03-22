@@ -71,7 +71,7 @@ export default function BadgeUnlockModal({ visible, badge, onDismiss }: BadgeUnl
                         <Ionicons
                             name={badge.iconName as any}
                             size={48}
-                            color="#6366f1"
+                            color="#A04F37"
                         />
                     </Animated.View>
 
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '100%',
         maxWidth: 320,
-        shadowColor: '#6366f1',
+        shadowColor: '#A04F37',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.2,
         shadowRadius: 24,
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
         width: 88,
         height: 88,
         borderRadius: 44,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     badgeName: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#6366f1',
+        color: '#A04F37',
         marginBottom: 6,
     },
     description: {
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     },
     button: {
         marginTop: 24,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 48,

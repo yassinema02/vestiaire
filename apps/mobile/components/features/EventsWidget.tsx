@@ -135,10 +135,10 @@ export function EventsWidget({ onConnectPress }: EventsWidgetProps) {
             <View style={styles.container}>
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>
-                        <Ionicons name="calendar-outline" size={20} color="#6366f1" />
+                        <Ionicons name="calendar-outline" size={20} color="#A04F37" />
                         <Text style={styles.headerTitle}>Today's Events</Text>
                     </View>
-                    <ActivityIndicator size="small" color="#6366f1" />
+                    <ActivityIndicator size="small" color="#A04F37" />
                 </View>
             </View>
         );
@@ -172,7 +172,7 @@ export function EventsWidget({ onConnectPress }: EventsWidgetProps) {
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
-                    <Ionicons name="calendar-outline" size={20} color="#6366f1" />
+                    <Ionicons name="calendar-outline" size={20} color="#A04F37" />
                     <Text style={styles.headerTitle}>Today's Events</Text>
                     {events.length > 0 && (
                         <View style={styles.countBadge}>
@@ -181,7 +181,7 @@ export function EventsWidget({ onConnectPress }: EventsWidgetProps) {
                     )}
                 </View>
                 {isLoading && (
-                    <ActivityIndicator size="small" color="#6366f1" />
+                    <ActivityIndicator size="small" color="#A04F37" />
                 )}
             </View>
 
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
         color: '#9ca3af',
     },
     countBadge: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 10,
         paddingHorizontal: 8,
         paddingVertical: 2,
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     countText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     // Events List
     eventsList: {

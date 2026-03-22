@@ -6,14 +6,11 @@
  * and manages listing history for resale tracking.
  */
 
-import Constants from 'expo-constants';
 import { WardrobeItem } from './items';
 import { supabase } from './supabase';
 import { requireUserId } from './auth-helpers';
 import { buildListingPrompt as buildListingPromptTemplate, LISTING_TONE_INSTRUCTIONS } from '../constants/prompts';
-import { trackedGenerateContent } from './aiUsageLogger';
-
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
+import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 
 export type ListingTone = 'casual' | 'detailed' | 'minimal';
 export type ListingStatus = 'listed' | 'sold' | 'cancelled';
@@ -50,7 +47,7 @@ export interface ResaleListing {
 }
 
 const isConfigured = (): boolean => {
-    return !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
+    return isGeminiConfigured();
 };
 
 function formatRelativeTime(dateStr: string): string {
@@ -159,8 +156,8 @@ export const listingService = {
             const prompt = buildListingPrompt(item, tone);
 
             const result = await trackedGenerateContent({
-                model: 'gemini-2.0-flash',
-                contents: prompt,
+                model: 'gemini-2.5-flash',
+                contents: [{ role: 'user', parts: [{ text: prompt }] }],
             }, 'listing_gen');
 
             const text = result.text;

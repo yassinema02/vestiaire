@@ -75,7 +75,7 @@ export const OutfitSwipeStack: React.FC<OutfitSwipeStackProps> = ({
     if (isLoading) {
         return (
             <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#6366f1" />
+                <ActivityIndicator size="large" color="#A04F37" />
                 <Text style={styles.loadingText}>Finding your perfect outfits...</Text>
             </View>
         );
@@ -175,7 +175,7 @@ export const OutfitSwipeStack: React.FC<OutfitSwipeStackProps> = ({
                     style={[styles.actionButton, styles.detailsButton]}
                     onPress={() => handleSwipeUp()}
                 >
-                    <Ionicons name="information-circle-outline" size={24} color="#6366f1" />
+                    <Ionicons name="information-circle-outline" size={24} color="#A04F37" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     },
     progressFill: {
         height: '100%',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 2,
     },
     cardsContainer: {
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#f5f3ff',
+        backgroundColor: '#F8EEE7',
     },
     saveButton: {
         backgroundColor: '#fff',
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingVertical: 14,
         paddingHorizontal: 24,
         borderRadius: 12,

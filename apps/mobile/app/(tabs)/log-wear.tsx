@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     },
     clearText: {
         fontSize: 14,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500',
     },
     // Category Filter

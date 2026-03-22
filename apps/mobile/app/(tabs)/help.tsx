@@ -112,7 +112,7 @@ export default function HelpScreen() {
                 <Text style={styles.sectionLabel}>Get in Touch</Text>
                 <TouchableOpacity style={styles.contactCard} onPress={handleContact}>
                     <View style={styles.contactIcon}>
-                        <Ionicons name="mail" size={24} color="#6366f1" />
+                        <Ionicons name="mail" size={24} color="#A04F37" />
                     </View>
                     <View style={styles.contactText}>
                         <Text style={styles.contactTitle}>Contact Support</Text>
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 12,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
     },

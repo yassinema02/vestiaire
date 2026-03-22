@@ -292,7 +292,7 @@ export default function ScanHistoryScreen() {
     if (isLoading) {
         return (
             <View style={[styles.container, styles.centerContainer]}>
-                <ActivityIndicator size="large" color="#6366f1" />
+                <ActivityIndicator size="large" color="#A04F37" />
             </View>
         );
     }
@@ -418,7 +418,7 @@ export default function ScanHistoryScreen() {
                     {/* Re-analyzing indicator */}
                     {reAnalyzingId && (
                         <View style={styles.reAnalyzingBanner}>
-                            <ActivityIndicator size="small" color="#6366f1" />
+                            <ActivityIndicator size="small" color="#A04F37" />
                             <Text style={styles.reAnalyzingText}>Re-analyzing compatibility...</Text>
                         </View>
                     )}
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
     emptyCta: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 14,
         paddingHorizontal: 24,
         paddingVertical: 14,
@@ -600,8 +600,8 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     chipActive: {
-        backgroundColor: '#6366f1',
-        borderColor: '#6366f1',
+        backgroundColor: '#A04F37',
+        borderColor: '#A04F37',
     },
     chipSaved: {
         backgroundColor: '#fef2f2',
@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         marginHorizontal: 24,
         borderRadius: 10,
         padding: 10,
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
     },
     reAnalyzingText: {
         fontSize: 13,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500',
     },
 
@@ -724,7 +724,7 @@ const styles = StyleSheet.create({
     clearFilterText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
         marginTop: 4,
     },
 

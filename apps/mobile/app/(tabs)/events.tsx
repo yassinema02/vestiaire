@@ -114,16 +114,16 @@ export default function EventsScreen() {
                     disabled={isSyncing}
                 >
                     {isSyncing ? (
-                        <ActivityIndicator size="small" color="#6366f1" />
+                        <ActivityIndicator size="small" color="#A04F37" />
                     ) : (
-                        <Ionicons name="refresh-outline" size={22} color="#6366f1" />
+                        <Ionicons name="refresh-outline" size={22} color="#A04F37" />
                     )}
                 </TouchableOpacity>
             </View>
 
             {isLoading ? (
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#6366f1" />
+                    <ActivityIndicator size="large" color="#A04F37" />
                 </View>
             ) : grouped.length === 0 ? (
                 <View style={styles.emptyContainer}>
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 12,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
         paddingVertical: 12,
         paddingHorizontal: 24,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 10,
     },
     connectButtonText: {

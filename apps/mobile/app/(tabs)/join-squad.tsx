@@ -81,7 +81,7 @@ export default function JoinSquadScreen() {
 
             <View style={styles.content}>
                 <View style={styles.iconContainer}>
-                    <Ionicons name="enter-outline" size={48} color="#6366f1" />
+                    <Ionicons name="enter-outline" size={48} color="#A04F37" />
                 </View>
 
                 <Text style={styles.instruction}>
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 20,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 24,
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     joinSubmit: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',

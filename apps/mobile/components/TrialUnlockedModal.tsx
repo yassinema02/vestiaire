@@ -56,7 +56,7 @@ export default function TrialUnlockedModal({ visible, onDismiss }: TrialUnlocked
                         {TRIAL_BENEFITS.map((b, i) => (
                             <View key={i} style={styles.benefitRow}>
                                 <View style={styles.benefitCheck}>
-                                    <Ionicons name={b.icon as any} size={16} color="#6366f1" />
+                                    <Ionicons name={b.icon as any} size={16} color="#A04F37" />
                                 </View>
                                 <Text style={styles.benefitText}>{b.label}</Text>
                             </View>
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     },
     subtitle: {
         fontSize: 16,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '600',
         marginBottom: 16,
     },
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 10,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -167,12 +167,12 @@ const styles = StyleSheet.create({
     },
     ctaButton: {
         width: '100%',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 14,
         paddingVertical: 16,
         alignItems: 'center',
         marginBottom: 12,
-        shadowColor: '#6366f1',
+        shadowColor: '#A04F37',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,

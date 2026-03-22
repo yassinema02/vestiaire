@@ -160,7 +160,7 @@ export default function OnboardingScreen() {
                             style={[
                                 styles.confetti,
                                 {
-                                    backgroundColor: ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'][index % 5],
+                                    backgroundColor: ['#A04F37', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'][index % 5],
                                     transform: [
                                         { translateX: anim.translateX },
                                         { translateY: anim.translateY },
@@ -206,7 +206,7 @@ export default function OnboardingScreen() {
             <View style={styles.content}>
                 {/* Icon */}
                 <View style={styles.iconContainer}>
-                    <Ionicons name="shirt-outline" size={80} color="#6366f1" />
+                    <Ionicons name="shirt-outline" size={80} color="#A04F37" />
                 </View>
 
                 {/* Title */}
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 24,
-        shadowColor: '#6366f1',
+        shadowColor: '#A04F37',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 12,
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     progressCurrent: {
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '700',
         fontSize: 20,
     },
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     },
     progressFill: {
         height: '100%',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         borderRadius: 4,
     },
     stepsContainer: {
@@ -403,12 +403,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     stepDotComplete: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
     },
     stepDotCurrent: {
         backgroundColor: '#fff',
         borderWidth: 3,
-        borderColor: '#6366f1',
+        borderColor: '#A04F37',
     },
     benefitsSection: {
         width: '100%',
@@ -434,12 +434,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingVertical: 16,
         paddingHorizontal: 32,
         borderRadius: 16,
         width: '100%',
-        shadowColor: '#6366f1',
+        shadowColor: '#A04F37',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     },
     viewWardrobeLinkText: {
         fontSize: 15,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500',
     },
     // Celebration styles
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
     celebrationSubtitle: {
         fontSize: 20,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
         marginBottom: 16,
     },
     celebrationMessage: {
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingVertical: 16,
         paddingHorizontal: 32,
         borderRadius: 16,

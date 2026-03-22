@@ -4,14 +4,11 @@
  * Story 12.2: Event Detection & Classification
  */
 
-import Constants from 'expo-constants';
 import { supabase } from './supabase';
 import { requireUserId } from './auth-helpers';
 import { detectOccasion, OccasionType } from '../utils/occasionDetector';
 import { buildEventClassificationPrompt } from '../constants/prompts';
-import { trackedGenerateContent } from './aiUsageLogger';
-
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
+import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 
 // Event type used in database (maps from OccasionType, with 'sport' → 'active')
 export type EventType = 'work' | 'social' | 'active' | 'formal' | 'casual';
@@ -72,7 +69,7 @@ async function classifyByAI(
     description?: string | null,
     location?: string | null
 ): Promise<ClassificationResult> {
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'your_api_key_here') {
+    if (!isGeminiConfigured()) {
         // Fallback if Gemini not configured
         return classifyByKeyword(title, location);
     }
@@ -81,8 +78,8 @@ async function classifyByAI(
         const prompt = buildEventClassificationPrompt(title, description, location);
 
         const result = await trackedGenerateContent({
-            model: 'gemini-2.0-flash',
-            contents: prompt,
+            model: 'gemini-2.5-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
         }, 'event_classify');
 
         const text = result.text;
@@ -242,6 +239,6 @@ export const eventClassificationService = {
      * Check if AI classification is available
      */
     isAIConfigured: (): boolean => {
-        return !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
+        return isGeminiConfigured();
     },
 };

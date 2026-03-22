@@ -296,7 +296,7 @@ export default function ConfirmItemScreen() {
     if (isLoading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#6366f1" />
+                <ActivityIndicator size="large" color="#A04F37" />
                 <Text style={styles.loadingText}>Analyzing your item...</Text>
                 <Text style={styles.loadingSubtext}>AI is detecting category and colors</Text>
             </View>
@@ -457,7 +457,7 @@ export default function ConfirmItemScreen() {
                                 >
                                     <Text style={styles.currencyOptionSymbol}>{curr.symbol}</Text>
                                     <Text style={[styles.currencyOptionText, currency === curr.code && styles.currencyOptionTextSelected]}>{curr.code}</Text>
-                                    {currency === curr.code && <Ionicons name="checkmark" size={16} color="#6366f1" />}
+                                    {currency === curr.code && <Ionicons name="checkmark" size={16} color="#A04F37" />}
                                 </TouchableOpacity>
                             ))}
                         </View>
@@ -548,12 +548,12 @@ const styles = StyleSheet.create({
     chipRow: { flexDirection: 'row', gap: 8 },
     chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb' },
-    chipSelected: { backgroundColor: '#6366f1', borderColor: '#6366f1' },
+    chipSelected: { backgroundColor: '#A04F37', borderColor: '#A04F37' },
     chipText: { fontSize: 14, color: '#4b5563', textTransform: 'capitalize' },
     chipTextSelected: { color: '#fff', fontWeight: '500' },
     colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     colorChip: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: '#e5e7eb', justifyContent: 'center', alignItems: 'center' },
-    colorChipSelected: { borderColor: '#6366f1', borderWidth: 3 },
+    colorChipSelected: { borderColor: '#A04F37', borderWidth: 3 },
     inputSection: { marginBottom: 16 },
     inputLabel: { fontSize: 14, fontWeight: '500', color: '#1f2937', marginBottom: 8 },
     textInput: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: '#1f2937' },
@@ -566,9 +566,9 @@ const styles = StyleSheet.create({
     currencyOptionSelected: { backgroundColor: '#f0f0ff' },
     currencyOptionSymbol: { fontSize: 18, fontWeight: '600', color: '#1f2937', width: 24 },
     currencyOptionText: { flex: 1, fontSize: 14, color: '#4b5563' },
-    currencyOptionTextSelected: { color: '#6366f1', fontWeight: '500' },
+    currencyOptionTextSelected: { color: '#A04F37', fontWeight: '500' },
     footer: { padding: 16, paddingBottom: Platform.OS === 'ios' ? 32 : 16 },
-    confirmButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#6366f1', paddingVertical: 16, borderRadius: 12 },
+    confirmButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#A04F37', paddingVertical: 16, borderRadius: 12 },
     confirmButtonDisabled: { opacity: 0.7 },
     confirmButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

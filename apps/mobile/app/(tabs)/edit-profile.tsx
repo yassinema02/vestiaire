@@ -162,7 +162,7 @@ export default function EditProfileScreen() {
 
                 {/* Change Password */}
                 <TouchableOpacity style={styles.actionButton} onPress={handleChangePassword}>
-                    <Ionicons name="key-outline" size={20} color="#6366f1" />
+                    <Ionicons name="key-outline" size={20} color="#A04F37" />
                     <Text style={styles.actionButtonText}>Change Password</Text>
                     <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
                 </TouchableOpacity>
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     saveButton: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 8,

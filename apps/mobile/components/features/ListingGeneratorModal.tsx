@@ -291,7 +291,7 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
                     >
                         {isGenerating ? (
                             <View style={styles.loadingContainer}>
-                                <ActivityIndicator size="large" color="#6366f1" />
+                                <ActivityIndicator size="large" color="#A04F37" />
                                 <Text style={styles.loadingText}>Writing your listing...</Text>
                                 <Text style={styles.loadingSubtext}>This takes a few seconds</Text>
                             </View>
@@ -315,7 +315,7 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
                                 {/* AI badge */}
                                 {fromAI && (
                                     <View style={styles.aiBadge}>
-                                        <Ionicons name="sparkles" size={14} color="#6366f1" />
+                                        <Ionicons name="sparkles" size={14} color="#A04F37" />
                                         <Text style={styles.aiBadgeText}>AI Generated</Text>
                                     </View>
                                 )}
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     usageCounter: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         paddingHorizontal: 8,
         paddingVertical: 3,
         borderRadius: 10,
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
     usageCounterText: {
         fontSize: 11,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     // Tone selector
     toneRow: {
@@ -525,8 +525,8 @@ const styles = StyleSheet.create({
         borderColor: '#e5e7eb',
     },
     toneButtonActive: {
-        backgroundColor: '#6366f1',
-        borderColor: '#6366f1',
+        backgroundColor: '#A04F37',
+        borderColor: '#A04F37',
     },
     toneText: {
         fontSize: 13,
@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 4,
         alignSelf: 'flex-start',
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 8,
@@ -604,7 +604,7 @@ const styles = StyleSheet.create({
     aiBadgeText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#A04F37',
     },
     // Fields
     fieldLabel: {
@@ -675,14 +675,14 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     hashtagChip: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 8,
     },
     hashtagText: {
         fontSize: 13,
-        color: '#6366f1',
+        color: '#A04F37',
         fontWeight: '500',
     },
     // Primary actions
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#A04F37',
         paddingVertical: 14,
         borderRadius: 12,
     },

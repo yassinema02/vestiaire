@@ -3,7 +3,7 @@
  * Story 12.6: Travel Mode Packing Suggestions
  */
 
-import { OccasionType } from './context';
+import { OccasionType } from '../utils/occasionDetector';
 
 export interface TripEvent {
     id: string;

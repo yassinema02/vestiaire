@@ -1,13 +1,9 @@
 /**
  * Extraction Service
- * Client-side Gemini-powered batch item detection for wardrobe photos
+ * Server-proxied Gemini-powered batch item detection for wardrobe photos
  * Story 10.2: Multi-Item Detection
- *
- * Uses client-side @google/genai SDK (same pattern as aiCategorization.ts)
- * instead of Edge Function (not deployed per project constraints).
  */
 
-import Constants from 'expo-constants';
 import { supabase } from './supabase';
 import {
   DetectedItem,
@@ -16,10 +12,9 @@ import {
   ExtractionJob,
 } from '../types/extraction';
 import { ITEM_DETECTION_PROMPT } from '../constants/prompts';
-import { trackedGenerateContent } from './aiUsageLogger';
+import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 import { optimizeForAI } from './imageOptimizer';
 
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 const MAX_ITEMS_PER_PHOTO = 5;
 
 // Prompt moved to constants/prompts.ts as ITEM_DETECTION_PROMPT
@@ -53,7 +48,7 @@ async function detectItemsInPhoto(
     });
 
     const result = await trackedGenerateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       contents: [{
         role: 'user',
         parts: [
@@ -116,8 +111,8 @@ export const extractionService = {
     jobId: string,
     onProgress?: (processed: number, total: number) => void
   ): Promise<{ result: ExtractionJobResult | null; error: Error | null }> => {
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'your_api_key_here') {
-      return { result: null, error: new Error('Gemini API key not configured') };
+    if (!isGeminiConfigured()) {
+      return { result: null, error: new Error('AI proxy not configured') };
     }
 
     try {

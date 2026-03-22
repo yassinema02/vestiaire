@@ -40,7 +40,7 @@ export default function DonationHistoryCard({ stats }: DonationHistoryCardProps)
             {/* Tax deduction (conditional) */}
             {stats.thisYearValue > 0 && (
                 <View style={styles.metricRow}>
-                    <Ionicons name="cash-outline" size={16} color="#6366f1" />
+                    <Ionicons name="cash-outline" size={16} color="#A04F37" />
                     <Text style={styles.metricText}>
                         £{stats.thisYearValue.toFixed(0)} donated this year (tax est.)
                     </Text>
@@ -53,7 +53,7 @@ export default function DonationHistoryCard({ stats }: DonationHistoryCardProps)
                 onPress={() => router.push('/(tabs)/donation-history')}
             >
                 <Text style={styles.viewText}>View Donation History</Text>
-                <Ionicons name="chevron-forward" size={16} color="#6366f1" />
+                <Ionicons name="chevron-forward" size={16} color="#A04F37" />
             </TouchableOpacity>
         </View>
     );
@@ -110,6 +110,6 @@ const styles = StyleSheet.create({
     viewText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#A04F37',
     },
 });
