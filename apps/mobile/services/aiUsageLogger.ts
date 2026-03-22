@@ -11,7 +11,7 @@ export type AIFeature =
     | 'outfit_gen'
     | 'event_outfit_gen'
     | 'listing_gen'
-    | 'bg_removal'
+    | 'product_photo'
     | 'extraction'
     | 'steal_look'
     | 'event_classify'

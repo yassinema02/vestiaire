@@ -25,9 +25,26 @@ Respond ONLY with valid JSON in this exact format, no other text:
   "confidence": 0.95
 }`;
 
-// ─── backgroundRemoval.ts ────────────────────────────────────────
+// ─── productPhotoService.ts ──────────────────────────────────────
 
-export const BACKGROUND_REMOVAL_PROMPT = 'Remove the background from this clothing item photo. Keep only the clothing item itself on a clean pure white background. Preserve all details of the clothing. Do not add any text or watermarks.';
+export const PRODUCT_PHOTO_PROMPT = `Generate a professional e-commerce product photo of this clothing item.
+
+ITEM DETAILS:
+{ITEM_DETAILS}
+
+STYLE REQUIREMENTS:
+- Ghost mannequin presentation: the item should appear with natural 3D form as if worn by an invisible person, showing its shape and drape
+- Clean, light gray (#F5F5F5) background
+- Soft, even studio lighting from above-left
+- Subtle drop shadow beneath the item for depth
+- Front-facing, slightly angled view
+- No model, no hanger, no props, no text, no watermarks
+
+CRITICAL RULES:
+- Preserve the EXACT colors, pattern, texture, and details of the original item
+- Do NOT change the design, add logos, or modify any features of the clothing
+- The output must look like it belongs on Zara.com or COS.com
+- Maintain the correct proportions and silhouette of the item`;
 
 // ─── extractionService.ts ────────────────────────────────────────
 
@@ -275,6 +292,35 @@ Rules:
 - formal: weddings, galas, funerals, ceremonies, black-tie
 - casual: errands, coffee, general tasks, all-day events with no clear type
 - formalityScore: 1=very casual, 10=ultra formal`;
+}
+
+export function buildBatchEventClassificationPrompt(
+    events: Array<{ id: string; title: string; description?: string | null; location?: string | null }>
+): string {
+    const eventList = events
+        .map((e, i) => {
+            let entry = `${i + 1}. id="${e.id}" title="${e.title}"`;
+            if (e.description) entry += ` description="${e.description}"`;
+            if (e.location) entry += ` location="${e.location}"`;
+            return entry;
+        })
+        .join('\n');
+
+    return `Classify these calendar events. Return ONLY a JSON array, no other text.
+
+Events:
+${eventList}
+
+Return: [{ "id": "<event_id>", "type": "work|social|active|formal|casual", "formalityScore": 1-10, "confidence": 0.0-1.0 }, ...]
+
+Rules:
+- work: meetings, presentations, interviews, standups, conferences
+- social: dinners, parties, dates, drinks, brunches, birthdays
+- active: gym, hiking, sports, yoga, running
+- formal: weddings, galas, funerals, ceremonies, black-tie
+- casual: errands, coffee, general tasks, all-day events with no clear type
+- formalityScore: 1=very casual, 10=ultra formal
+- Return one object per event, matching the id exactly`;
 }
 
 // ─── gapAnalysisService.ts ───────────────────────────────────────

@@ -123,7 +123,7 @@ export const storageService = {
         try {
             // Generate unique filename for processed image
             const timestamp = Date.now();
-            const filename = `${userId}/processed_${timestamp}.png`;
+            const filename = `${userId}/${timestamp}_product.png`;
 
             // Convert base64 to ArrayBuffer
             const arrayBuffer = decode(base64Data);

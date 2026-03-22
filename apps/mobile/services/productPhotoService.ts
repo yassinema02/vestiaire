@@ -1,34 +1,33 @@
 /**
- * Background Removal Service
- * Uses Gemini 2.5 Flash Image to remove backgrounds from clothing photos
+ * Product Photo Generation Service
+ * Uses Gemini 2.5 Flash Image to generate professional e-commerce product photos
  */
 
-import { decode } from 'base64-arraybuffer';
-import { BACKGROUND_REMOVAL_PROMPT } from '../constants/prompts';
+import { PRODUCT_PHOTO_PROMPT } from '../constants/prompts';
 import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 import { optimizeForAI } from './imageOptimizer';
 
-export interface BackgroundRemovalResult {
+export interface ProductPhotoResult {
     processedImageBase64: string | null;
     error: Error | null;
 }
 
-/**
- * Check if background removal is configured
- */
-export const isBackgroundRemovalConfigured = (): boolean => {
+export interface ProductPhotoMetadata {
+    category?: string;
+    subCategory?: string;
+    colors?: string[];
+    pattern?: string;
+}
+
+export const isProductPhotoConfigured = (): boolean => {
     return isGeminiConfigured();
 };
 
-/**
- * Convert blob to base64 string (React Native compatible)
- */
 const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => {
             const base64data = reader.result as string;
-            // Remove the data URL prefix (e.g., "data:image/png;base64,")
             const base64 = base64data.split(',')[1];
             resolve(base64);
         };
@@ -37,32 +36,49 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
     });
 };
 
+function buildPrompt(metadata?: ProductPhotoMetadata): string {
+    const details: string[] = [];
+    if (metadata?.category) {
+        details.push(`- Category: ${metadata.category}${metadata.subCategory ? ` / ${metadata.subCategory}` : ''}`);
+    }
+    if (metadata?.colors?.length) {
+        details.push(`- Colors: ${metadata.colors.join(', ')}`);
+    }
+    if (metadata?.pattern) {
+        details.push(`- Pattern: ${metadata.pattern}`);
+    }
+
+    const itemDetails = details.length > 0
+        ? details.join('\n')
+        : '- (No metadata available — analyze the item from the image)';
+
+    return PRODUCT_PHOTO_PROMPT.replace('{ITEM_DETAILS}', itemDetails);
+}
+
 /**
- * Remove background from an image using Gemini 2.5 Flash Image
- * @param imageUrl - Public URL of the image to process
+ * Generate a professional e-commerce product photo from a clothing item image
+ * @param imageUrl - URL or local URI of the image to process
+ * @param metadata - Optional categorization metadata to ground the prompt
  * @returns Processed image as base64 or error
  */
-export const removeBackground = async (
-    imageUrl: string
-): Promise<BackgroundRemovalResult> => {
-    if (!isBackgroundRemovalConfigured()) {
-        console.warn('Background removal not configured - missing AI proxy configuration');
-        return {
-            processedImageBase64: null,
-            error: new Error('Background removal not configured'),
-        };
+export const generateProductPhoto = async (
+    imageUrl: string,
+    metadata?: ProductPhotoMetadata
+): Promise<ProductPhotoResult> => {
+    if (!isProductPhotoConfigured()) {
+        console.warn('Product photo generation not configured — missing AI proxy configuration');
+        return { processedImageBase64: null, error: new Error('Product photo generation not configured') };
     }
 
     try {
-        console.log('Starting background removal with Gemini');
+        console.log('Starting product photo generation with Gemini');
 
-        // Optimize image for AI (512px, 85% JPEG)
         const optimizedUri = await optimizeForAI(imageUrl);
-
-        // Fetch image and convert to base64
         const imageResponse = await fetch(optimizedUri);
         const imageBlob = await imageResponse.blob();
         const imageBase64 = await blobToBase64(imageBlob);
+
+        const prompt = buildPrompt(metadata);
 
         const response = await trackedGenerateContent({
             model: 'gemini-2.5-flash-image',
@@ -70,9 +86,7 @@ export const removeBackground = async (
                 {
                     role: 'user',
                     parts: [
-                        {
-                            text: BACKGROUND_REMOVAL_PROMPT,
-                        },
+                        { text: prompt },
                         {
                             inlineData: {
                                 mimeType: 'image/jpeg',
@@ -82,9 +96,8 @@ export const removeBackground = async (
                     ],
                 },
             ],
-        }, 'bg_removal');
+        }, 'product_photo');
 
-        // Extract image data from response
         const parts = (response.candidates?.[0] as any)?.content?.parts as Array<any> | undefined;
         if (!parts) {
             throw new Error('No response parts from Gemini');
@@ -96,13 +109,11 @@ export const removeBackground = async (
         }
 
         const base64 = imagePart.inlineData.data;
-        console.log('Background removal successful, base64 length:', base64.length);
+        console.log('Product photo generation successful, base64 length:', base64.length);
 
         return { processedImageBase64: base64, error: null };
     } catch (error) {
-        console.error('Background removal failed:', error);
+        console.error('Product photo generation failed:', error);
         return { processedImageBase64: null, error: error as Error };
     }
 };
-
-export { decode };
