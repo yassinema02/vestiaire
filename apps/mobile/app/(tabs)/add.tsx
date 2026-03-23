@@ -475,14 +475,15 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     imageContainer: {
-        flex: 1,
         margin: 16,
         borderRadius: 16,
         overflow: 'hidden',
         backgroundColor: '#e5e7eb',
+        maxHeight: '65%',
     },
     previewImage: {
-        flex: 1,
+        width: '100%',
+        aspectRatio: 3 / 4,
         resizeMode: 'contain',
     },
     imageInfo: {
