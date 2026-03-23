@@ -28,7 +28,7 @@ export interface TrackedGenerateContentResult {
 }
 
 export function isGeminiConfigured(): boolean {
-    return hasRuntimeValue(runtimeConfig.supabaseUrl) && hasRuntimeValue(runtimeConfig.supabaseAnonKey);
+    return hasRuntimeValue(runtimeConfig.geminiApiKey);
 }
 
 /**

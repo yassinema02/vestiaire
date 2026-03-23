@@ -1,10 +1,12 @@
 /**
  * AI Proxy Client
- * Routes AI API calls through Supabase Edge Functions to keep API keys server-side.
+ * Calls Gemini API directly using @google/genai SDK.
  */
 
-import { supabase } from './supabase';
+import { GoogleGenAI } from '@google/genai';
+import { runtimeConfig } from './runtimeConfig';
 import type { AIFeature } from './aiUsageLogger';
+import { managedAIRequest } from './aiRequestManager';
 
 export interface AIProxyGenerateContentParams {
     model: string;
@@ -20,32 +22,49 @@ export interface AIProxyGenerateContentResponse {
     } | null;
 }
 
+let genAIInstance: GoogleGenAI | null = null;
+
+function getGenAI(): GoogleGenAI {
+    if (!genAIInstance) {
+        genAIInstance = new GoogleGenAI({ apiKey: runtimeConfig.geminiApiKey });
+    }
+    return genAIInstance;
+}
+
 /**
- * Invoke the server-side AI proxy with a Gemini generateContent payload.
+ * Call Gemini API directly with queue/timeout/retry management.
  */
 export async function callGeminiProxy(
     params: AIProxyGenerateContentParams,
     feature: AIFeature
 ): Promise<AIProxyGenerateContentResponse> {
-    const { data, error } = await supabase.functions.invoke('ai-proxy', {
-        body: {
-            feature,
-            model: params.model,
-            contents: params.contents,
-        },
+    return managedAIRequest(
+        () => callGeminiDirect(params),
+        feature
+    );
+}
+
+/**
+ * Direct Gemini API call via @google/genai SDK.
+ */
+async function callGeminiDirect(
+    params: AIProxyGenerateContentParams
+): Promise<AIProxyGenerateContentResponse> {
+    const genAI = getGenAI();
+
+    const response = await genAI.models.generateContent({
+        model: params.model,
+        contents: params.contents as any,
     });
 
-    if (error) {
-        // Log full error details for debugging
-        console.error('[aiProxy] Edge Function error:', {
-            message: error.message,
-            name: error.name,
-            context: (error as any).context,
-            status: (error as any).status,
-            data,
-        });
-        throw new Error(data?.detail || data?.error || error.message || 'AI proxy request failed');
-    }
-    if (!data) throw new Error('No response from AI proxy');
-    return data as AIProxyGenerateContentResponse;
+    const text = response.text ?? null;
+    const candidates = response.candidates as Array<Record<string, unknown>> | undefined;
+    const usageMetadata = response.usageMetadata
+        ? {
+              promptTokenCount: response.usageMetadata.promptTokenCount ?? null,
+              candidatesTokenCount: response.usageMetadata.candidatesTokenCount ?? null,
+          }
+        : null;
+
+    return { text, candidates, usageMetadata };
 }

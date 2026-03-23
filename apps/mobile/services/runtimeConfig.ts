@@ -12,6 +12,7 @@ export const runtimeConfig = {
     googleIosClientId: getString(extra.googleIosClientId, process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || ''),
     googleWebClientId: getString(extra.googleWebClientId, process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || ''),
     googleAuthProxyRedirectUri: getString(extra.googleAuthProxyRedirectUri, ''),
+    geminiApiKey: getString(extra.geminiApiKey, process.env.EXPO_PUBLIC_GEMINI_API_KEY || ''),
 };
 
 export function hasRuntimeValue(value: string): boolean {

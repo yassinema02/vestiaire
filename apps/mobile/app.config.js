@@ -93,12 +93,24 @@ export default {
         extra: {
             supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
             supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+            geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY,
             googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
             googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
             googleAuthProxyRedirectUri,
+            eas: {
+                projectId: process.env.EAS_PROJECT_ID,
+            },
             router: {
                 origin: false,
             },
+        },
+        updates: {
+            url: process.env.EAS_PROJECT_ID
+                ? `https://u.expo.dev/${process.env.EAS_PROJECT_ID}`
+                : undefined,
+        },
+        runtimeVersion: {
+            policy: 'appVersion',
         },
     },
 };
