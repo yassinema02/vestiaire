@@ -52,9 +52,14 @@ async function callGeminiDirect(
 ): Promise<AIProxyGenerateContentResponse> {
     const genAI = getGenAI();
 
+    const isImageModel = params.model.includes('image');
+
     const response = await genAI.models.generateContent({
         model: params.model,
         contents: params.contents as any,
+        ...(isImageModel && {
+            config: { responseModalities: ['IMAGE', 'TEXT'] },
+        }),
     });
 
     const text = response.text ?? null;
