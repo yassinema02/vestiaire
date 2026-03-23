@@ -5,17 +5,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    ActivityIndicator,
-    Share,
-    Platform,
-    Image,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Share, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -23,6 +13,7 @@ import { eventSyncService } from '../../services/eventSyncService';
 import { tripPackingService } from '../../services/tripPackingService';
 import { itemsService, WardrobeItem } from '../../services/items';
 import { TripEvent, PackingList } from '../../types/packingList';
+import { Text } from '../../components/ui/Typography';
 
 export default function TravelScreen() {
     const router = useRouter();
@@ -132,7 +123,7 @@ export default function TravelScreen() {
 
             {isLoading ? (
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#A04F37" />
+                    <ActivityIndicator size="large" color="#87A96B" />
                 </View>
             ) : trips.length === 0 ? (
                 <View style={styles.emptyContainer}>
@@ -179,7 +170,7 @@ export default function TravelScreen() {
                     {/* Trip info card */}
                     {selectedTrip && (
                         <View style={styles.tripCard}>
-                            <Ionicons name="airplane" size={20} color="#A04F37" />
+                            <Ionicons name="airplane" size={20} color="#87A96B" />
                             <View style={styles.tripCardInfo}>
                                 <Text style={styles.tripCardTitle}>{selectedTrip.title}</Text>
                                 <Text style={styles.tripCardDates}>
@@ -326,7 +317,7 @@ export default function TravelScreen() {
                                     <Text style={styles.exportBtnText}>Export List</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.regenerateBtn} onPress={handleRegenerate}>
-                                    <Ionicons name="refresh-outline" size={16} color="#A04F37" />
+                                    <Ionicons name="refresh-outline" size={16} color="#87A96B" />
                                     <Text style={styles.regenerateBtnText}>Regenerate</Text>
                                 </TouchableOpacity>
                             </View>
@@ -419,7 +410,7 @@ const styles = StyleSheet.create({
         color: '#6b7280',
     },
     tripChipTextSelected: {
-        color: '#A04F37',
+        color: '#87A96B',
     },
 
     // Trip card
@@ -485,7 +476,7 @@ const styles = StyleSheet.create({
     },
     packedProgress: {
         fontSize: 13,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
     },
 
@@ -522,7 +513,7 @@ const styles = StyleSheet.create({
     dayNumber: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     dayDate: {
         fontSize: 13,
@@ -630,6 +621,6 @@ const styles = StyleSheet.create({
     regenerateBtnText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 });

@@ -5,15 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    ActivityIndicator,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -22,6 +14,7 @@ import { eventClassificationService } from '../../services/eventClassificationSe
 import { calendarOutfitService, CalendarOutfitRow } from '../../services/calendarOutfitService';
 import { EventOutfitCard } from '../../components/features/EventOutfitCard';
 import { itemsService, WardrobeItem } from '../../services/items';
+import { Text } from '../../components/ui/Typography';
 
 /**
  * Group events by date label (Today, Tomorrow, day name)
@@ -114,16 +107,16 @@ export default function EventsScreen() {
                     disabled={isSyncing}
                 >
                     {isSyncing ? (
-                        <ActivityIndicator size="small" color="#A04F37" />
+                        <ActivityIndicator size="small" color="#87A96B" />
                     ) : (
-                        <Ionicons name="refresh-outline" size={22} color="#A04F37" />
+                        <Ionicons name="refresh-outline" size={22} color="#87A96B" />
                     )}
                 </TouchableOpacity>
             </View>
 
             {isLoading ? (
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#A04F37" />
+                    <ActivityIndicator size="large" color="#87A96B" />
                 </View>
             ) : grouped.length === 0 ? (
                 <View style={styles.emptyContainer}>
@@ -236,7 +229,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
         paddingVertical: 12,
         paddingHorizontal: 24,
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 10,
     },
     connectButtonText: {

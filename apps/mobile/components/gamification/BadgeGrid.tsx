@@ -5,10 +5,11 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BADGES, BADGE_CATEGORY_LABELS, BadgeCategory, BadgeDefinition } from '@vestiaire/shared';
 import { UserBadge, gamificationService } from '../../services/gamificationService';
+import { Text } from '../ui/Typography';
 
 interface BadgeGridProps {
     earnedBadges: UserBadge[];
@@ -71,7 +72,7 @@ export default function BadgeGrid({ earnedBadges, onBadgesChanged }: BadgeGridPr
                             return (
                                 <View key={ub.id} style={styles.showcaseBadge}>
                                     <View style={styles.showcaseIconWrap}>
-                                        <Ionicons name={def.iconName as any} size={28} color="#A04F37" />
+                                        <Ionicons name={def.iconName as any} size={28} color="#87A96B" />
                                     </View>
                                     <Text style={styles.showcaseName} numberOfLines={1}>{def.name}</Text>
                                 </View>
@@ -121,7 +122,7 @@ export default function BadgeGrid({ earnedBadges, onBadgesChanged }: BadgeGridPr
                                         <Ionicons
                                             name={earned ? badge.iconName as any : 'lock-closed'}
                                             size={24}
-                                            color={earned ? '#A04F37' : '#d1d5db'}
+                                            color={earned ? '#87A96B' : '#d1d5db'}
                                         />
                                     </View>
                                     <Text
@@ -156,7 +157,7 @@ export default function BadgeGrid({ earnedBadges, onBadgesChanged }: BadgeGridPr
                     style={styles.editShowcaseButton}
                     onPress={() => setEditShowcase(true)}
                 >
-                    <Ionicons name="star-outline" size={16} color="#A04F37" />
+                    <Ionicons name="star-outline" size={16} color="#87A96B" />
                     <Text style={styles.editShowcaseText}>Edit Showcase</Text>
                 </TouchableOpacity>
             )}
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
     editText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     showcaseRow: {
         flexDirection: 'row',
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
     doneText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
         marginLeft: 12,
     },
     // Category
@@ -267,7 +268,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fafbff',
     },
     badgeCellFeatured: {
-        borderColor: '#A04F37',
+        borderColor: '#87A96B',
         borderWidth: 2,
     },
     badgeIcon: {
@@ -319,6 +320,6 @@ const styles = StyleSheet.create({
     editShowcaseText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 });

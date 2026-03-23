@@ -4,11 +4,12 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, SafeAreaView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, Modal, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WardrobeItem } from '../../services/items';
 import { formatNeglectedLabel, getDaysSinceWorn } from '../../utils/neglectedItems';
 import { getCPWResult } from '../../utils/cpwCalculator';
+import { Text } from '../ui/Typography';
 
 export interface SpringCleanResult {
     kept: string[];
@@ -108,7 +109,7 @@ export default function SpringCleanModal({ visible, items, onDismiss, onComplete
                 {/* Step 1: Overview */}
                 {step === 'overview' && (
                     <View style={styles.stepContent}>
-                        <Ionicons name="sparkles" size={48} color="#A04F37" />
+                        <Ionicons name="sparkles" size={48} color="#87A96B" />
                         <Text style={styles.overviewTitle}>Time for a Spring Clean!</Text>
                         <Text style={styles.overviewSubtitle}>
                             You have {sortedItems.length} neglected item{sortedItems.length !== 1 ? 's' : ''}.{'\n'}
@@ -265,7 +266,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#e5e7eb',
     },
     stepDotActive: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
     },
     stepContent: {
         flex: 1,
@@ -295,7 +296,7 @@ const styles = StyleSheet.create({
         marginTop: 16,
     },
     startButton: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 48,
@@ -429,7 +430,7 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     doneButton: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 48,

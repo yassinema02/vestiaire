@@ -4,18 +4,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Modal,
-    TouchableOpacity,
-    ScrollView,
-    ActivityIndicator,
-    SafeAreaView,
-} from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity, ScrollView, ActivityIndicator, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppleCalendar } from '../../stores/calendarStore';
+import { Text } from '../ui/Typography';
 
 interface CalendarSelectorProps {
     visible: boolean;

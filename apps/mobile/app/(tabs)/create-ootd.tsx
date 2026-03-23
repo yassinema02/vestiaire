@@ -5,25 +5,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Image,
-    TextInput,
-    ActivityIndicator,
-    Alert,
-    Modal,
-    FlatList,
-    Dimensions,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput, ActivityIndicator, Alert, Modal, FlatList, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useSocialStore } from '../../stores/socialStore';
 import { itemsService, WardrobeItem } from '../../services/items';
+import { Text } from '../../components/ui/Typography';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_HEIGHT = SCREEN_WIDTH * 0.75;
@@ -156,7 +144,7 @@ export default function CreateOotdScreen() {
                                 />
                                 {isSelected && (
                                     <View style={styles.checkmark}>
-                                        <Ionicons name="checkmark-circle" size={24} color="#A04F37" />
+                                        <Ionicons name="checkmark-circle" size={24} color="#87A96B" />
                                     </View>
                                 )}
                                 <Text style={styles.gridItemName} numberOfLines={1}>
@@ -221,11 +209,11 @@ export default function CreateOotdScreen() {
                         <Text style={styles.photoPlaceholderText}>Add a photo of your outfit</Text>
                         <View style={styles.photoButtons}>
                             <TouchableOpacity style={styles.photoButton} onPress={handleCamera}>
-                                <Ionicons name="camera" size={20} color="#A04F37" />
+                                <Ionicons name="camera" size={20} color="#87A96B" />
                                 <Text style={styles.photoButtonText}>Camera</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.photoButton} onPress={handleGallery}>
-                                <Ionicons name="images" size={20} color="#A04F37" />
+                                <Ionicons name="images" size={20} color="#87A96B" />
                                 <Text style={styles.photoButtonText}>Gallery</Text>
                             </TouchableOpacity>
                         </View>
@@ -236,11 +224,11 @@ export default function CreateOotdScreen() {
                 {photoUri && (
                     <View style={styles.photoSourceRow}>
                         <TouchableOpacity style={styles.photoSourceBtn} onPress={handleCamera}>
-                            <Ionicons name="camera" size={18} color="#A04F37" />
+                            <Ionicons name="camera" size={18} color="#87A96B" />
                             <Text style={styles.photoSourceText}>Retake</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.photoSourceBtn} onPress={handleGallery}>
-                            <Ionicons name="images" size={18} color="#A04F37" />
+                            <Ionicons name="images" size={18} color="#87A96B" />
                             <Text style={styles.photoSourceText}>Gallery</Text>
                         </TouchableOpacity>
                     </View>
@@ -270,7 +258,7 @@ export default function CreateOotdScreen() {
                             style={styles.addTagBtn}
                             onPress={() => setShowItemPicker(true)}
                         >
-                            <Ionicons name="add" size={18} color="#A04F37" />
+                            <Ionicons name="add" size={18} color="#87A96B" />
                             <Text style={styles.addTagText}>Add Item</Text>
                         </TouchableOpacity>
                     </View>
@@ -306,7 +294,7 @@ export default function CreateOotdScreen() {
                                 <Ionicons
                                     name={isSelected ? 'checkbox' : 'square-outline'}
                                     size={22}
-                                    color={isSelected ? '#A04F37' : '#9ca3af'}
+                                    color={isSelected ? '#87A96B' : '#9ca3af'}
                                 />
                                 <Text style={styles.squadRowName}>{squad.name}</Text>
                                 <Text style={styles.squadRowMeta}>
@@ -353,7 +341,7 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     postBtn: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 10,
@@ -437,7 +425,7 @@ const styles = StyleSheet.create({
     photoButtonText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     photoSourceRow: {
         flexDirection: 'row',
@@ -456,7 +444,7 @@ const styles = StyleSheet.create({
     photoSourceText: {
         fontSize: 13,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 
     // Sections
@@ -507,13 +495,13 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#A04F37',
+        borderColor: '#87A96B',
         borderStyle: 'dashed',
     },
     addTagText: {
         fontSize: 13,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 
     // Caption
@@ -586,7 +574,7 @@ const styles = StyleSheet.create({
     modalDone: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     itemGrid: {
         padding: 12,
@@ -601,7 +589,7 @@ const styles = StyleSheet.create({
     },
     gridItemSelected: {
         borderWidth: 2,
-        borderColor: '#A04F37',
+        borderColor: '#87A96B',
     },
     gridItemImage: {
         width: 80,

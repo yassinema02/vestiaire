@@ -4,20 +4,12 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Image,
-    ActivityIndicator,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { donationService, DonationEntry, DonationStats } from '../../services/donationService';
+import { Text } from '../../components/ui/Typography';
 
 export default function DonationHistoryScreen() {
     const router = useRouter();
@@ -74,7 +66,7 @@ export default function DonationHistoryScreen() {
                                 <Text style={styles.statLabel}>Weight</Text>
                             </View>
                             <View style={styles.statItem}>
-                                <Text style={[styles.statValue, { color: '#A04F37' }]}>
+                                <Text style={[styles.statValue, { color: '#87A96B' }]}>
                                     £{stats.totalEstimatedValue.toFixed(0)}
                                 </Text>
                                 <Text style={styles.statLabel}>Est. Value</Text>
@@ -91,7 +83,7 @@ export default function DonationHistoryScreen() {
 
                         {stats.thisYearValue > 0 && (
                             <View style={styles.sustainRow}>
-                                <Ionicons name="cash-outline" size={16} color="#A04F37" />
+                                <Ionicons name="cash-outline" size={16} color="#87A96B" />
                                 <Text style={styles.sustainText}>
                                     £{stats.thisYearValue.toFixed(0)} donated this year (tax est.)
                                 </Text>
@@ -274,6 +266,6 @@ const styles = StyleSheet.create({
     valueText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 });

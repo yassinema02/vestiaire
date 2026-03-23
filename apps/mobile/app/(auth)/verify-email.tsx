@@ -4,12 +4,13 @@
  */
 
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../../services/auth';
 import { AuthScreenShell } from '../../components/ui/AuthScreenShell';
 import { appTheme } from '../../theme/tokens';
+import { Text } from '../../components/ui/Typography';
 
 export default function VerifyEmailScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();

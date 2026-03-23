@@ -5,14 +5,7 @@
  */
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    ScrollView,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -20,6 +13,7 @@ import { useShoppingStore } from '../../stores/shoppingStore';
 import { getCompatibilityRating } from '../../types/shopping';
 import { shoppingService } from '../../services/shoppingService';
 import { WardrobeItem } from '../../services/items';
+import { Text } from '../../components/ui/Typography';
 
 const CATEGORY_ORDER = ['outerwear', 'tops', 'bottoms', 'dresses', 'shoes', 'accessories'];
 
@@ -243,7 +237,7 @@ export default function ScanResultsScreen() {
                             onPress={() => router.push('/(tabs)/add')}
                             activeOpacity={0.8}
                         >
-                            <Ionicons name="add-circle-outline" size={18} color="#A04F37" />
+                            <Ionicons name="add-circle-outline" size={18} color="#87A96B" />
                             <Text style={styles.addItemsCtaText}>Add Items</Text>
                         </TouchableOpacity>
                     </View>
@@ -339,7 +333,7 @@ export default function ScanResultsScreen() {
                         };
                         const bgMap: Record<string, string> = {
                             match: '#ecfdf5',
-                            gap: '#F8EEE7',
+                            gap: '#F8F6F0',
                             tip: '#eff6ff',
                             warning: '#fff7ed',
                         };
@@ -439,7 +433,7 @@ export default function ScanResultsScreen() {
                             <Ionicons
                                 name={showAllMatches ? 'chevron-up' : 'chevron-down'}
                                 size={16}
-                                color="#A04F37"
+                                color="#87A96B"
                             />
                         </TouchableOpacity>
                     )}
@@ -459,7 +453,7 @@ export default function ScanResultsScreen() {
                             onPress={() => router.push('/(tabs)/add')}
                             activeOpacity={0.8}
                         >
-                            <Ionicons name="add-circle-outline" size={18} color="#A04F37" />
+                            <Ionicons name="add-circle-outline" size={18} color="#87A96B" />
                             <Text style={styles.addItemsCtaText}>Add Items</Text>
                         </TouchableOpacity>
                     </View>
@@ -538,7 +532,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     emptyButton: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 12,
         paddingHorizontal: 24,
         paddingVertical: 12,
@@ -695,7 +689,7 @@ const styles = StyleSheet.create({
     addItemsCtaText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     productName: {
         fontSize: 16,
@@ -805,7 +799,7 @@ const styles = StyleSheet.create({
     },
     reasonText: {
         fontSize: 10,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
     },
     categoryGroup: {
@@ -838,7 +832,7 @@ const styles = StyleSheet.create({
     seeAllText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     noMatchesSection: {
         alignItems: 'center',
@@ -864,7 +858,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 14,
         padding: 16,
         gap: 8,

@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { OutfitCard } from './OutfitCard';
@@ -12,6 +12,7 @@ import { useOutfitGeneration } from '../../hooks/useOutfitGeneration';
 import { itemsService, WardrobeItem } from '../../services/items';
 import PaywallModal from '../PaywallModal';
 import { appTheme } from '../../theme/tokens';
+import { Text } from '../ui/Typography';
 
 interface OutfitSuggestionWidgetProps {
   onAddItemsPress?: () => void;
@@ -149,7 +150,7 @@ export const OutfitSuggestionWidget: React.FC<OutfitSuggestionWidgetProps> = ({
       <View style={styles.container}>
         <Text style={styles.sectionTitle}>Today&apos;s Outfit</Text>
         <View style={styles.loadingCard}>
-          <ActivityIndicator size="large" color="#A04F37" />
+          <ActivityIndicator size="large" color="#87A96B" />
           <Text style={styles.loadingText}>Generating outfit ideas...</Text>
           <Text style={styles.loadingSubtext}>
             Analyzing your wardrobe and today&apos;s context
@@ -187,7 +188,7 @@ export const OutfitSuggestionWidget: React.FC<OutfitSuggestionWidgetProps> = ({
         <Text style={styles.sectionTitle}>Today&apos;s Outfit</Text>
         <View style={styles.emptyCard}>
           <View style={styles.emptyIcon}>
-            <Ionicons name="sparkles-outline" size={48} color="#A04F37" />
+            <Ionicons name="sparkles-outline" size={48} color="#87A96B" />
           </View>
           <Text style={styles.emptyTitle}>Ready for outfit ideas?</Text>
           <Text style={styles.emptySubtitle}>
@@ -210,7 +211,7 @@ export const OutfitSuggestionWidget: React.FC<OutfitSuggestionWidgetProps> = ({
         <View style={styles.headerRight}>
           {limitStatus && !limitStatus.isPremium && (
             <View style={styles.usageCounter}>
-              <Ionicons name="sparkles" size={12} color="#A04F37" />
+              <Ionicons name="sparkles" size={12} color="#87A96B" />
               <Text style={styles.usageCounterText}>
                 {limitStatus.used}/{limitStatus.limit}
               </Text>
@@ -221,7 +222,7 @@ export const OutfitSuggestionWidget: React.FC<OutfitSuggestionWidgetProps> = ({
             onPress={handleRegenerate}
             disabled={isLoading}
           >
-            <Ionicons name="refresh" size={18} color={isLoading ? '#9ca3af' : '#A04F37'} />
+            <Ionicons name="refresh" size={18} color={isLoading ? '#9ca3af' : '#87A96B'} />
             <Text style={[styles.regenerateText, isLoading && styles.regenerateTextDisabled]}>
               {isLoading ? 'Generating...' : 'Regenerate'}
             </Text>
@@ -407,26 +408,24 @@ const styles = StyleSheet.create({
   },
   // Error state
   errorCard: {
-    backgroundColor: '#fff',
+    backgroundColor: appTheme.palette.surfaceRaised,
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(181, 150, 120, 0.22)',
+    ...appTheme.shadows.card,
   },
   errorTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: appTheme.palette.text,
     marginTop: 12,
     marginBottom: 4,
   },
   errorSubtitle: {
     fontSize: 14,
-    color: '#6b7280',
+    color: appTheme.palette.textSoft,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -434,13 +433,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#A04F37',
+    backgroundColor: appTheme.palette.accent,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 12,
   },
   retryButtonText: {
-    color: '#fff',
+    color: appTheme.palette.surface,
     fontSize: 14,
     fontWeight: '600',
   },

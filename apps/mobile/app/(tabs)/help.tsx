@@ -4,18 +4,11 @@
  */
 
 import { useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Linking,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Linking, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
+import { Text } from '../../components/ui/Typography';
 
 interface FAQItem {
     question: string;
@@ -112,7 +105,7 @@ export default function HelpScreen() {
                 <Text style={styles.sectionLabel}>Get in Touch</Text>
                 <TouchableOpacity style={styles.contactCard} onPress={handleContact}>
                     <View style={styles.contactIcon}>
-                        <Ionicons name="mail" size={24} color="#A04F37" />
+                        <Ionicons name="mail" size={24} color="#87A96B" />
                     </View>
                     <View style={styles.contactText}>
                         <Text style={styles.contactTitle}>Contact Support</Text>

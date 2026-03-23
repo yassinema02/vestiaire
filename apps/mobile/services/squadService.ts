@@ -217,6 +217,10 @@ export const squadService = {
                 });
 
             if (joinError) {
+                // Handle capacity trigger or unique constraint violation
+                if (joinError.message?.includes('maximum capacity') || joinError.code === '23505') {
+                    return { squad: null, error: 'This squad is full. Maximum 20 members allowed.' };
+                }
                 return { squad: null, error: 'Failed to join squad. Please try again.' };
             }
 
@@ -290,7 +294,15 @@ export const squadService = {
                 .eq('squad_id', squadId)
                 .eq('user_id', userId);
 
-            return { error: error?.message || null };
+            if (error) {
+                // Handle DB trigger preventing last admin removal
+                if (error.message?.includes('last admin')) {
+                    return { error: 'You are the only admin. Delete the squad or promote another member first.' };
+                }
+                return { error: error.message };
+            }
+
+            return { error: null };
         } catch (error) {
             return { error: 'Something went wrong. Please try again.' };
         }

@@ -4,11 +4,12 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { NeglectStats } from '../../services/neglectService';
 import { formatNeglectedLabel } from '../../utils/neglectedItems';
+import { Text } from '../ui/Typography';
 
 interface NeglectInsightsCardProps {
     stats: NeglectStats;
@@ -88,7 +89,7 @@ export default function NeglectInsightsCard({ stats, thresholdDays }: NeglectIns
                     onPress={() => router.push('/(tabs)/wardrobe')}
                 >
                     <Text style={styles.viewAllText}>View All Neglected Items</Text>
-                    <Ionicons name="chevron-forward" size={16} color="#A04F37" />
+                    <Ionicons name="chevron-forward" size={16} color="#87A96B" />
                 </TouchableOpacity>
             )}
         </View>
@@ -189,6 +190,6 @@ const styles = StyleSheet.create({
     viewAllText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 });

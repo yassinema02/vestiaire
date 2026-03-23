@@ -7,7 +7,7 @@
 import { supabase } from './supabase';
 import { requireUserId } from './auth-helpers';
 import { detectOccasion, OccasionType } from '../utils/occasionDetector';
-import { buildEventClassificationPrompt } from '../constants/prompts';
+import { buildEventClassificationPrompt, buildBatchEventClassificationPrompt } from '../constants/prompts';
 import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 
 // Event type used in database (maps from OccasionType, with 'sport' → 'active')
@@ -120,6 +120,50 @@ async function classifyByAI(
     }
 }
 
+/**
+ * Classify a batch of events in a single AI call.
+ * Returns classification results keyed by event ID.
+ */
+async function classifyBatchByAI(
+    events: Array<{ id: string; title: string; description?: string | null; location?: string | null }>
+): Promise<Array<{ id: string; type: EventType; formalityScore: number }>> {
+    const validTypes: EventType[] = ['work', 'social', 'active', 'formal', 'casual'];
+
+    try {
+        const prompt = buildBatchEventClassificationPrompt(events);
+
+        const result = await trackedGenerateContent({
+            model: 'gemini-2.5-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        }, 'event_classify');
+
+        const text = result.text;
+        if (!text) throw new Error('No text response from Gemini');
+
+        const jsonMatch = text.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new Error('Failed to parse batch AI response');
+
+        const parsed = JSON.parse(jsonMatch[0]) as Array<{
+            id: string;
+            type: string;
+            formalityScore: number;
+        }>;
+
+        return parsed.map((item) => ({
+            id: item.id,
+            type: validTypes.includes(item.type as EventType) ? (item.type as EventType) : 'casual',
+            formalityScore: Math.max(1, Math.min(10, Math.round(item.formalityScore || 3))),
+        }));
+    } catch (error) {
+        console.error('Batch AI classification error:', error);
+        // Fallback: keyword-classify each event individually
+        return events.map((e) => {
+            const kw = classifyByKeyword(e.title, e.location);
+            return { id: e.id, type: kw.type, formalityScore: kw.formalityScore };
+        });
+    }
+}
+
 export const eventClassificationService = {
     /**
      * Classify a single event (two-tier: keyword first, AI for ambiguous)
@@ -142,8 +186,9 @@ export const eventClassificationService = {
     },
 
     /**
-     * Classify all unclassified events for a user in batch
-     * Skips events that already have a type (preserves user corrections)
+     * Classify all unclassified events for a user in batch.
+     * Uses keyword fast-path first, then batches remaining ambiguous events
+     * into a single AI call (~10 events per request) instead of N+1 calls.
      */
     classifyUnclassified: async (
         userId?: string
@@ -151,7 +196,6 @@ export const eventClassificationService = {
         try {
             const uid = userId || await requireUserId();
 
-            // Get unclassified events
             const { data, error } = await supabase
                 .from('calendar_events')
                 .select('id, title, description, location, is_all_day')
@@ -165,34 +209,55 @@ export const eventClassificationService = {
 
             let classified = 0;
 
-            for (const event of data) {
-                // All-day events default to casual (AC 6)
-                let result: ClassificationResult;
-                if (event.is_all_day) {
-                    result = {
-                        type: 'casual',
-                        formalityScore: 3,
-                        confidence: 0.8,
-                        source: 'keyword',
-                    };
-                } else {
-                    result = await eventClassificationService.classifyEvent(
-                        event.title,
-                        event.description,
-                        event.location
-                    );
-                }
+            // Phase 1: Resolve all-day and high-confidence keyword matches locally
+            const needsAI: typeof data = [];
+            const localResults: Array<{ id: string; type: EventType; formalityScore: number }> = [];
 
+            for (const event of data) {
+                if (event.is_all_day) {
+                    localResults.push({ id: event.id, type: 'casual', formalityScore: 3 });
+                } else {
+                    const kw = classifyByKeyword(event.title, event.location);
+                    if (kw.confidence >= 0.7) {
+                        localResults.push({ id: event.id, type: kw.type, formalityScore: kw.formalityScore });
+                    } else {
+                        needsAI.push(event);
+                    }
+                }
+            }
+
+            // Write local results in one batch
+            for (const r of localResults) {
                 const { error: updateError } = await supabase
                     .from('calendar_events')
-                    .update({
-                        event_type: result.type,
-                        formality_score: result.formalityScore,
-                    })
-                    .eq('id', event.id);
+                    .update({ event_type: r.type, formality_score: r.formalityScore })
+                    .eq('id', r.id);
+                if (!updateError) classified++;
+            }
 
-                if (!updateError) {
-                    classified++;
+            // Phase 2: Batch AI classification (~10 events per call)
+            if (needsAI.length > 0 && isGeminiConfigured()) {
+                const BATCH_SIZE = 10;
+                for (let i = 0; i < needsAI.length; i += BATCH_SIZE) {
+                    const batch = needsAI.slice(i, i + BATCH_SIZE);
+                    const aiResults = await classifyBatchByAI(batch);
+
+                    for (const r of aiResults) {
+                        const { error: updateError } = await supabase
+                            .from('calendar_events')
+                            .update({ event_type: r.type, formality_score: r.formalityScore })
+                            .eq('id', r.id);
+                        if (!updateError) classified++;
+                    }
+                }
+            } else if (needsAI.length > 0) {
+                // No AI available — default ambiguous events to casual
+                for (const event of needsAI) {
+                    const { error: updateError } = await supabase
+                        .from('calendar_events')
+                        .update({ event_type: 'casual', formality_score: 3 })
+                        .eq('id', event.id);
+                    if (!updateError) classified++;
                 }
             }
 

@@ -4,15 +4,16 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Text } from '../ui/Typography';
 
 export default function LeaderboardTeaser() {
     return (
         <View style={styles.card}>
             <View style={styles.iconRow}>
                 <View style={styles.iconWrap}>
-                    <Ionicons name="podium-outline" size={24} color="#A04F37" />
+                    <Ionicons name="podium-outline" size={24} color="#87A96B" />
                 </View>
                 <View style={styles.textWrap}>
                     <Text style={styles.title}>Leaderboard</Text>
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
     },
     subtitle: {
         fontSize: 12,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
     },
     podium: {
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     podiumRankFirst: {
-        color: '#A04F37',
+        color: '#87A96B',
     },
     description: {
         fontSize: 13,

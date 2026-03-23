@@ -4,24 +4,14 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Image,
-    TextInput,
-    Alert,
-    ActivityIndicator,
-    Dimensions,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput, Alert, ActivityIndicator, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { itemsService, WardrobeItem } from '../../../services/items';
 import { outfitService } from '../../../services/outfitService';
 import { OutfitPosition, CreateOutfitInput } from '../../../types/outfit';
 import { OccasionType } from '../../../utils/occasionDetector';
+import { Text } from '../../../components/ui/Typography';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ITEM_SIZE = (SCREEN_WIDTH - 60) / 3;

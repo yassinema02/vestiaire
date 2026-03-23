@@ -1,8 +1,9 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { appTheme } from '../../theme/tokens';
+import { Text } from './Typography';
 
 interface AuthScreenShellProps {
   eyebrow: string;

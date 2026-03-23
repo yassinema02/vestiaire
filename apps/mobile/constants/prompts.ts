@@ -27,24 +27,24 @@ Respond ONLY with valid JSON in this exact format, no other text:
 
 // ─── productPhotoService.ts ──────────────────────────────────────
 
-export const PRODUCT_PHOTO_PROMPT = `Generate a professional e-commerce product photo of this clothing item.
+export const PRODUCT_PHOTO_PROMPT = `Edit this photo to create a clean product image of the clothing item.
+
+TASK: Remove the person/model from the photo entirely. Extract ONLY the clothing item and display it as a flat-lay or ghost mannequin on a clean white background.
 
 ITEM DETAILS:
 {ITEM_DETAILS}
 
-STYLE REQUIREMENTS:
-- Ghost mannequin presentation: the item should appear with natural 3D form as if worn by an invisible person, showing its shape and drape
-- Clean, light gray (#F5F5F5) background
-- Soft, even studio lighting from above-left
-- Subtle drop shadow beneath the item for depth
-- Front-facing, slightly angled view
-- No model, no hanger, no props, no text, no watermarks
+REQUIREMENTS:
+1. REMOVE the person completely — show only the garment itself
+2. Display the garment flat or with natural 3D shape as if on an invisible mannequin
+3. Use a pure white (#FFFFFF) background
+4. Even, soft studio lighting
+5. No people, no body parts, no hanger, no props, no text
 
-CRITICAL RULES:
-- Preserve the EXACT colors, pattern, texture, and details of the original item
-- Do NOT change the design, add logos, or modify any features of the clothing
-- The output must look like it belongs on Zara.com or COS.com
-- Maintain the correct proportions and silhouette of the item`;
+CRITICAL:
+- Preserve the EXACT colors, pattern, texture and design of the original garment
+- Do NOT modify, redesign, or add anything to the clothing item
+- The result should look like a professional e-commerce product photo`;
 
 // ─── extractionService.ts ────────────────────────────────────────
 

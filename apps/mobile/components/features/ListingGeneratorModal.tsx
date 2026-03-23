@@ -5,23 +5,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Modal,
-    TouchableOpacity,
-    TextInput,
-    ScrollView,
-    ActivityIndicator,
-    Alert,
-    Linking,
-    Clipboard,
-    Share,
-    KeyboardAvoidingView,
-    Platform,
-    Animated,
-} from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Linking, Clipboard, Share, KeyboardAvoidingView, Platform, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as MediaLibrary from 'expo-media-library';
 import { cacheDirectory, downloadAsync } from 'expo-file-system/legacy';
@@ -30,6 +14,7 @@ import { WardrobeItem } from '../../services/items';
 import { listingService, ListingTone, ListingData } from '../../services/listingService';
 import { usageLimitsService, UsageLimitStatus } from '../../services/usageLimitsService';
 import PaywallModal from '../PaywallModal';
+import { Text } from '../ui/Typography';
 
 const TOOLTIP_STORAGE_KEY = 'listing_tooltip_shown';
 
@@ -291,7 +276,7 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
                     >
                         {isGenerating ? (
                             <View style={styles.loadingContainer}>
-                                <ActivityIndicator size="large" color="#A04F37" />
+                                <ActivityIndicator size="large" color="#87A96B" />
                                 <Text style={styles.loadingText}>Writing your listing...</Text>
                                 <Text style={styles.loadingSubtext}>This takes a few seconds</Text>
                             </View>
@@ -315,7 +300,7 @@ export default function ListingGeneratorModal({ visible, item, onDismiss }: List
                                 {/* AI badge */}
                                 {fromAI && (
                                     <View style={styles.aiBadge}>
-                                        <Ionicons name="sparkles" size={14} color="#A04F37" />
+                                        <Ionicons name="sparkles" size={14} color="#87A96B" />
                                         <Text style={styles.aiBadgeText}>AI Generated</Text>
                                     </View>
                                 )}
@@ -503,7 +488,7 @@ const styles = StyleSheet.create({
     usageCounterText: {
         fontSize: 11,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     // Tone selector
     toneRow: {
@@ -525,8 +510,8 @@ const styles = StyleSheet.create({
         borderColor: '#e5e7eb',
     },
     toneButtonActive: {
-        backgroundColor: '#A04F37',
-        borderColor: '#A04F37',
+        backgroundColor: '#87A96B',
+        borderColor: '#87A96B',
     },
     toneText: {
         fontSize: 13,
@@ -604,7 +589,7 @@ const styles = StyleSheet.create({
     aiBadgeText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     // Fields
     fieldLabel: {
@@ -682,7 +667,7 @@ const styles = StyleSheet.create({
     },
     hashtagText: {
         fontSize: 13,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
     },
     // Primary actions
@@ -697,7 +682,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         paddingVertical: 14,
         borderRadius: 12,
     },

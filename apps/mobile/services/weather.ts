@@ -104,6 +104,16 @@ const WEATHER_CODE_MAP: Record<number, { condition: string; icon: string }> = {
 };
 
 const OPEN_METEO_BASE_URL = 'https://api.open-meteo.com/v1/forecast';
+const WEATHER_TIMEOUT_MS = 10_000;
+
+/**
+ * Fetch with AbortController timeout to prevent hanging requests.
+ */
+function fetchWithTimeout(url: string, timeoutMs = WEATHER_TIMEOUT_MS): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
+}
 
 /**
  * Map WMO weather code to condition and icon
@@ -127,7 +137,7 @@ export const weatherService = {
                 current: 'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m',
             });
 
-            const response = await fetch(`${OPEN_METEO_BASE_URL}?${params}`);
+            const response = await fetchWithTimeout(`${OPEN_METEO_BASE_URL}?${params}`);
 
             if (!response.ok) {
                 throw new Error(`Weather API error: ${response.status}`);
@@ -190,7 +200,7 @@ export const weatherService = {
                 forecast_days: '5',
             });
 
-            const response = await fetch(`${OPEN_METEO_BASE_URL}?${params}`);
+            const response = await fetchWithTimeout(`${OPEN_METEO_BASE_URL}?${params}`);
 
             if (!response.ok) {
                 throw new Error(`Weather API error: ${response.status}`);

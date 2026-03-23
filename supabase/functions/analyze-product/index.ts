@@ -9,7 +9,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') || '*';
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') || 'https://vestiaire.app';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
@@ -239,7 +239,31 @@ Deno.serve(async (req: Request) => {
             );
         }
 
-        const analysis = JSON.parse(jsonMatch[0]);
+        const rawAnalysis = JSON.parse(jsonMatch[0]);
+
+        // Validate and sanitize LLM output before returning
+        const VALID_CATEGORIES = ['tops', 'bottoms', 'dresses', 'outerwear', 'shoes', 'accessories'];
+        const VALID_STYLES = ['casual', 'formal', 'smart-casual', 'sporty', 'bohemian', 'streetwear', 'classic', 'minimalist'];
+        const VALID_PATTERNS = ['solid', 'striped', 'plaid', 'floral', 'polka-dot', 'checkered', 'geometric', 'abstract', 'animal-print', 'camo', 'tie-dye'];
+
+        const analysis = {
+            product_name: typeof rawAnalysis.product_name === 'string' ? rawAnalysis.product_name.slice(0, 100) : 'Unknown Product',
+            product_brand: typeof rawAnalysis.product_brand === 'string' ? rawAnalysis.product_brand.slice(0, 50) : null,
+            category: VALID_CATEGORIES.includes(rawAnalysis.category) ? rawAnalysis.category : 'tops',
+            color: typeof rawAnalysis.color === 'string' ? rawAnalysis.color.slice(0, 30) : 'Black',
+            secondary_colors: Array.isArray(rawAnalysis.secondary_colors)
+                ? rawAnalysis.secondary_colors.filter((c: unknown) => typeof c === 'string').slice(0, 5).map((c: string) => c.slice(0, 30))
+                : [],
+            style: VALID_STYLES.includes(rawAnalysis.style) ? rawAnalysis.style : 'casual',
+            material: typeof rawAnalysis.material === 'string' ? rawAnalysis.material.slice(0, 30) : null,
+            pattern: VALID_PATTERNS.includes(rawAnalysis.pattern) ? rawAnalysis.pattern : 'solid',
+            season: Array.isArray(rawAnalysis.season)
+                ? rawAnalysis.season.filter((s: unknown) => ['spring', 'summer', 'autumn', 'winter'].includes(s as string))
+                : [],
+            formality: typeof rawAnalysis.formality === 'number' ? Math.max(1, Math.min(10, Math.round(rawAnalysis.formality))) : 5,
+            confidence: typeof rawAnalysis.confidence === 'number' ? Math.max(0, Math.min(1, rawAnalysis.confidence)) : 0.5,
+            items_detected: typeof rawAnalysis.items_detected === 'number' ? Math.max(0, Math.min(10, Math.round(rawAnalysis.items_detected))) : 1,
+        };
 
         return new Response(
             JSON.stringify({ analysis }),

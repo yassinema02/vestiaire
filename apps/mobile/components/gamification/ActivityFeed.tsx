@@ -4,10 +4,11 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { gamificationService, PointHistoryEntry } from '../../services/gamificationService';
+import { Text } from '../ui/Typography';
 
 const ACTION_CONFIG: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; color: string }> = {
     upload_item: { label: 'Uploaded item', icon: 'shirt-outline', color: '#3b82f6' },
@@ -57,7 +58,7 @@ export default function ActivityFeed() {
     if (isLoading) {
         return (
             <View style={styles.loadingWrap}>
-                <ActivityIndicator size="small" color="#A04F37" />
+                <ActivityIndicator size="small" color="#87A96B" />
             </View>
         );
     }
@@ -165,6 +166,6 @@ const styles = StyleSheet.create({
     entryPoints: {
         fontSize: 13,
         fontWeight: '700',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 });

@@ -1,28 +1,28 @@
 import { Platform, ViewStyle } from 'react-native';
 
 export const palette = {
-  canvas: '#F6F0E8',
-  canvasMuted: '#E8D8C9',
-  canvasStrong: '#D8C0A8',
-  surface: '#FFF9F3',
-  surfaceRaised: '#FFFCF8',
-  surfaceInverse: '#2C221D',
-  line: '#D9C7B4',
-  lineStrong: '#B59678',
-  text: '#241B17',
-  textMuted: '#7C6656',
-  textSoft: '#A08775',
-  accent: '#A04F37',
-  accentDeep: '#7D3825',
-  accentSoft: '#EBC8B5',
-  forest: '#365246',
-  forestSoft: '#C8D8CF',
-  gold: '#C49A58',
-  goldSoft: '#F4E3BF',
-  danger: '#B4483A',
-  success: '#3F6B57',
+  canvas: '#F8F6F0', // Blanc Cassé
+  canvasMuted: '#E6D7C3', // Beige Chaud
+  canvasStrong: '#DCD1B8',
+  surface: '#FFFFFF', // Clean contrast for cards
+  surfaceRaised: '#F9F7EE', // Almond
+  surfaceInverse: '#1F2937', // Noir Charbon
+  line: '#E2D9C5',
+  lineStrong: '#CDBF9E',
+  text: '#1F2937', // Noir Charbon
+  textMuted: '#64748B', // Bleu Ardoise (muted/secondary)
+  textSoft: '#9CA3AF',
+  accent: '#87A96B', // Vert Sage (Vestiaire Green)
+  accentDeep: '#6C8065',
+  accentSoft: '#DCE3D9', // Very soft sage background
+  forest: '#87A96B', // Sage Green
+  forestSoft: '#E8EBE6',
+  gold: '#F7E7CE', // Or Champagne
+  goldSoft: '#FCF5E8',
+  danger: '#D2691E', // Terracotta
+  success: '#87A96B', // Vert Sage
   white: '#FFFFFF',
-  overlay: 'rgba(36, 27, 23, 0.14)',
+  overlay: 'rgba(31, 41, 55, 0.15)', // Noir Charbon with opacity
 };
 
 export const editorial = {
@@ -67,16 +67,17 @@ export const spacing = {
 };
 
 export const typography = {
-  display: Platform.select({
-    ios: 'Georgia',
-    android: 'serif',
-    default: 'Georgia',
-  }),
-  body: Platform.select({
-    ios: 'System',
-    android: 'sans-serif',
-    default: 'System',
-  }),
+  serif: 'SourceSerifPro_600SemiBold',
+  serifRegular: 'SourceSerifPro_400Regular',
+  sans: 'Inter_400Regular',
+  sansMedium: 'Inter_500Medium',
+  sansBold: 'Inter_600SemiBold',
+  // Backward compatibility aliases
+  display: 'SourceSerifPro_600SemiBold',
+  displayRegular: 'SourceSerifPro_400Regular',
+  body: 'Inter_400Regular',
+  bodyMedium: 'Inter_500Medium',
+  bodyBold: 'Inter_600SemiBold',
 };
 
 export const shadows = {

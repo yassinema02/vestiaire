@@ -5,14 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CalendarEventRow } from '../../services/eventSyncService';
 import { OutfitSuggestion, generateEventOutfit, clearEventOutfitCache, getFormalityGuidance, getEventTimeOfDay } from '../../services/aiOutfitService';
@@ -20,6 +13,7 @@ import { CalendarOutfitRow } from '../../services/calendarOutfitService';
 import { EventClassificationBadge } from './EventClassificationBadge';
 import { WardrobeItem } from '../../services/items';
 import { EventType } from '../../services/eventClassificationService';
+import { Text } from '../ui/Typography';
 
 interface EventOutfitCardProps {
     event: CalendarEventRow;
@@ -149,7 +143,7 @@ export const EventOutfitCard: React.FC<EventOutfitCardProps> = ({
                 <View style={styles.outfitSection}>
                     {isLoading ? (
                         <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="small" color="#A04F37" />
+                            <ActivityIndicator size="small" color="#87A96B" />
                             <Text style={styles.loadingText}>Generating outfit...</Text>
                         </View>
                     ) : suggestion ? (
@@ -179,7 +173,7 @@ export const EventOutfitCard: React.FC<EventOutfitCardProps> = ({
                             {/* Actions */}
                             <View style={styles.actionRow}>
                                 <TouchableOpacity style={styles.regenerateBtn} onPress={handleRegenerate}>
-                                    <Ionicons name="refresh-outline" size={16} color="#A04F37" />
+                                    <Ionicons name="refresh-outline" size={16} color="#87A96B" />
                                     <Text style={styles.regenerateText}>Regenerate</Text>
                                 </TouchableOpacity>
                                 {onSaveOutfit && (
@@ -304,7 +298,7 @@ const styles = StyleSheet.create({
     regenerateText: {
         fontSize: 13,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     saveBtn: {
         flexDirection: 'row',
@@ -341,7 +335,7 @@ const styles = StyleSheet.create({
     },
     changeLink: {
         fontSize: 12,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
     },
 });

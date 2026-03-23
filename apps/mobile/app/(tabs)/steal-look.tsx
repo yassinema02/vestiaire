@@ -5,22 +5,14 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    Image,
-    ActivityIndicator,
-    Alert,
-} from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSocialStore } from '../../stores/socialStore';
 import { supabase } from '../../services/supabase';
 import { requireUserId } from '../../services/auth-helpers';
 import { StealMatchResult } from '../../types/social';
+import { Text } from '../../components/ui/Typography';
 
 const MATCH_COLORS = {
     exact: { bg: '#ecfdf5', border: '#6ee7b7', text: '#065f46', badge: '#10b981' },
@@ -110,7 +102,7 @@ export default function StealLookScreen() {
                     <View style={styles.headerSpacer} />
                 </View>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#A04F37" />
+                    <ActivityIndicator size="large" color="#87A96B" />
                     <Text style={styles.loadingText}>Analyzing look...</Text>
                     <Text style={styles.loadingSubtext}>
                         Finding matches in your wardrobe
@@ -341,7 +333,7 @@ const styles = StyleSheet.create({
     },
     retryBtn: {
         marginTop: 16,
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 10,
@@ -402,7 +394,7 @@ const styles = StyleSheet.create({
     scoreValue: {
         fontSize: 36,
         fontWeight: '800',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     scoreLabel: {
         fontSize: 15,
@@ -500,7 +492,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 14,
         paddingVertical: 16,
         marginTop: 8,

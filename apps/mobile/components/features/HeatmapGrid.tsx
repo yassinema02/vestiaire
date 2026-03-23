@@ -7,14 +7,9 @@
  */
 
 import React, { useMemo } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    ScrollView,
-    StyleSheet,
-} from 'react-native';
+import { View, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { HeatmapDay, HeatmapView } from '../../types/heatmap';
+import { Text } from '../ui/Typography';
 
 // ─── Color palette (GitHub-style greens) ─────────────────────────
 
@@ -297,11 +292,11 @@ const styles = StyleSheet.create({
     },
     todayBorder: {
         borderWidth: 2,
-        borderColor: '#A04F37',
+        borderColor: '#87A96B',
     },
     todayBorderSmall: {
         borderWidth: 1,
-        borderColor: '#A04F37',
+        borderColor: '#87A96B',
     },
     monthLabel: {
         fontSize: 9,

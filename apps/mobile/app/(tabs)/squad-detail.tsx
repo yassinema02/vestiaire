@@ -5,24 +5,13 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Image,
-    ActivityIndicator,
-    Alert,
-    Share,
-    ActionSheetIOS,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, Share, ActionSheetIOS, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSocialStore } from '../../stores/socialStore';
 import { SquadMember, OotdPostWithAuthor } from '../../types/social';
+import { Text } from '../../components/ui/Typography';
 
 function getTimeAgo(dateStr: string): string {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -198,7 +187,7 @@ export default function SquadDetailScreen() {
         return (
             <View style={styles.container}>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#A04F37" />
+                    <ActivityIndicator size="large" color="#87A96B" />
                 </View>
             </View>
         );
@@ -216,7 +205,7 @@ export default function SquadDetailScreen() {
                     </Text>
                 </View>
                 <TouchableOpacity onPress={handleShareCode} style={styles.backButton}>
-                    <Ionicons name="share-outline" size={22} color="#A04F37" />
+                    <Ionicons name="share-outline" size={22} color="#87A96B" />
                 </TouchableOpacity>
             </View>
 
@@ -241,11 +230,11 @@ export default function SquadDetailScreen() {
                     <Text style={styles.inviteCode}>{activeSquad.invite_code}</Text>
                     <View style={styles.inviteActions}>
                         <TouchableOpacity style={styles.inviteAction} onPress={handleCopyCode}>
-                            <Ionicons name="copy-outline" size={18} color="#A04F37" />
+                            <Ionicons name="copy-outline" size={18} color="#87A96B" />
                             <Text style={styles.inviteActionText}>Copy Code</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.inviteAction} onPress={handleShareCode}>
-                            <Ionicons name="chatbubble-outline" size={18} color="#A04F37" />
+                            <Ionicons name="chatbubble-outline" size={18} color="#87A96B" />
                             <Text style={styles.inviteActionText}>Share via SMS</Text>
                         </TouchableOpacity>
                     </View>
@@ -397,7 +386,7 @@ const styles = StyleSheet.create({
     inviteCode: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#A04F37',
+        color: '#87A96B',
         letterSpacing: 4,
         marginBottom: 16,
     },
@@ -417,7 +406,7 @@ const styles = StyleSheet.create({
     inviteActionText: {
         fontSize: 13,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 
     // Members section
@@ -434,7 +423,7 @@ const styles = StyleSheet.create({
     },
     sectionCount: {
         backgroundColor: '#F4E2D6',
-        color: '#A04F37',
+        color: '#87A96B',
         fontSize: 13,
         fontWeight: '600',
         paddingHorizontal: 8,
@@ -462,7 +451,7 @@ const styles = StyleSheet.create({
     avatarText: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     memberInfo: {
         flex: 1,
@@ -542,7 +531,7 @@ const styles = StyleSheet.create({
     postAvatarText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     postAuthorInfo: {
         flex: 1,

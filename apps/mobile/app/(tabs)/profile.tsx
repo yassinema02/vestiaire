@@ -4,20 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Modal,
-    TextInput,
-    ActivityIndicator,
-    Alert,
-    Switch,
-    Platform,
-    Share,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, ActivityIndicator, Alert, Switch, Platform, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -43,6 +30,7 @@ import { listingService } from '../../services/listingService';
 import ResaleHistoryCard from '../../components/features/ResaleHistoryCard';
 import DonationHistoryCard from '../../components/features/DonationHistoryCard';
 import { donationService, DonationStats } from '../../services/donationService';
+import { Text } from '../../components/ui/Typography';
 
 // Complete auth session for web browser redirect
 WebBrowser.maybeCompleteAuthSession();
@@ -433,7 +421,7 @@ export default function ProfileScreen() {
                 <Text style={styles.title}>Profile</Text>
                 <View style={styles.headerButtons}>
                     <TouchableOpacity style={styles.headerIconButton} onPress={handleShareAchievements}>
-                        <Ionicons name="share-outline" size={22} color="#A04F37" />
+                        <Ionicons name="share-outline" size={22} color="#87A96B" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.headerIconButton} onPress={() => router.push('/(tabs)/edit-profile')}>
                         <Ionicons name="settings-outline" size={22} color="#1f2937" />
@@ -455,7 +443,7 @@ export default function ProfileScreen() {
                 <Text style={styles.email}>{user?.email}</Text>
                 {subStatus?.isPremium ? (
                     <View style={styles.premiumBadge}>
-                        <Ionicons name="diamond" size={13} color="#A04F37" />
+                        <Ionicons name="diamond" size={13} color="#87A96B" />
                         <Text style={styles.premiumBadgeText}>
                             {subStatus.isTrial ? 'Premium Trial' : 'Premium'}
                             {subStatus.daysRemaining ? ` · ${subStatus.daysRemaining}d left` : ''}
@@ -526,7 +514,7 @@ export default function ProfileScreen() {
                             style={styles.historyButton}
                             onPress={() => setShowPointsHistory(true)}
                         >
-                            <Ionicons name="time-outline" size={16} color="#A04F37" />
+                            <Ionicons name="time-outline" size={16} color="#87A96B" />
                             <Text style={styles.historyButtonText}>View History</Text>
                         </TouchableOpacity>
                     </View>
@@ -549,7 +537,7 @@ export default function ProfileScreen() {
                     activeOpacity={0.8}
                 >
                     <View style={styles.badgesIconWrap}>
-                        <Ionicons name="ribbon" size={22} color="#A04F37" />
+                        <Ionicons name="ribbon" size={22} color="#87A96B" />
                     </View>
                     <View style={styles.badgesButtonContent}>
                         <Text style={styles.badgesButtonTitle}>Badges</Text>
@@ -579,7 +567,7 @@ export default function ProfileScreen() {
                         <Ionicons
                             name={location?.isManual ? 'location' : 'navigate'}
                             size={22}
-                            color="#A04F37"
+                            color="#87A96B"
                         />
                         <View style={styles.locationTextContainer}>
                             <Text style={styles.locationLabel}>
@@ -603,7 +591,7 @@ export default function ProfileScreen() {
                         style={styles.resetLocationLink}
                         onPress={handleResetLocation}
                     >
-                        <Ionicons name="navigate-outline" size={16} color="#A04F37" />
+                        <Ionicons name="navigate-outline" size={16} color="#87A96B" />
                         <Text style={styles.resetLocationText}>Use device location</Text>
                     </TouchableOpacity>
                 )}
@@ -636,7 +624,7 @@ export default function ProfileScreen() {
                         </View>
                     </View>
                     {isConnectingGoogle ? (
-                        <ActivityIndicator size="small" color="#A04F37" />
+                        <ActivityIndicator size="small" color="#87A96B" />
                     ) : googleConnected ? (
                         <TouchableOpacity
                             style={styles.disconnectButton}
@@ -677,7 +665,7 @@ export default function ProfileScreen() {
                         </View>
                     </View>
                     {isConnectingApple ? (
-                        <ActivityIndicator size="small" color="#A04F37" />
+                        <ActivityIndicator size="small" color="#87A96B" />
                     ) : appleConnected ? (
                         <View style={styles.appleCalendarButtons}>
                             <TouchableOpacity
@@ -714,7 +702,7 @@ export default function ProfileScreen() {
                 <View style={styles.reminderCard}>
                     <View style={styles.reminderRow}>
                         <View style={styles.reminderInfo}>
-                            <Ionicons name="notifications-outline" size={22} color="#A04F37" />
+                            <Ionicons name="notifications-outline" size={22} color="#87A96B" />
                             <View style={styles.reminderTextContainer}>
                                 <Text style={styles.reminderLabel}>Log outfit reminder</Text>
                                 <Text style={styles.reminderDescription}>
@@ -723,13 +711,13 @@ export default function ProfileScreen() {
                             </View>
                         </View>
                         {isLoadingReminder ? (
-                            <ActivityIndicator size="small" color="#A04F37" />
+                            <ActivityIndicator size="small" color="#87A96B" />
                         ) : (
                             <Switch
                                 value={reminderEnabled}
                                 onValueChange={handleToggleReminder}
                                 trackColor={{ false: '#d1d5db', true: '#E4B7A3' }}
-                                thumbColor={reminderEnabled ? '#A04F37' : '#f4f3f4'}
+                                thumbColor={reminderEnabled ? '#87A96B' : '#f4f3f4'}
                                 ios_backgroundColor="#d1d5db"
                             />
                         )}
@@ -752,7 +740,7 @@ export default function ProfileScreen() {
                                         style={styles.timeButton}
                                         onPress={() => setShowTimePicker(true)}
                                     >
-                                        <Ionicons name="time-outline" size={16} color="#A04F37" />
+                                        <Ionicons name="time-outline" size={16} color="#87A96B" />
                                         <Text style={styles.timeButtonText}>
                                             {formatTime12h(reminderTime)}
                                         </Text>
@@ -832,7 +820,7 @@ export default function ProfileScreen() {
                             value={resalePromptsEnabled}
                             onValueChange={handleToggleResalePrompts}
                             trackColor={{ false: '#d1d5db', true: '#D9C7B4' }}
-                            thumbColor={resalePromptsEnabled ? '#A04F37' : '#9ca3af'}
+                            thumbColor={resalePromptsEnabled ? '#87A96B' : '#9ca3af'}
                         />
                     </View>
                 </View>
@@ -847,7 +835,7 @@ export default function ProfileScreen() {
                         activeOpacity={0.8}
                     >
                         <View style={styles.premiumBannerIcon}>
-                            <Ionicons name="diamond" size={22} color="#A04F37" />
+                            <Ionicons name="diamond" size={22} color="#87A96B" />
                         </View>
                         <View style={styles.premiumBannerContent}>
                             <Text style={styles.premiumBannerTitle}>Upgrade to Premium</Text>
@@ -866,7 +854,7 @@ export default function ProfileScreen() {
                     style={styles.menuItem}
                     onPress={() => router.push('/(tabs)/premium')}
                 >
-                    <Ionicons name="diamond-outline" size={22} color="#A04F37" />
+                    <Ionicons name="diamond-outline" size={22} color="#87A96B" />
                     <Text style={styles.menuText}>
                         {subStatus?.isPremium ? 'Premium Subscription' : 'Upgrade to Premium'}
                     </Text>
@@ -877,7 +865,7 @@ export default function ProfileScreen() {
                     style={styles.menuItem}
                     onPress={() => router.push('/(tabs)/analytics')}
                 >
-                    <Ionicons name="stats-chart-outline" size={22} color="#A04F37" />
+                    <Ionicons name="stats-chart-outline" size={22} color="#87A96B" />
                     <Text style={styles.menuText}>Wardrobe Analytics</Text>
                     <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
                 </TouchableOpacity>
@@ -1016,7 +1004,7 @@ const styles = StyleSheet.create({
         width: 30,
         height: 30,
         borderRadius: 15,
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
@@ -1052,7 +1040,7 @@ const styles = StyleSheet.create({
     premiumBadgeText: {
         fontSize: 13,
         fontWeight: '700',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     sectionContainer: {
         paddingHorizontal: 24,
@@ -1107,7 +1095,7 @@ const styles = StyleSheet.create({
     changeButtonText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     resetLocationLink: {
         flexDirection: 'row',
@@ -1118,7 +1106,7 @@ const styles = StyleSheet.create({
     },
     resetLocationText: {
         fontSize: 14,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
     },
     // Premium banner
@@ -1156,10 +1144,10 @@ const styles = StyleSheet.create({
     },
     premiumBannerSubtitle: {
         fontSize: 12,
-        color: '#A04F37',
+        color: '#87A96B',
     },
     premiumBannerCta: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 8,
@@ -1254,7 +1242,7 @@ const styles = StyleSheet.create({
     levelTitle: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     levelNext: {
         fontSize: 11,
@@ -1268,7 +1256,7 @@ const styles = StyleSheet.create({
     },
     progressBarFill: {
         height: 8,
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 4,
     },
     historyButton: {
@@ -1282,7 +1270,7 @@ const styles = StyleSheet.create({
     historyButtonText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     // Badges button
     badgesButton: {
@@ -1319,7 +1307,7 @@ const styles = StyleSheet.create({
     },
     badgesButtonSubtitle: {
         fontSize: 13,
-        color: '#A04F37',
+        color: '#87A96B',
     },
     // Modal styles
     modalOverlay: {
@@ -1368,7 +1356,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     setButton: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 12,
         paddingVertical: 14,
         alignItems: 'center',
@@ -1388,7 +1376,7 @@ const styles = StyleSheet.create({
     },
     resetButtonText: {
         fontSize: 14,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
     },
     // Calendar styles
@@ -1541,7 +1529,7 @@ const styles = StyleSheet.create({
     timeButtonText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     reminderHint: {
         fontSize: 12,

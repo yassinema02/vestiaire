@@ -51,7 +51,10 @@ export const donationService = {
                     estimated_value: estimatedValue || null,
                 });
 
-            if (error) return { error: error.message };
+            if (error) {
+                if (error.code === '23505') return { error: 'This item has already been donated.' };
+                return { error: error.message };
+            }
 
             // Mark item as donated
             await supabase

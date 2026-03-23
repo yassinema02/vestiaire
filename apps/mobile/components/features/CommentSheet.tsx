@@ -5,24 +5,12 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Modal,
-    TouchableOpacity,
-    TextInput,
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
-    ActionSheetIOS,
-    Alert,
-    ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity, TextInput, FlatList, KeyboardAvoidingView, Platform, ActionSheetIOS, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { OotdCommentWithAuthor } from '../../types/social';
 import { formatRelativeTime } from '../../utils/formatTime';
 import { useSocialStore } from '../../stores/socialStore';
+import { Text } from '../ui/Typography';
 
 interface CommentSheetProps {
     visible: boolean;
@@ -269,7 +257,7 @@ const styles = StyleSheet.create({
     commentAvatarText: {
         fontSize: 10,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     commentBody: {
         flex: 1,
@@ -339,7 +327,7 @@ const styles = StyleSheet.create({
         color: '#9ca3af',
     },
     postBtn: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         paddingHorizontal: 16,
         paddingVertical: 6,
         borderRadius: 14,

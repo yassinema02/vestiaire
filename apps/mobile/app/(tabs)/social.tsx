@@ -7,16 +7,7 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    FlatList,
-    RefreshControl,
-    Animated,
-    ScrollView,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, FlatList, RefreshControl, Animated, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -26,6 +17,7 @@ import { StyleSquad, OotdPostWithAuthor } from '../../types/social';
 import OotdPostCard from '../../components/features/OotdPostCard';
 import PhotoViewer from '../../components/features/PhotoViewer';
 import CommentSheet from '../../components/features/CommentSheet';
+import { Text } from '../../components/ui/Typography';
 
 export default function SocialScreen() {
     const router = useRouter();
@@ -165,7 +157,7 @@ export default function SocialScreen() {
                     onPress={() => handleSquadPress(squad)}
                 >
                     <View style={styles.squadChipIcon}>
-                        <Ionicons name="people" size={16} color="#A04F37" />
+                        <Ionicons name="people" size={16} color="#87A96B" />
                     </View>
                     <Text style={styles.squadChipName} numberOfLines={1}>
                         {squad.name}
@@ -174,7 +166,7 @@ export default function SocialScreen() {
                 </TouchableOpacity>
             ))}
             <TouchableOpacity style={styles.squadChipAdd} onPress={handleJoinSquad}>
-                <Ionicons name="enter-outline" size={16} color="#A04F37" />
+                <Ionicons name="enter-outline" size={16} color="#87A96B" />
                 <Text style={styles.squadChipAddText}>Join</Text>
             </TouchableOpacity>
         </ScrollView>
@@ -258,12 +250,12 @@ export default function SocialScreen() {
                     <Text style={styles.title}>Style Squads</Text>
                     <View style={styles.headerActions}>
                         <TouchableOpacity style={styles.headerBtn} onPress={handleCreateSquad}>
-                            <Ionicons name="add" size={22} color="#A04F37" />
+                            <Ionicons name="add" size={22} color="#87A96B" />
                         </TouchableOpacity>
                     </View>
                 </View>
                 <TouchableOpacity style={styles.joinBar} onPress={handleJoinSquad}>
-                    <Ionicons name="enter-outline" size={20} color="#A04F37" />
+                    <Ionicons name="enter-outline" size={20} color="#87A96B" />
                     <Text style={styles.joinBarText}>Join with Code</Text>
                 </TouchableOpacity>
                 {renderNoSquads()}
@@ -278,10 +270,10 @@ export default function SocialScreen() {
                 <Text style={styles.title}>Style Squads</Text>
                 <View style={styles.headerActions}>
                     <TouchableOpacity style={styles.headerBtn} onPress={handlePostOotd}>
-                        <Ionicons name="camera" size={20} color="#A04F37" />
+                        <Ionicons name="camera" size={20} color="#87A96B" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.headerBtn} onPress={handleCreateSquad}>
-                        <Ionicons name="add" size={22} color="#A04F37" />
+                        <Ionicons name="add" size={22} color="#87A96B" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -311,8 +303,8 @@ export default function SocialScreen() {
                         <RefreshControl
                             refreshing={refreshing}
                             onRefresh={handleRefresh}
-                            tintColor="#A04F37"
-                            colors={['#A04F37']}
+                            tintColor="#87A96B"
+                            colors={['#87A96B']}
                         />
                     }
                     showsVerticalScrollIndicator={false}
@@ -392,7 +384,7 @@ const styles = StyleSheet.create({
     joinBarText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 
     // Compact squad row
@@ -444,7 +436,7 @@ const styles = StyleSheet.create({
     squadChipAddText: {
         fontSize: 13,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 
     // Filter chips
@@ -462,8 +454,8 @@ const styles = StyleSheet.create({
         borderColor: '#e5e7eb',
     },
     filterChipActive: {
-        backgroundColor: '#A04F37',
-        borderColor: '#A04F37',
+        backgroundColor: '#87A96B',
+        borderColor: '#87A96B',
     },
     filterChipText: {
         fontSize: 13,
@@ -564,7 +556,7 @@ const styles = StyleSheet.create({
     emptyButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         paddingVertical: 12,
         paddingHorizontal: 20,
         borderRadius: 12,

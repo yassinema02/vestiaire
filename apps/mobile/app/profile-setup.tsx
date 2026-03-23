@@ -5,19 +5,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    TextInput,
-    ScrollView,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image, KeyboardAvoidingView, Platform, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { userProfileService, STYLE_OPTIONS } from '../services/userProfileService';
@@ -25,6 +13,7 @@ import { profileSetupService } from '../services/profileSetupService';
 import { onboardingService } from '../services/onboarding';
 import { gapAnalysisService } from '../services/gapAnalysisService';
 import { Gender, UserProfile } from '../types/userProfile';
+import { Text } from '../components/ui/Typography';
 
 // ─── Constants ────────────────────────────────────────────────────
 

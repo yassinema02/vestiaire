@@ -4,10 +4,11 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ResalePrompt } from '../../services/resalePromptService';
 import ResalePromptCard from './ResalePromptCard';
+import { Text } from '../ui/Typography';
 
 interface ResalePromptBannerProps {
     prompts: ResalePrompt[];

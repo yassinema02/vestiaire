@@ -5,18 +5,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  FlatList,
-  Image,
-  ActivityIndicator,
-  Modal,
-  Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, ActivityIndicator, Modal, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -34,6 +23,7 @@ import {
 import { useWeatherStore } from '../../stores/weatherStore';
 import { DailyForecast } from '../../services/weather';
 import { Outfit } from '../../types/outfit';
+import { Text } from '../../components/ui/Typography';
 
 interface DayData {
   date: string;
@@ -278,7 +268,7 @@ export default function PlanWeekScreen() {
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#A04F37" />
+          <ActivityIndicator size="large" color="#87A96B" />
         </View>
       ) : (
         <>
@@ -409,7 +399,7 @@ export default function PlanWeekScreen() {
                         style={styles.changeBtn}
                         onPress={() => setShowOutfitPicker(true)}
                       >
-                        <Ionicons name="swap-horizontal-outline" size={16} color="#A04F37" />
+                        <Ionicons name="swap-horizontal-outline" size={16} color="#87A96B" />
                         <Text style={styles.changeBtnText}>Change</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -452,10 +442,10 @@ export default function PlanWeekScreen() {
                           disabled={isSuggesting || isScheduling}
                         >
                           {isSuggesting ? (
-                            <ActivityIndicator size="small" color="#A04F37" />
+                            <ActivityIndicator size="small" color="#87A96B" />
                           ) : (
                             <>
-                              <Ionicons name="refresh-outline" size={18} color="#A04F37" />
+                              <Ionicons name="refresh-outline" size={18} color="#87A96B" />
                               <Text style={styles.regenerateBtnText}>Regenerate</Text>
                             </>
                           )}
@@ -483,10 +473,10 @@ export default function PlanWeekScreen() {
                       disabled={isSuggesting}
                     >
                       {isSuggesting ? (
-                        <ActivityIndicator size="small" color="#A04F37" />
+                        <ActivityIndicator size="small" color="#87A96B" />
                       ) : (
                         <>
-                          <Ionicons name="sparkles-outline" size={18} color="#A04F37" />
+                          <Ionicons name="sparkles-outline" size={18} color="#87A96B" />
                           <Text style={styles.suggestBtnText}>Get AI Suggestion</Text>
                         </>
                       )}
@@ -607,7 +597,7 @@ const styles = StyleSheet.create({
   },
   dayCellToday: {
     borderWidth: 2,
-    borderColor: '#A04F37',
+    borderColor: '#87A96B',
   },
   dayCellSelected: {
     backgroundColor: '#F4E2D6',
@@ -618,7 +608,7 @@ const styles = StyleSheet.create({
     color: '#1f2937',
   },
   dayLabelSelected: {
-    color: '#A04F37',
+    color: '#87A96B',
   },
   weatherChip: {
     flexDirection: 'row',
@@ -745,7 +735,7 @@ const styles = StyleSheet.create({
   changeBtnText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#A04F37',
+    color: '#87A96B',
   },
   removeBtn: {
     flexDirection: 'row',
@@ -778,7 +768,7 @@ const styles = StyleSheet.create({
   suggestBtnText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#A04F37',
+    color: '#87A96B',
   },
   browseBtn: {
     flexDirection: 'row',
@@ -830,7 +820,7 @@ const styles = StyleSheet.create({
   regenerateBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#A04F37',
+    color: '#87A96B',
   },
   scheduleBtn: {
     flex: 1,

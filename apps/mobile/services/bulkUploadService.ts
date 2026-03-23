@@ -62,11 +62,17 @@ export const bulkUploadService = {
           continue;
         }
 
-        const { data: urlData } = supabase.storage
+        // Use signed URL since extraction-uploads bucket is private
+        const { data: urlData, error: signError } = await supabase.storage
           .from(EXTRACTION_BUCKET)
-          .getPublicUrl(data.path);
+          .createSignedUrl(data.path, 3600); // 1 hour expiry
 
-        urls.push(urlData.publicUrl);
+        if (signError || !urlData?.signedUrl) {
+          console.warn(`Failed to create signed URL for photo ${i + 1}:`, signError?.message);
+          continue;
+        }
+
+        urls.push(urlData.signedUrl);
       }
 
       onProgress({

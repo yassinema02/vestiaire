@@ -5,19 +5,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Image,
-    ActivityIndicator,
-    Alert,
-    TextInput,
-    Modal,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, TextInput, Modal, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -30,6 +18,7 @@ import {
 import ListingGeneratorModal from '../../components/features/ListingGeneratorModal';
 import EarningsChart from '../../components/features/EarningsChart';
 import { WardrobeItem } from '../../services/items';
+import { Text } from '../../components/ui/Typography';
 
 const STATUS_FILTERS: { id: ListingStatus | 'all'; label: string }[] = [
     { id: 'all', label: 'All' },
@@ -176,7 +165,7 @@ export default function ListingHistoryScreen() {
                         <Text style={styles.statLabel}>Sold</Text>
                     </View>
                     <View style={styles.statCard}>
-                        <Text style={[styles.statValue, { color: '#A04F37' }]}>
+                        <Text style={[styles.statValue, { color: '#87A96B' }]}>
                             {stats.totalRevenue > 0 ? `$${stats.totalRevenue.toFixed(0)}` : '$0'}
                         </Text>
                         <Text style={styles.statLabel}>Revenue</Text>
@@ -206,7 +195,7 @@ export default function ListingHistoryScreen() {
                 {/* Content */}
                 {isLoading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#A04F37" />
+                        <ActivityIndicator size="large" color="#87A96B" />
                     </View>
                 ) : listings.length === 0 ? (
                     <View style={styles.emptyState}>
@@ -356,8 +345,8 @@ function ListingCard({
                             style={styles.actionBtn}
                             onPress={() => onRegenerate(item)}
                         >
-                            <Ionicons name="refresh-outline" size={16} color="#A04F37" />
-                            <Text style={[styles.actionBtnText, { color: '#A04F37' }]}>Re-generate</Text>
+                            <Ionicons name="refresh-outline" size={16} color="#87A96B" />
+                            <Text style={[styles.actionBtnText, { color: '#87A96B' }]}>Re-generate</Text>
                         </TouchableOpacity>
                     )}
                     <TouchableOpacity
@@ -466,7 +455,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     filterChipActive: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
     },
     filterChipText: {
         fontSize: 13,

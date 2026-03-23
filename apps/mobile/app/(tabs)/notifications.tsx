@@ -4,21 +4,14 @@
  */
 
 import { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Switch,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Switch, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { OotdNotificationPreference, OotdReminderPreferences } from '../../types/social';
 import { ootdNotificationService } from '../../services/ootdNotificationService';
 import { ootdReminderService } from '../../services/ootdReminderService';
+import { Text } from '../../components/ui/Typography';
 
 const PREF_KEYS = {
     outfitSuggestions: 'notif_outfit_suggestions',
@@ -135,7 +128,7 @@ export default function NotificationsScreen() {
             >
                 {/* Info Banner */}
                 <View style={styles.infoBanner}>
-                    <Ionicons name="information-circle" size={20} color="#A04F37" />
+                    <Ionicons name="information-circle" size={20} color="#87A96B" />
                     <Text style={styles.infoBannerText}>
                         Push notifications will activate when running a development build. Your preferences are saved for when they're enabled.
                     </Text>
@@ -147,7 +140,7 @@ export default function NotificationsScreen() {
 
                     <View style={styles.toggleRow}>
                         <View style={styles.toggleInfo}>
-                            <Ionicons name="shirt-outline" size={22} color="#A04F37" />
+                            <Ionicons name="shirt-outline" size={22} color="#87A96B" />
                             <View style={styles.toggleText}>
                                 <Text style={styles.toggleLabel}>Outfit Suggestions</Text>
                                 <Text style={styles.toggleDescription}>
@@ -159,7 +152,7 @@ export default function NotificationsScreen() {
                             value={prefs.outfitSuggestions}
                             onValueChange={() => togglePref('outfitSuggestions')}
                             trackColor={{ false: '#d1d5db', true: '#D9C7B4' }}
-                            thumbColor={prefs.outfitSuggestions ? '#A04F37' : '#f4f3f4'}
+                            thumbColor={prefs.outfitSuggestions ? '#87A96B' : '#f4f3f4'}
                         />
                     </View>
 

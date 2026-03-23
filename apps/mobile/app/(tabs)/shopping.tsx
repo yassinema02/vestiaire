@@ -6,22 +6,12 @@
  */
 
 import { useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    ScrollView,
-    ActivityIndicator,
-    Alert,
-    TextInput,
-    Keyboard,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert, TextInput, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useShoppingStore, AnalysisProgress } from '../../stores/shoppingStore';
+import { Text } from '../../components/ui/Typography';
 
 type InputTab = 'screenshot' | 'url';
 
@@ -191,7 +181,7 @@ export default function ShoppingScreen() {
                     <Ionicons
                         name="camera-outline"
                         size={16}
-                        color={activeTab === 'screenshot' ? '#A04F37' : '#6b7280'}
+                        color={activeTab === 'screenshot' ? '#87A96B' : '#6b7280'}
                     />
                     <Text style={[styles.tabText, activeTab === 'screenshot' && styles.tabTextActive]}>
                         Screenshot
@@ -205,7 +195,7 @@ export default function ShoppingScreen() {
                     <Ionicons
                         name="link-outline"
                         size={16}
-                        color={activeTab === 'url' ? '#A04F37' : '#6b7280'}
+                        color={activeTab === 'url' ? '#87A96B' : '#6b7280'}
                     />
                     <Text style={[styles.tabText, activeTab === 'url' && styles.tabTextActive]}>
                         Paste URL
@@ -238,7 +228,7 @@ export default function ShoppingScreen() {
                                 activeOpacity={0.7}
                             >
                                 <View style={styles.inputIconContainer}>
-                                    <Ionicons name="images-outline" size={32} color="#A04F37" />
+                                    <Ionicons name="images-outline" size={32} color="#87A96B" />
                                 </View>
                                 <Text style={styles.inputTitle}>Upload Screenshot</Text>
                                 <Text style={styles.inputSubtitle}>Pick from your gallery</Text>
@@ -250,7 +240,7 @@ export default function ShoppingScreen() {
                                 activeOpacity={0.7}
                             >
                                 <View style={styles.inputIconContainer}>
-                                    <Ionicons name="camera-outline" size={32} color="#A04F37" />
+                                    <Ionicons name="camera-outline" size={32} color="#87A96B" />
                                 </View>
                                 <Text style={styles.inputTitle}>Take Photo</Text>
                                 <Text style={styles.inputSubtitle}>Snap a product photo</Text>
@@ -335,7 +325,7 @@ export default function ShoppingScreen() {
             {isAnalyzing && (
                 <View style={styles.loadingSection}>
                     <View style={styles.loadingCard}>
-                        <ActivityIndicator size="large" color="#A04F37" />
+                        <ActivityIndicator size="large" color="#87A96B" />
                         <Text style={styles.loadingText}>
                             {PROGRESS_MESSAGES[analysisProgress]}
                         </Text>
@@ -370,7 +360,7 @@ export default function ShoppingScreen() {
                                 onPress={handleRetry}
                                 activeOpacity={0.8}
                             >
-                                <Ionicons name="refresh" size={18} color="#A04F37" />
+                                <Ionicons name="refresh" size={18} color="#87A96B" />
                                 <Text style={styles.retryButtonText}>Try Again</Text>
                             </TouchableOpacity>
                             {activeTab === 'url' && (
@@ -522,7 +512,7 @@ const styles = StyleSheet.create({
         color: '#6b7280',
     },
     tabTextActive: {
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '600',
     },
 
@@ -635,11 +625,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 14,
         padding: 16,
         gap: 8,
-        shadowColor: '#A04F37',
+        shadowColor: '#87A96B',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -667,7 +657,7 @@ const styles = StyleSheet.create({
     },
     loadingText: {
         fontSize: 15,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
         marginTop: 16,
     },
@@ -683,7 +673,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#e5e7eb',
     },
     dotActive: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
     },
     errorSection: {
         paddingHorizontal: 24,
@@ -726,7 +716,7 @@ const styles = StyleSheet.create({
     retryButtonText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     switchButton: {
         flexDirection: 'row',

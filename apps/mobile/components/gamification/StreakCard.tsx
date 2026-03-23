@@ -4,11 +4,12 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { STREAK_MILESTONES } from '@vestiaire/shared';
 import { UserStats } from '../../services/gamificationService';
+import { Text } from '../ui/Typography';
 
 interface StreakCardProps {
     stats: UserStats;

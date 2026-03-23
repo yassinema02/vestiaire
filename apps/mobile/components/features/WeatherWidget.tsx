@@ -4,18 +4,11 @@
  */
 
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Modal,
-  TextInput,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useWeatherStore } from '../../stores/weatherStore';
 import { appTheme } from '../../theme/tokens';
+import { Text } from '../ui/Typography';
 
 interface WeatherWidgetProps {
   compact?: boolean;
@@ -383,7 +376,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   setButton: {
-    backgroundColor: '#A04F37',
+    backgroundColor: '#87A96B',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',

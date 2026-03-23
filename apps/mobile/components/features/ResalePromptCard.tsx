@@ -4,10 +4,11 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ResalePrompt } from '../../services/resalePromptService';
 import { formatNeglectedLabel } from '../../utils/neglectedItems';
+import { Text } from '../ui/Typography';
 
 interface ResalePromptCardProps {
     prompt: ResalePrompt;
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         paddingVertical: 10,
         borderRadius: 10,
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 4,

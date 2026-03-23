@@ -4,20 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    ScrollView,
-    TextInput,
-    Alert,
-    ActivityIndicator,
-    Platform,
-    Dimensions,
-    Modal,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, Alert, ActivityIndicator, Platform, Dimensions, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { itemsService, WardrobeItem } from '../../services/items';
@@ -29,6 +16,7 @@ import { isNeglected, formatNeglectedLabel } from '../../utils/neglectedItems';
 import ListingGeneratorModal from '../../components/features/ListingGeneratorModal';
 import { resalePromptService } from '../../services/resalePromptService';
 import { donationService } from '../../services/donationService';
+import { Text } from '../../components/ui/Typography';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -268,7 +256,7 @@ export default function ItemDetailScreen() {
                     <View style={{ width: 40 }} />
                 </View>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#A04F37" />
+                    <ActivityIndicator size="large" color="#87A96B" />
                 </View>
             </View>
         );
@@ -340,7 +328,7 @@ export default function ItemDetailScreen() {
                             onPress={() => navigateToItem('prev')}
                             disabled={currentIndex === 0}
                         >
-                            <Ionicons name="chevron-back" size={20} color={currentIndex === 0 ? '#d1d5db' : '#A04F37'} />
+                            <Ionicons name="chevron-back" size={20} color={currentIndex === 0 ? '#d1d5db' : '#87A96B'} />
                             <Text style={[styles.navButtonText, currentIndex === 0 && styles.navButtonTextDisabled]}>Previous</Text>
                         </TouchableOpacity>
                         <Text style={styles.navCounter}>{currentIndex + 1} / {allItemIds.length}</Text>
@@ -350,7 +338,7 @@ export default function ItemDetailScreen() {
                             disabled={currentIndex === allItemIds.length - 1}
                         >
                             <Text style={[styles.navButtonText, currentIndex === allItemIds.length - 1 && styles.navButtonTextDisabled]}>Next</Text>
-                            <Ionicons name="chevron-forward" size={20} color={currentIndex === allItemIds.length - 1 ? '#d1d5db' : '#A04F37'} />
+                            <Ionicons name="chevron-forward" size={20} color={currentIndex === allItemIds.length - 1 ? '#d1d5db' : '#87A96B'} />
                         </TouchableOpacity>
                     </View>
                 )}
@@ -503,7 +491,7 @@ export default function ItemDetailScreen() {
                 <View style={styles.wearHistoryCard}>
                     <Text style={styles.cardTitle}>Wear History</Text>
                     {isLoadingHistory ? (
-                        <ActivityIndicator size="small" color="#A04F37" style={{ paddingVertical: 16 }} />
+                        <ActivityIndicator size="small" color="#87A96B" style={{ paddingVertical: 16 }} />
                     ) : wearHistory.length === 0 ? (
                         <Text style={styles.noHistoryText}>No wear logs yet</Text>
                     ) : (
@@ -548,7 +536,7 @@ export default function ItemDetailScreen() {
                         <Text style={styles.cardTitle}>Details</Text>
                         {!isEditing ? (
                             <TouchableOpacity onPress={() => setIsEditing(true)} style={styles.editButton}>
-                                <Ionicons name="pencil" size={16} color="#A04F37" />
+                                <Ionicons name="pencil" size={16} color="#87A96B" />
                                 <Text style={styles.editButtonText}>Edit</Text>
                             </TouchableOpacity>
                         ) : (
@@ -852,7 +840,7 @@ const styles = StyleSheet.create({
     },
     navButtonText: {
         fontSize: 14,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500'
     },
     navButtonTextDisabled: {
@@ -891,7 +879,7 @@ const styles = StyleSheet.create({
     statValue: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#A04F37'
+        color: '#87A96B'
     },
     statLabel: {
         fontSize: 12,
@@ -926,7 +914,7 @@ const styles = StyleSheet.create({
     },
     editButtonText: {
         fontSize: 14,
-        color: '#A04F37',
+        color: '#87A96B',
         marginLeft: 4,
         fontWeight: '500'
     },
@@ -943,7 +931,7 @@ const styles = StyleSheet.create({
         color: '#6b7280'
     },
     saveButton: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         paddingHorizontal: 16,
         paddingVertical: 6,
         borderRadius: 8,
@@ -1022,8 +1010,8 @@ const styles = StyleSheet.create({
         borderColor: '#e5e7eb'
     },
     chipSelected: {
-        backgroundColor: '#A04F37',
-        borderColor: '#A04F37'
+        backgroundColor: '#87A96B',
+        borderColor: '#87A96B'
     },
     chipText: {
         fontSize: 13,
@@ -1197,7 +1185,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 6,
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         paddingVertical: 12,
         borderRadius: 10,
     },
@@ -1274,7 +1262,7 @@ const styles = StyleSheet.create({
     },
     wearSummary: {
         fontSize: 14,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
         marginBottom: 12,
     },

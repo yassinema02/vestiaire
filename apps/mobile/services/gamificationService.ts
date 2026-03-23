@@ -374,31 +374,29 @@ export const gamificationService = {
      */
     awardWearLog: async (): Promise<{ pointsEarned: number; error: Error | null }> => {
         try {
-            let totalEarned = 0;
+            // Use atomic RPC to award base points + first-of-day bonus
+            const { data, error } = await supabase.rpc('award_wear_log_with_bonus', {
+                p_base_points: POINTS.LOG_OUTFIT,
+                p_first_day_points: POINTS.FIRST_ITEM_OF_DAY,
+            });
 
-            // Base wear log points
-            const { error } = await gamificationService.addPoints(POINTS.LOG_OUTFIT, 'wear_log');
-            if (!error) totalEarned += POINTS.LOG_OUTFIT;
-
-            // Check if this is the first log of the day for bonus
-            const today = todayStr();
-            const userId = await requireUserId();
-            const { data: todayLogs } = await supabase
-                .from('point_history')
-                .select('id')
-                .eq('user_id', userId)
-                .eq('action_type', 'wear_log')
-                .gte('created_at', `${today}T00:00:00`)
-                .lte('created_at', `${today}T23:59:59`);
-
-            // If exactly 1 entry (the one we just created), this is the first
-            if (todayLogs && todayLogs.length === 1) {
-                const { error: bonusError } = await gamificationService.addPoints(
-                    POINTS.FIRST_ITEM_OF_DAY,
-                    'first_of_day'
-                );
-                if (!bonusError) totalEarned += POINTS.FIRST_ITEM_OF_DAY;
+            if (error) {
+                // Fallback to non-atomic path if RPC not deployed yet
+                if (error.code === 'PGRST205' || error.code === '42883') {
+                    const { error: addErr } = await gamificationService.addPoints(POINTS.LOG_OUTFIT, 'wear_log');
+                    await gamificationService.updateStreak();
+                    return { pointsEarned: addErr ? 0 : POINTS.LOG_OUTFIT, error: addErr };
+                }
+                console.warn('Award wear log RPC error:', error);
+                return { pointsEarned: 0, error };
             }
+
+            const result = data as { base_points: number; bonus_awarded: boolean; bonus_points: number; error?: string };
+            if (result.error) {
+                return { pointsEarned: 0, error: new Error(result.error) };
+            }
+
+            const totalEarned = result.base_points + (result.bonus_points || 0);
 
             // Update streak
             await gamificationService.updateStreak();
@@ -513,6 +511,10 @@ export const gamificationService = {
                 .eq('user_id', userId);
 
             if (error) {
+                // Handle DB trigger enforcing the limit
+                if (error.message?.includes('Maximum 3 featured badges')) {
+                    return { error: new Error('Maximum 3 featured badges allowed') };
+                }
                 console.warn('Toggle featured badge error:', error);
                 return { error };
             }

@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -30,6 +30,7 @@ import { TripEvent } from '../../types/packingList';
 import ResalePromptBanner from '../../components/features/ResalePromptBanner';
 import { resalePromptService, ResalePrompt } from '../../services/resalePromptService';
 import { appTheme } from '../../theme/tokens';
+import { Text } from '../../components/ui/Typography';
 
 function getGreeting(): string {
   const hour = new Date().getHours();

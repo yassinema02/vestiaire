@@ -4,15 +4,7 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Image,
-    ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -20,6 +12,7 @@ import { useOutfitStore } from '../../stores/outfitStore';
 import { Outfit } from '../../types/outfit';
 import { OccasionType } from '../../utils/occasionDetector';
 import { itemsService, WardrobeItem } from '../../services/items';
+import { Text } from '../../components/ui/Typography';
 
 type SourceFilter = 'all' | 'ai' | 'manual';
 const OCCASION_OPTIONS: OccasionType[] = ['casual', 'work', 'formal', 'sport', 'social'];
@@ -122,7 +115,7 @@ export default function OutfitsScreen() {
                     <View style={styles.outfitMeta}>
                         {outfit.is_ai_generated && (
                             <View style={styles.aiBadge}>
-                                <Ionicons name="sparkles" size={12} color="#A04F37" />
+                                <Ionicons name="sparkles" size={12} color="#87A96B" />
                                 <Text style={styles.aiBadgeText}>AI</Text>
                             </View>
                         )}
@@ -195,7 +188,7 @@ export default function OutfitsScreen() {
             <View style={styles.header}>
                 <Text style={styles.title}>Outfits</Text>
                 <TouchableOpacity style={styles.addButton} onPress={handleCreateOutfit}>
-                    <Ionicons name="add" size={22} color="#A04F37" />
+                    <Ionicons name="add" size={22} color="#87A96B" />
                 </TouchableOpacity>
             </View>
 
@@ -210,7 +203,7 @@ export default function OutfitsScreen() {
                         Swipe through AI-generated looks
                     </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={24} color="#A04F37" />
+                <Ionicons name="chevron-forward" size={24} color="#87A96B" />
             </TouchableOpacity>
 
             {/* Filter Bar */}
@@ -218,7 +211,7 @@ export default function OutfitsScreen() {
 
             {isLoading ? (
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#A04F37" />
+                    <ActivityIndicator size="large" color="#87A96B" />
                 </View>
             ) : filteredOutfits.length === 0 ? (
                 <View style={styles.emptyContainer}>
@@ -313,7 +306,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 12,
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
@@ -382,7 +375,7 @@ const styles = StyleSheet.create({
     },
     countBadge: {
         backgroundColor: '#F4E2D6',
-        color: '#A04F37',
+        color: '#87A96B',
         fontSize: 13,
         fontWeight: '600',
         paddingHorizontal: 8,
@@ -425,7 +418,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     emptyButton: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 12,
@@ -499,7 +492,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 3,
-        backgroundColor: '#F8EEE7',
+        backgroundColor: '#F8F6F0',
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 4,
@@ -507,7 +500,7 @@ const styles = StyleSheet.create({
     aiBadgeText: {
         fontSize: 11,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     occasionText: {
         fontSize: 13,

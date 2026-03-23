@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { EarningsMonth } from '../../services/listingService';
+import { Text } from '../ui/Typography';
 
 interface EarningsChartProps {
     data: EarningsMonth[];
@@ -45,7 +46,7 @@ export default function EarningsChart({ data }: EarningsChartProps) {
                                         styles.bar,
                                         {
                                             height,
-                                            backgroundColor: entry.earnings > 0 ? '#A04F37' : '#e5e7eb',
+                                            backgroundColor: entry.earnings > 0 ? '#87A96B' : '#e5e7eb',
                                         },
                                     ]}
                                 />
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     barValue: {
         fontSize: 10,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
         marginBottom: 4,
     },
     barContainer: {

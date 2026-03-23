@@ -34,6 +34,16 @@ export const engagementService = {
                 const { error } = await supabase
                     .from('ootd_reactions')
                     .insert({ post_id: postId, user_id: userId });
+                // Handle unique constraint violation (concurrent toggle)
+                if (error && error.code === '23505') {
+                    // Another request already inserted — treat as already reacted, delete it
+                    const { error: delError } = await supabase
+                        .from('ootd_reactions')
+                        .delete()
+                        .eq('post_id', postId)
+                        .eq('user_id', userId);
+                    return { reacted: false, error: delError || null };
+                }
                 if (error) return { reacted: false, error };
                 return { reacted: true, error: null };
             }

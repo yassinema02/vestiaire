@@ -125,9 +125,14 @@ export const generateOutfitSuggestions = async (
             throw new Error('No text response from Gemini');
         }
 
-        // Parse JSON response
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        // Parse JSON response — Gemini sometimes wraps in markdown or adds preamble
+        let jsonText = text;
+        // Strip markdown code fences
+        jsonText = jsonText.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '');
+        
+        const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
+            console.warn('[OutfitGen] Non-JSON response from Gemini:', text.substring(0, 200));
             throw new Error('Failed to parse AI response');
         }
 

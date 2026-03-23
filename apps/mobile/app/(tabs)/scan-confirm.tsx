@@ -5,19 +5,11 @@
  */
 
 import { useState, useMemo } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    ScrollView,
-    TextInput,
-    ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useShoppingStore } from '../../stores/shoppingStore';
+import { Text } from '../../components/ui/Typography';
 import {
     ProductAnalysis,
     CATEGORY_OPTIONS,
@@ -200,7 +192,7 @@ export default function ScanConfirmScreen() {
     if (isAnalyzing && analysisProgress === 'scoring') {
         return (
             <View style={[styles.container, styles.centerContainer]}>
-                <ActivityIndicator size="large" color="#A04F37" />
+                <ActivityIndicator size="large" color="#87A96B" />
                 <Text style={styles.scoringText}>Checking wardrobe compatibility...</Text>
             </View>
         );
@@ -227,7 +219,7 @@ export default function ScanConfirmScreen() {
                 </View>
             ) : (
                 <View style={styles.aiBadge}>
-                    <Ionicons name="sparkles" size={16} color="#A04F37" />
+                    <Ionicons name="sparkles" size={16} color="#87A96B" />
                     <Text style={styles.aiBadgeText}>AI extracted this data</Text>
                 </View>
             )}
@@ -375,7 +367,7 @@ const styles = StyleSheet.create({
     },
     scoringText: {
         fontSize: 15,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
     },
     header: {
@@ -418,7 +410,7 @@ const styles = StyleSheet.create({
     },
     aiBadgeText: {
         fontSize: 13,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
     },
 
@@ -503,8 +495,8 @@ const styles = StyleSheet.create({
         borderColor: '#e5e7eb',
     },
     chipSelected: {
-        backgroundColor: '#A04F37',
-        borderColor: '#A04F37',
+        backgroundColor: '#87A96B',
+        borderColor: '#87A96B',
     },
     chipText: {
         fontSize: 13,
@@ -534,7 +526,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#e5e7eb',
     },
     formalityDotActive: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
     },
     formalityEndLabel: {
         fontSize: 11,

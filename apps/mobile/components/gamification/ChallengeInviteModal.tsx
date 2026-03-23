@@ -5,16 +5,9 @@
  */
 
 import React, { useRef, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Modal,
-    TouchableOpacity,
-    Animated,
-    Dimensions,
-} from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity, Animated, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Text } from '../ui/Typography';
 
 interface ChallengeInviteModalProps {
     visible: boolean;
@@ -66,7 +59,7 @@ export default function ChallengeInviteModal({ visible, onAccept, onSkip }: Chal
                 >
                     {/* Safari Icon */}
                     <View style={styles.iconWrap}>
-                        <Ionicons name="compass" size={48} color="#A04F37" />
+                        <Ionicons name="compass" size={48} color="#87A96B" />
                     </View>
 
                     <Text style={styles.title}>Closet Safari</Text>
@@ -74,11 +67,11 @@ export default function ChallengeInviteModal({ visible, onAccept, onSkip }: Chal
 
                     <View style={styles.detailsCard}>
                         <View style={styles.detailRow}>
-                            <Ionicons name="camera-outline" size={20} color="#A04F37" />
+                            <Ionicons name="camera-outline" size={20} color="#87A96B" />
                             <Text style={styles.detailText}>Upload 20 items to your wardrobe</Text>
                         </View>
                         <View style={styles.detailRow}>
-                            <Ionicons name="time-outline" size={20} color="#A04F37" />
+                            <Ionicons name="time-outline" size={20} color="#87A96B" />
                             <Text style={styles.detailText}>Complete within 7 days</Text>
                         </View>
                         <View style={styles.detailRow}>
@@ -86,7 +79,7 @@ export default function ChallengeInviteModal({ visible, onAccept, onSkip }: Chal
                             <Text style={styles.detailText}>Win 1 month of Premium free!</Text>
                         </View>
                         <View style={styles.detailRow}>
-                            <Ionicons name="ribbon-outline" size={20} color="#A04F37" />
+                            <Ionicons name="ribbon-outline" size={20} color="#87A96B" />
                             <Text style={styles.detailText}>Unlock the Safari Explorer badge</Text>
                         </View>
                     </View>
@@ -166,7 +159,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         gap: 8,
         width: '100%',
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 14,
         paddingVertical: 16,
         marginBottom: 12,

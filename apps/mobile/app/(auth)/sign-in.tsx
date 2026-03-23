@@ -4,22 +4,14 @@
  */
 
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-} from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/authStore';
 import { validateEmail } from '../../utils/validation';
 import { AuthScreenShell } from '../../components/ui/AuthScreenShell';
 import { appTheme } from '../../theme/tokens';
+import { Text } from '../../components/ui/Typography';
 
 export default function SignInScreen() {
   const router = useRouter();

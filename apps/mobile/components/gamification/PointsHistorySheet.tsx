@@ -4,17 +4,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Modal,
-    TouchableOpacity,
-    ScrollView,
-    ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { gamificationService, PointHistoryEntry } from '../../services/gamificationService';
+import { Text } from '../ui/Typography';
 
 interface PointsHistorySheetProps {
     visible: boolean;
@@ -83,7 +76,7 @@ export default function PointsHistorySheet({ visible, onClose }: PointsHistorySh
 
                     {isLoading ? (
                         <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color="#A04F37" />
+                            <ActivityIndicator size="large" color="#87A96B" />
                         </View>
                     ) : entries.length === 0 ? (
                         <View style={styles.emptyState}>
@@ -221,6 +214,6 @@ const styles = StyleSheet.create({
     pointsText: {
         fontSize: 14,
         fontWeight: '700',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 });

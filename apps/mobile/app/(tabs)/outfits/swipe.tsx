@@ -4,16 +4,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Modal,
-    ScrollView,
-    Image,
-    Alert,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, ScrollView, Image, Alert } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -21,6 +12,7 @@ import { OutfitSwipeStack } from '../../../components/features/OutfitSwipeStack'
 import { useOutfitGeneration } from '../../../hooks/useOutfitGeneration';
 import { OutfitSuggestion } from '../../../services/aiOutfitService';
 import { itemsService, WardrobeItem } from '../../../services/items';
+import { Text } from '../../../components/ui/Typography';
 
 export default function OutfitSwipeScreen() {
     const router = useRouter();
@@ -137,7 +129,7 @@ export default function OutfitSwipeScreen() {
 
                                 <View style={styles.rationaleBox}>
                                     <View style={styles.rationaleHeader}>
-                                        <Ionicons name="sparkles" size={18} color="#A04F37" />
+                                        <Ionicons name="sparkles" size={18} color="#87A96B" />
                                         <Text style={styles.rationaleTitle}>Why this outfit?</Text>
                                     </View>
                                     <Text style={styles.rationaleText}>
@@ -269,7 +261,7 @@ const styles = StyleSheet.create({
         textTransform: 'capitalize',
     },
     rationaleBox: {
-        backgroundColor: '#F8EEE7',
+        backgroundColor: '#F8F6F0',
         borderRadius: 12,
         padding: 16,
         marginBottom: 24,
@@ -283,7 +275,7 @@ const styles = StyleSheet.create({
     rationaleTitle: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     rationaleText: {
         fontSize: 14,

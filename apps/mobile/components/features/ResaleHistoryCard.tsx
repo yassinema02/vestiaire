@@ -4,9 +4,10 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { Text } from '../ui/Typography';
 
 interface ResaleHistoryCardProps {
     totalListed: number;
@@ -49,7 +50,7 @@ export default function ResaleHistoryCard({ totalListed, totalSold, totalRevenue
                 onPress={() => router.push('/(tabs)/listing-history')}
             >
                 <Text style={styles.viewText}>View Full History</Text>
-                <Ionicons name="chevron-forward" size={16} color="#A04F37" />
+                <Ionicons name="chevron-forward" size={16} color="#87A96B" />
             </TouchableOpacity>
         </View>
     );
@@ -114,6 +115,6 @@ const styles = StyleSheet.create({
     viewText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 });

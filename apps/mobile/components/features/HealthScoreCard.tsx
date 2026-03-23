@@ -4,9 +4,10 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { HealthScore } from '../../services/analyticsService';
+import { Text } from '../ui/Typography';
 
 interface HealthScoreCardProps {
     healthScore: HealthScore;
@@ -64,7 +65,7 @@ export default function HealthScoreCard({ healthScore, onSpringClean }: HealthSc
 
             {/* Comparison */}
             <View style={styles.infoRow}>
-                <Ionicons name="bar-chart-outline" size={16} color="#A04F37" />
+                <Ionicons name="bar-chart-outline" size={16} color="#87A96B" />
                 <Text style={styles.infoText}>{comparisonLabel}</Text>
             </View>
 
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 6,
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 10,
         paddingVertical: 12,
         marginTop: 8,

@@ -4,20 +4,14 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ActivityIndicator,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { wearLogService } from '../../services/wearLogService';
 import { WearCalendarDay } from '../../types/wearLog';
 import WearDayModal from '../../components/features/WearDayModal';
+import { Text } from '../../components/ui/Typography';
 
 const DAYS_OF_WEEK = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -129,17 +123,17 @@ export default function WearCalendarScreen() {
             {/* Month Navigation */}
             <View style={styles.monthNav}>
                 <TouchableOpacity style={styles.navArrow} onPress={goToPrevMonth}>
-                    <Ionicons name="chevron-back" size={22} color="#A04F37" />
+                    <Ionicons name="chevron-back" size={22} color="#87A96B" />
                 </TouchableOpacity>
                 <Text style={styles.monthTitle}>{MONTH_NAMES[month]} {year}</Text>
                 <TouchableOpacity style={styles.navArrow} onPress={goToNextMonth}>
-                    <Ionicons name="chevron-forward" size={22} color="#A04F37" />
+                    <Ionicons name="chevron-forward" size={22} color="#87A96B" />
                 </TouchableOpacity>
             </View>
 
             {isLoading ? (
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#A04F37" />
+                    <ActivityIndicator size="large" color="#87A96B" />
                 </View>
             ) : (
                 <>
@@ -204,7 +198,7 @@ export default function WearCalendarScreen() {
 
                     {/* Monthly Stats */}
                     <View style={styles.statsCard}>
-                        <Ionicons name="calendar-outline" size={18} color="#A04F37" />
+                        <Ionicons name="calendar-outline" size={18} color="#87A96B" />
                         <Text style={styles.statsText}>
                             You logged <Text style={styles.statsBold}>{totalLogs}</Text> outfit{totalLogs !== 1 ? 's' : ''} this month
                         </Text>
@@ -323,7 +317,7 @@ const styles = StyleSheet.create({
         padding: 2,
     },
     dayCellToday: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 12,
     },
     dayCellSelected: {
@@ -340,7 +334,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     dayNumberSelected: {
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '700',
     },
     dayNumberInactive: {
@@ -380,6 +374,6 @@ const styles = StyleSheet.create({
     },
     statsBold: {
         fontWeight: '700',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 });

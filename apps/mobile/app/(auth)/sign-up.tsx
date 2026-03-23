@@ -4,16 +4,7 @@
  */
 
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-} from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/authStore';
@@ -22,6 +13,7 @@ import { challengeService } from '../../services/challengeService';
 import ChallengeInviteModal from '../../components/gamification/ChallengeInviteModal';
 import { AuthScreenShell } from '../../components/ui/AuthScreenShell';
 import { appTheme } from '../../theme/tokens';
+import { Text } from '../../components/ui/Typography';
 
 export default function SignUpScreen() {
   const router = useRouter();

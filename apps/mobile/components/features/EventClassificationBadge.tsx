@@ -5,17 +5,11 @@
  */
 
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Modal,
-    SafeAreaView,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { eventClassificationService, EventType } from '../../services/eventClassificationService';
 import { getOccasionColor } from '../../utils/occasionDetector';
+import { Text } from '../ui/Typography';
 
 interface EventClassificationBadgeProps {
     eventId: string;
@@ -162,7 +156,7 @@ const styles = StyleSheet.create({
     },
     wrongText: {
         fontSize: 12,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
     },
 
@@ -200,7 +194,7 @@ const styles = StyleSheet.create({
     },
     typeOptionSelected: {
         borderWidth: 2,
-        borderColor: '#A04F37',
+        borderColor: '#87A96B',
     },
     typeIcon: {
         width: 44,

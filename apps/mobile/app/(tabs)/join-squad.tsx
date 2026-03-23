@@ -5,20 +5,11 @@
  */
 
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSocialStore } from '../../stores/socialStore';
+import { Text } from '../../components/ui/Typography';
 
 export default function JoinSquadScreen() {
     const router = useRouter();
@@ -81,7 +72,7 @@ export default function JoinSquadScreen() {
 
             <View style={styles.content}>
                 <View style={styles.iconContainer}>
-                    <Ionicons name="enter-outline" size={48} color="#A04F37" />
+                    <Ionicons name="enter-outline" size={48} color="#87A96B" />
                 </View>
 
                 <Text style={styles.instruction}>
@@ -176,7 +167,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     joinSubmit: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',

@@ -6,7 +6,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
-const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') || '*';
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') || 'https://vestiaire.app';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
@@ -63,7 +63,9 @@ Deno.serve(async (req: Request) => {
         // Parse request body
         const body = await req.json();
         const feature = typeof body?.feature === 'string' ? body.feature : 'unknown';
-        const model = typeof body?.model === 'string' ? body.model : 'gemini-2.5-flash';
+        const requestedModel = typeof body?.model === 'string' ? body.model : 'gemini-2.5-flash';
+        const allowedModels = Object.keys(COST_TABLE);
+        const model = allowedModels.includes(requestedModel) ? requestedModel : 'gemini-2.5-flash';
         const contents = body?.contents;
         const legacyPrompt = typeof body?.prompt === 'string' ? body.prompt : null;
         const legacyImage = typeof body?.image === 'string' ? body.image : null;

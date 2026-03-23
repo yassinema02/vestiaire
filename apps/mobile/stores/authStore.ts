@@ -133,11 +133,17 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     signOut: async () => {
         set({ isLoading: true, error: null });
         try {
+            // Clean up auth listener before signing out
+            if (authSubscription) {
+                authSubscription.unsubscribe();
+                authSubscription = null;
+            }
             await authService.signOut();
             set({
                 user: null,
                 session: null,
                 isLoading: false,
+                isInitialized: false,
                 error: null,
             });
         } catch (err) {

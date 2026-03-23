@@ -5,18 +5,12 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    ScrollView,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { OotdPostWithAuthor } from '../../types/social';
 import { formatRelativeTime } from '../../utils/formatTime';
 import { ootdService } from '../../services/ootdService';
+import { Text } from '../ui/Typography';
 
 interface TaggedItem {
     id: string;
@@ -151,7 +145,7 @@ export default function OotdPostCard({ post, squadName, isReacted, onPhotoPress,
                         onPress={onStealLookPress}
                         activeOpacity={0.7}
                     >
-                        <Ionicons name="sparkles" size={14} color="#A04F37" />
+                        <Ionicons name="sparkles" size={14} color="#87A96B" />
                         <Text style={styles.stealBtnText}>Steal</Text>
                     </TouchableOpacity>
                 )}
@@ -184,7 +178,7 @@ const styles = StyleSheet.create({
     avatarText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     headerInfo: {
         flex: 1,
@@ -271,7 +265,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     engagementCountActive: {
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '600',
     },
     stealBtn: {
@@ -287,6 +281,6 @@ const styles = StyleSheet.create({
     stealBtnText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 });

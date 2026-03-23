@@ -6,17 +6,7 @@
  */
 
 import React, { useState, useCallback, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Image,
-    ActivityIndicator,
-    Platform,
-    Alert,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Platform, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -54,6 +44,7 @@ import { neglectService, NeglectStats } from '../../services/neglectService';
 import { listingService } from '../../services/listingService';
 import { calculateHealthScore, HealthScore } from '../../services/analyticsService';
 import { springCleanService, SpringCleanResult } from '../../services/springCleanService';
+import { Text } from '../../components/ui/Typography';
 
 const CATEGORIES = [
     { id: null, label: 'All' },
@@ -297,7 +288,7 @@ export default function AnalyticsScreen() {
                 {/* ===== DASHBOARD SECTION ===== */}
                 {isDashboardLoading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#A04F37" />
+                        <ActivityIndicator size="large" color="#87A96B" />
                     </View>
                 ) : stats && (
                     <>
@@ -368,7 +359,7 @@ export default function AnalyticsScreen() {
                                 <Text style={styles.calendarTitle}>Wear Calendar</Text>
                                 <Text style={styles.calendarSubtitle}>View your outfit history by day</Text>
                             </View>
-                            <Ionicons name="chevron-forward" size={16} color="#A04F37" />
+                            <Ionicons name="chevron-forward" size={16} color="#87A96B" />
                         </TouchableOpacity>
 
                         {/* Neglected Items */}
@@ -484,7 +475,7 @@ export default function AnalyticsScreen() {
                             </ScrollView>
 
                             {isBrandLoading ? (
-                                <ActivityIndicator size="small" color="#A04F37" style={{ marginVertical: 20 }} />
+                                <ActivityIndicator size="small" color="#87A96B" style={{ marginVertical: 20 }} />
                             ) : !brandAnalytics || brandAnalytics.brands.length === 0 ? (
                                 <View style={styles.brandEmptyState}>
                                     <Ionicons name="pricetag-outline" size={36} color="#d1d5db" />
@@ -538,7 +529,7 @@ export default function AnalyticsScreen() {
                             </View>
 
                             {isGapLoading ? (
-                                <ActivityIndicator size="small" color="#A04F37" style={{ marginVertical: 20 }} />
+                                <ActivityIndicator size="small" color="#87A96B" style={{ marginVertical: 20 }} />
                             ) : !gapResult || gapResult.gaps.length === 0 ? (
                                 <View style={styles.gapEmptyState}>
                                     <Text style={styles.gapEmptyEmoji}>🎉</Text>
@@ -916,7 +907,7 @@ export default function AnalyticsScreen() {
 
                 {isLeaderboardLoading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#A04F37" />
+                        <ActivityIndicator size="large" color="#87A96B" />
                     </View>
                 ) : mostWorn.length === 0 ? (
                     <View style={styles.emptyState}>
@@ -1171,7 +1162,7 @@ function WearFrequencyChart({ data }: { data: DailyWearCount[] }) {
                                     styles.bar,
                                     {
                                         height: barHeight,
-                                        backgroundColor: isToday ? '#A04F37' : d.count > 0 ? '#E4B7A3' : '#e5e7eb',
+                                        backgroundColor: isToday ? '#87A96B' : d.count > 0 ? '#E4B7A3' : '#e5e7eb',
                                     },
                                 ]}
                             />
@@ -1431,7 +1422,7 @@ const styles = StyleSheet.create({
     },
     insightBullet: {
         fontSize: 14,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '700',
         marginRight: 8,
         lineHeight: 20,
@@ -1460,7 +1451,7 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 10,
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -1474,7 +1465,7 @@ const styles = StyleSheet.create({
     },
     calendarSubtitle: {
         fontSize: 12,
-        color: '#A04F37',
+        color: '#87A96B',
         marginTop: 1,
     },
 
@@ -1597,7 +1588,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     timeChipActive: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
     },
     timeChipText: {
         fontSize: 13,
@@ -1978,7 +1969,7 @@ const styles = StyleSheet.create({
     },
     undismissText: {
         fontSize: 12,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '600',
     },
     gapTimestamp: {
@@ -2028,7 +2019,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: -6,
         right: -4,
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 6,
         paddingHorizontal: 4,
         paddingVertical: 1,
@@ -2138,7 +2129,7 @@ const styles = StyleSheet.create({
     seasonWearBadgeText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     neglectedToggle: {
         paddingVertical: 6,
@@ -2375,7 +2366,7 @@ const styles = StyleSheet.create({
     listCountText: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     listCountLabel: {
         fontSize: 10,

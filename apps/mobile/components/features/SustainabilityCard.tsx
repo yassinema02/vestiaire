@@ -5,9 +5,10 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SustainabilityScore } from '../../services/analyticsService';
+import { Text } from '../ui/Typography';
 
 interface SustainabilityCardProps {
     data: SustainabilityScore;

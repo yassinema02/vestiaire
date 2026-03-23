@@ -5,16 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    ActivityIndicator,
-    Alert,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -26,6 +17,7 @@ import { useCalendarStore, AppleCalendar } from '../../stores/calendarStore';
 import { CalendarSelector } from '../../components/features/CalendarSelector';
 import { useEventSync } from '../../hooks/useEventSync';
 import { eventReminderService, EventReminderPreferences } from '../../services/eventReminderService';
+import { Text } from '../../components/ui/Typography';
 
 // Complete auth session for web browser redirect
 WebBrowser.maybeCompleteAuthSession();
@@ -63,7 +55,7 @@ export default function CalendarSettingsScreen() {
 
     // Google OAuth configuration
     const googleWebClientId = Constants.expoConfig?.extra?.googleWebClientId;
-    const proxyRedirectUri = 'https://auth.expo.io/@yassine06/vestiaire';
+    const proxyRedirectUri = Constants.expoConfig?.extra?.googleAuthProxyRedirectUri || 'https://auth.expo.io/@yassine06/vestiaire';
 
     const [request, response, promptAsync] = Google.useAuthRequest({
         clientId: googleWebClientId,
@@ -258,7 +250,7 @@ export default function CalendarSettingsScreen() {
                                 {/* Actions */}
                                 <View style={styles.actionRow}>
                                     <TouchableOpacity style={styles.selectButton} onPress={handleOpenCalendarSelector}>
-                                        <Ionicons name="list-outline" size={16} color="#A04F37" />
+                                        <Ionicons name="list-outline" size={16} color="#87A96B" />
                                         <Text style={styles.selectButtonText}>Edit Calendars</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity style={styles.disconnectButton} onPress={handleDisconnectApple}>
@@ -353,9 +345,9 @@ export default function CalendarSettingsScreen() {
                         disabled={isSyncing}
                     >
                         {isSyncing ? (
-                            <ActivityIndicator size="small" color="#A04F37" />
+                            <ActivityIndicator size="small" color="#87A96B" />
                         ) : (
-                            <Ionicons name="sync-outline" size={18} color="#A04F37" />
+                            <Ionicons name="sync-outline" size={18} color="#87A96B" />
                         )}
                         <Text style={styles.syncButtonText}>
                             {isSyncing ? 'Syncing events...' : 'Sync Events Now'}
@@ -385,7 +377,7 @@ export default function CalendarSettingsScreen() {
                                 value={reminderPrefs.enabled}
                                 onValueChange={handleToggleReminder}
                                 trackColor={{ false: '#d1d5db', true: '#D9C7B4' }}
-                                thumbColor={reminderPrefs.enabled ? '#A04F37' : '#f4f3f4'}
+                                thumbColor={reminderPrefs.enabled ? '#87A96B' : '#f4f3f4'}
                             />
                         </View>
 
@@ -436,7 +428,7 @@ export default function CalendarSettingsScreen() {
                                                 <Ionicons
                                                     name={checked ? 'checkbox' : 'square-outline'}
                                                     size={22}
-                                                    color={checked ? '#A04F37' : '#9ca3af'}
+                                                    color={checked ? '#87A96B' : '#9ca3af'}
                                                 />
                                                 <Ionicons name={icon as any} size={16} color="#5D4E37" />
                                                 <Text style={styles.typeLabel}>{label}</Text>
@@ -647,7 +639,7 @@ const styles = StyleSheet.create({
     selectButtonText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     disconnectButton: {
         paddingVertical: 8,
@@ -695,7 +687,7 @@ const styles = StyleSheet.create({
     syncButtonText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 
     // Reminder Section
@@ -763,7 +755,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     timeChipTextSelected: {
-        color: '#A04F37',
+        color: '#87A96B',
     },
     reminderTypesSection: {
         marginTop: 16,

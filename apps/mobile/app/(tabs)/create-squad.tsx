@@ -5,21 +5,11 @@
  */
 
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
-    ActivityIndicator,
-    Alert,
-    Share,
-    KeyboardAvoidingView,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, Share, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSocialStore } from '../../stores/socialStore';
+import { Text } from '../../components/ui/Typography';
 
 export default function CreateSquadScreen() {
     const router = useRouter();
@@ -223,7 +213,7 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     createSubmit: {
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',
@@ -282,13 +272,13 @@ const styles = StyleSheet.create({
     codeValue: {
         fontSize: 36,
         fontWeight: 'bold',
-        color: '#A04F37',
+        color: '#87A96B',
         letterSpacing: 6,
     },
     shareButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         paddingVertical: 14,
         paddingHorizontal: 28,
         borderRadius: 12,

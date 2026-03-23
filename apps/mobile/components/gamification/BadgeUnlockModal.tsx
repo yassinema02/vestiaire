@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Modal, View, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { BadgeDefinition, BADGE_CATEGORY_LABELS } from '@vestiaire/shared';
+import { Text } from '../ui/Typography';
 
 interface BadgeUnlockModalProps {
     visible: boolean;
@@ -71,7 +72,7 @@ export default function BadgeUnlockModal({ visible, badge, onDismiss }: BadgeUnl
                         <Ionicons
                             name={badge.iconName as any}
                             size={48}
-                            color="#A04F37"
+                            color="#87A96B"
                         />
                     </Animated.View>
 
@@ -107,7 +108,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '100%',
         maxWidth: 320,
-        shadowColor: '#A04F37',
+        shadowColor: '#87A96B',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.2,
         shadowRadius: 24,
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
     badgeName: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#A04F37',
+        color: '#87A96B',
         marginBottom: 6,
     },
     description: {
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
     },
     button: {
         marginTop: 24,
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 48,

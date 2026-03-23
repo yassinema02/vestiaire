@@ -5,19 +5,11 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    ScrollView,
-    Alert,
-    ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useShoppingStore } from '../../stores/shoppingStore';
+import { Text } from '../../components/ui/Typography';
 import {
     ShoppingScan,
     ScanHistoryFilters,
@@ -292,7 +284,7 @@ export default function ScanHistoryScreen() {
     if (isLoading) {
         return (
             <View style={[styles.container, styles.centerContainer]}>
-                <ActivityIndicator size="large" color="#A04F37" />
+                <ActivityIndicator size="large" color="#87A96B" />
             </View>
         );
     }
@@ -418,7 +410,7 @@ export default function ScanHistoryScreen() {
                     {/* Re-analyzing indicator */}
                     {reAnalyzingId && (
                         <View style={styles.reAnalyzingBanner}>
-                            <ActivityIndicator size="small" color="#A04F37" />
+                            <ActivityIndicator size="small" color="#87A96B" />
                             <Text style={styles.reAnalyzingText}>Re-analyzing compatibility...</Text>
                         </View>
                     )}
@@ -534,7 +526,7 @@ const styles = StyleSheet.create({
     emptyCta: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 14,
         paddingHorizontal: 24,
         paddingVertical: 14,
@@ -600,8 +592,8 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     chipActive: {
-        backgroundColor: '#A04F37',
-        borderColor: '#A04F37',
+        backgroundColor: '#87A96B',
+        borderColor: '#87A96B',
     },
     chipSaved: {
         backgroundColor: '#fef2f2',
@@ -636,7 +628,7 @@ const styles = StyleSheet.create({
     },
     reAnalyzingText: {
         fontSize: 13,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
     },
 
@@ -724,7 +716,7 @@ const styles = StyleSheet.create({
     clearFilterText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
         marginTop: 4,
     },
 

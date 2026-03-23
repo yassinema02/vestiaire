@@ -5,21 +5,12 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    ScrollView,
-    Alert,
-    ActivityIndicator,
-    Dimensions,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, ActivityIndicator, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useShoppingStore } from '../../stores/shoppingStore';
 import { ShoppingScan, getCompatibilityRating } from '../../types/shopping';
+import { Text } from '../../components/ui/Typography';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_GAP = 12;
@@ -220,7 +211,7 @@ export default function WishlistScreen() {
     if (isLoading) {
         return (
             <View style={[styles.container, styles.centerContainer]}>
-                <ActivityIndicator size="large" color="#A04F37" />
+                <ActivityIndicator size="large" color="#87A96B" />
             </View>
         );
     }
@@ -313,7 +304,7 @@ export default function WishlistScreen() {
                     {/* Re-analyzing indicator */}
                     {reAnalyzingId && (
                         <View style={styles.reAnalyzingBanner}>
-                            <ActivityIndicator size="small" color="#A04F37" />
+                            <ActivityIndicator size="small" color="#87A96B" />
                             <Text style={styles.reAnalyzingText}>Re-analyzing compatibility...</Text>
                         </View>
                     )}
@@ -422,7 +413,7 @@ const styles = StyleSheet.create({
     emptyCta: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 14,
         paddingHorizontal: 24,
         paddingVertical: 14,
@@ -449,8 +440,8 @@ const styles = StyleSheet.create({
         borderColor: '#e5e7eb',
     },
     sortChipActive: {
-        backgroundColor: '#A04F37',
-        borderColor: '#A04F37',
+        backgroundColor: '#87A96B',
+        borderColor: '#87A96B',
     },
     sortChipText: {
         fontSize: 13,
@@ -477,7 +468,7 @@ const styles = StyleSheet.create({
     },
     filterChipActive: {
         backgroundColor: '#F4E2D6',
-        borderColor: '#A04F37',
+        borderColor: '#87A96B',
     },
     filterChipText: {
         fontSize: 12,
@@ -485,7 +476,7 @@ const styles = StyleSheet.create({
         color: '#6b7280',
     },
     filterChipTextActive: {
-        color: '#A04F37',
+        color: '#87A96B',
     },
 
     // Re-analyzing banner
@@ -502,7 +493,7 @@ const styles = StyleSheet.create({
     },
     reAnalyzingText: {
         fontSize: 13,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '500',
     },
 
@@ -588,7 +579,7 @@ const styles = StyleSheet.create({
     clearFilterText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
 
     // Hint

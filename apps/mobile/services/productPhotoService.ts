@@ -83,22 +83,30 @@ export const generateProductPhoto = async (
     }
 
     try {
-        console.log('Starting product photo generation with Gemini');
+        console.log('[ProductPhoto] Starting generation...');
 
         const optimizedUri = await optimizeForAI(imageUrl);
         const imageResponse = await fetch(optimizedUri);
         const imageBlob = await imageResponse.blob();
         const imageBase64 = await blobToBase64(imageBlob);
 
-        const prompt = buildPrompt(metadata);
         const genAI = getGenAI();
 
-        const response = await genAI.models.generateContent({
-            model: 'gemini-2.5-flash-image',
-            contents: [
-                {
-                    role: 'user',
-                    parts: [
+        // Try with full prompt first, then simplified prompt on IMAGE_OTHER
+        const prompts = [
+            buildPrompt(metadata),
+            // Fallback: much simpler prompt that is less likely to trigger safety filters
+            `Remove the background from this clothing photo and place the garment on a plain white background. Keep the item exactly as it is, do not modify it. Output only the resulting image.`,
+        ];
+
+        for (let attempt = 0; attempt < prompts.length; attempt++) {
+            const prompt = prompts[attempt];
+            console.log(`[ProductPhoto] Attempt ${attempt + 1}/${prompts.length}`);
+
+            try {
+                const response = await genAI.models.generateContent({
+                    model: 'gemini-2.5-flash-image',
+                    contents: [
                         { text: prompt },
                         {
                             inlineData: {
@@ -107,29 +115,48 @@ export const generateProductPhoto = async (
                             },
                         },
                     ],
-                },
-            ],
-            config: {
-                responseModalities: ['IMAGE', 'TEXT'],
-            },
-        });
+                    config: {
+                        responseModalities: ['IMAGE', 'TEXT'],
+                    },
+                });
 
-        const parts = response.candidates?.[0]?.content?.parts;
-        if (!parts) {
-            throw new Error('No response parts from Gemini');
+                const candidate = response.candidates?.[0] as any;
+                const finishReason = candidate?.finishReason ?? 'unknown';
+                const parts = candidate?.content?.parts;
+
+                console.log(`[ProductPhoto] finishReason: ${finishReason}, parts: ${parts?.length ?? 0}`);
+
+                // If blocked by safety filter, try next prompt
+                if (!parts || parts.length === 0) {
+                    console.warn(`[ProductPhoto] Attempt ${attempt + 1} blocked (${finishReason})`);
+                    if (attempt < prompts.length - 1) continue;
+                    // All attempts exhausted
+                    console.warn('[ProductPhoto] All attempts blocked by Gemini safety filters. Skipping enhancement.');
+                    return { processedImageBase64: null, error: null };
+                }
+
+                const imagePart = parts.find((part: any) => part.inlineData);
+                if (!imagePart?.inlineData?.data) {
+                    console.warn(`[ProductPhoto] Attempt ${attempt + 1}: no image in parts, trying next...`);
+                    if (attempt < prompts.length - 1) continue;
+                    console.warn('[ProductPhoto] No image data returned. Skipping enhancement.');
+                    return { processedImageBase64: null, error: null };
+                }
+
+                const base64 = imagePart.inlineData.data;
+                console.log(`[ProductPhoto] Success on attempt ${attempt + 1}, base64 length: ${base64.length}`);
+                return { processedImageBase64: base64, error: null };
+            } catch (innerError) {
+                console.warn(`[ProductPhoto] Attempt ${attempt + 1} threw:`, innerError);
+                if (attempt < prompts.length - 1) continue;
+                throw innerError;
+            }
         }
 
-        const imagePart = parts.find((part: any) => part.inlineData);
-        if (!imagePart?.inlineData?.data) {
-            throw new Error('No image data in Gemini response');
-        }
-
-        const base64 = imagePart.inlineData.data;
-        console.log('Product photo generation successful, base64 length:', base64.length);
-
-        return { processedImageBase64: base64, error: null };
+        // Should never reach here, but just in case
+        return { processedImageBase64: null, error: null };
     } catch (error) {
-        console.error('Product photo generation failed:', error);
+        console.error('[ProductPhoto] Generation failed:', error);
         return { processedImageBase64: null, error: error as Error };
     }
 };

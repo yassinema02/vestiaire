@@ -5,16 +5,10 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Modal,
-    TouchableOpacity,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { Text } from './ui/Typography';
 
 interface PaywallModalProps {
     visible: boolean;
@@ -93,7 +87,7 @@ export default function PaywallModal({
 
                     {/* Header */}
                     <View style={styles.iconWrap}>
-                        <Ionicons name="rocket" size={32} color="#A04F37" />
+                        <Ionicons name="rocket" size={32} color="#87A96B" />
                     </View>
                     <Text style={styles.title}>Upgrade to Premium</Text>
                     <Text style={styles.subtitle}>
@@ -112,7 +106,7 @@ export default function PaywallModal({
                         {PREMIUM_BENEFITS.map((b, i) => (
                             <View key={i} style={styles.benefitRow}>
                                 <View style={styles.benefitCheck}>
-                                    <Ionicons name={b.icon as any} size={16} color="#A04F37" />
+                                    <Ionicons name={b.icon as any} size={16} color="#87A96B" />
                                 </View>
                                 <Text style={styles.benefitText}>{b.label}</Text>
                             </View>
@@ -223,7 +217,7 @@ const styles = StyleSheet.create({
     },
     upgradeButton: {
         width: '100%',
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 14,
         paddingVertical: 16,
         alignItems: 'center',

@@ -4,20 +4,12 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Image,
-    Alert,
-    ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useOutfitStore } from '../../../stores/outfitStore';
 import { itemsService, WardrobeItem } from '../../../services/items';
+import { Text } from '../../../components/ui/Typography';
 
 export default function OutfitDetailScreen() {
     const router = useRouter();
@@ -88,7 +80,7 @@ export default function OutfitDetailScreen() {
     if (isLoading || !currentOutfit) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#A04F37" />
+                <ActivityIndicator size="large" color="#87A96B" />
             </View>
         );
     }
@@ -127,7 +119,7 @@ export default function OutfitDetailScreen() {
                 <View style={styles.metaRow}>
                     {currentOutfit.is_ai_generated && (
                         <View style={styles.aiBadge}>
-                            <Ionicons name="sparkles" size={14} color="#A04F37" />
+                            <Ionicons name="sparkles" size={14} color="#87A96B" />
                             <Text style={styles.aiBadgeText}>AI Generated</Text>
                         </View>
                     )}
@@ -271,7 +263,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
-        backgroundColor: '#F8EEE7',
+        backgroundColor: '#F8F6F0',
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 8,
@@ -279,7 +271,7 @@ const styles = StyleSheet.create({
     aiBadgeText: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#A04F37',
+        color: '#87A96B',
     },
     occasionBadge: {
         backgroundColor: '#fef3c7',

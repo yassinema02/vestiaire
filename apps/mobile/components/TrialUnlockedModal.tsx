@@ -6,14 +6,9 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Modal,
-    TouchableOpacity,
-} from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Text } from './ui/Typography';
 
 interface TrialUnlockedModalProps {
     visible: boolean;
@@ -56,7 +51,7 @@ export default function TrialUnlockedModal({ visible, onDismiss }: TrialUnlocked
                         {TRIAL_BENEFITS.map((b, i) => (
                             <View key={i} style={styles.benefitRow}>
                                 <View style={styles.benefitCheck}>
-                                    <Ionicons name={b.icon as any} size={16} color="#A04F37" />
+                                    <Ionicons name={b.icon as any} size={16} color="#87A96B" />
                                 </View>
                                 <Text style={styles.benefitText}>{b.label}</Text>
                             </View>
@@ -114,7 +109,7 @@ const styles = StyleSheet.create({
     },
     subtitle: {
         fontSize: 16,
-        color: '#A04F37',
+        color: '#87A96B',
         fontWeight: '600',
         marginBottom: 16,
     },
@@ -167,12 +162,12 @@ const styles = StyleSheet.create({
     },
     ctaButton: {
         width: '100%',
-        backgroundColor: '#A04F37',
+        backgroundColor: '#87A96B',
         borderRadius: 14,
         paddingVertical: 16,
         alignItems: 'center',
         marginBottom: 12,
-        shadowColor: '#A04F37',
+        shadowColor: '#87A96B',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,

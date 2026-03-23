@@ -14,6 +14,9 @@ import { eveningReminderService } from '../services/eveningReminderService';
 import { ootdReminderService } from '../services/ootdReminderService';
 import { migrateSessionStorage } from '../services/sessionMigration';
 import { appTheme } from '../theme/tokens';
+import { useFonts } from 'expo-font';
+import { SourceSerifPro_600SemiBold, SourceSerifPro_400Regular } from '@expo-google-fonts/source-serif-pro';
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 
 /**
  * Register for push notifications and save token to profile.
@@ -45,6 +48,13 @@ async function registerForPushNotifications() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    SourceSerifPro_600SemiBold,
+    SourceSerifPro_400Regular,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+  });
   const router = useRouter();
   const segments = useSegments();
   const { session, isLoading, isInitialized, initialize } = useAuthStore();
@@ -129,7 +139,7 @@ export default function RootLayout() {
   }, [session, segments, isInitialized, hasCheckedInitialOnboarding, router]);
 
   // Show loading screen while initializing
-  if (!isInitialized || isLoading) {
+  if (!isInitialized || isLoading || !fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
         <View style={styles.loadingCard}>

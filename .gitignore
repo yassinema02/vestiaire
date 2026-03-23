@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Superpowers brainstorm sessions
+.superpowers/
+
 # Expo
 .expo/
 dist/
@@ -51,3 +54,4 @@ temp/
 
 # Supabase
 supabase/.temp/
+.gstack/
