@@ -223,13 +223,17 @@ export default function ConfirmItemScreen() {
         if (!params.itemId) return;
         setIsSaving(true);
         try {
-            // Upload product photo if available
+            // Upload product photo if available (non-blocking — failure keeps original)
             let productPhotoUrl: string | null = null;
             if (productPhotoBase64) {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    const { url } = await storageService.uploadProcessedImage(user.id, productPhotoBase64);
-                    productPhotoUrl = url;
+                try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                        const { url } = await storageService.uploadProcessedImage(user.id, productPhotoBase64);
+                        productPhotoUrl = url;
+                    }
+                } catch (uploadErr) {
+                    console.warn('Product photo upload failed, keeping original:', uploadErr);
                 }
             }
 
