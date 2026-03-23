@@ -1,10 +1,13 @@
 /**
  * Product Photo Generation Service
- * Uses Gemini 2.5 Flash Image to generate professional e-commerce product photos
+ * Uses Gemini 2.5 Flash Image to generate professional e-commerce product photos.
+ * Calls the SDK directly (not through aiProxy) because image generation
+ * requires responseModalities config that the shared proxy layer doesn't support.
  */
 
+import { GoogleGenAI } from '@google/genai';
+import { runtimeConfig, hasRuntimeValue } from './runtimeConfig';
 import { PRODUCT_PHOTO_PROMPT } from '../constants/prompts';
-import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 import { optimizeForAI } from './imageOptimizer';
 
 export interface ProductPhotoResult {
@@ -20,8 +23,17 @@ export interface ProductPhotoMetadata {
 }
 
 export const isProductPhotoConfigured = (): boolean => {
-    return isGeminiConfigured();
+    return hasRuntimeValue(runtimeConfig.geminiApiKey);
 };
+
+let genAIInstance: GoogleGenAI | null = null;
+
+function getGenAI(): GoogleGenAI {
+    if (!genAIInstance) {
+        genAIInstance = new GoogleGenAI({ apiKey: runtimeConfig.geminiApiKey });
+    }
+    return genAIInstance;
+}
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -66,7 +78,7 @@ export const generateProductPhoto = async (
     metadata?: ProductPhotoMetadata
 ): Promise<ProductPhotoResult> => {
     if (!isProductPhotoConfigured()) {
-        console.warn('Product photo generation not configured — missing AI proxy configuration');
+        console.warn('Product photo generation not configured — missing Gemini API key');
         return { processedImageBase64: null, error: new Error('Product photo generation not configured') };
     }
 
@@ -79,8 +91,9 @@ export const generateProductPhoto = async (
         const imageBase64 = await blobToBase64(imageBlob);
 
         const prompt = buildPrompt(metadata);
+        const genAI = getGenAI();
 
-        const response = await trackedGenerateContent({
+        const response = await genAI.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: [
                 {
@@ -96,9 +109,12 @@ export const generateProductPhoto = async (
                     ],
                 },
             ],
-        }, 'product_photo');
+            config: {
+                responseModalities: ['IMAGE', 'TEXT'],
+            },
+        });
 
-        const parts = (response.candidates?.[0] as any)?.content?.parts as Array<any> | undefined;
+        const parts = response.candidates?.[0]?.content?.parts;
         if (!parts) {
             throw new Error('No response parts from Gemini');
         }
