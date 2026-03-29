@@ -5,11 +5,13 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { TripEvent, PackingList, PackingDay, PackingItem } from '../types/packingList';
+import { TripEvent, PackingList, PackingDay, PackingItem, DailyWeatherForecast } from '../types/packingList';
 import { CalendarEventRow, eventSyncService } from './eventSyncService';
 import { generateEventOutfit, generateFallbackOutfit } from './aiOutfitService';
 import { WardrobeItem } from './items';
 import { OccasionType } from '../utils/occasionDetector';
+import { WeatherContext } from './weather';
+import { mapWeatherToClothingNeeds } from '../utils/weatherClothingMap';
 
 const PACKING_LIST_PREFIX = 'packing_list_';
 
@@ -24,6 +26,22 @@ function mapOccasion(eventType: string | null): OccasionType {
         case 'active': return 'sport';
         default: return 'casual';
     }
+}
+
+/**
+ * Convert a daily forecast to a WeatherContext for AI prompt injection
+ */
+function forecastToWeatherContext(forecast: DailyWeatherForecast): WeatherContext {
+    const avgTemp = Math.round((forecast.tempHigh + forecast.tempLow) / 2);
+    return {
+        temp: avgTemp,
+        feels_like: avgTemp,
+        condition: forecast.precipitationProbability > 50 ? 'Rain likely' : 'Clear',
+        humidity: 0,
+        wind_speed: 0,
+        weather_code: forecast.weatherCode,
+        icon: forecast.weatherCode > 50 ? 'rainy' : 'sunny',
+    };
 }
 
 /**
@@ -95,7 +113,11 @@ function exportPackingList(list: PackingList): string {
  */
 async function generatePackingList(
     trip: TripEvent,
-    wardrobeItems: WardrobeItem[]
+    wardrobeItems: WardrobeItem[],
+    options?: {
+        defaultOccasion?: OccasionType;
+        weatherForecasts?: DailyWeatherForecast[];
+    }
 ): Promise<{ list: PackingList | null; error: string | null }> {
     try {
         const dates = getDateRange(trip.startDate, trip.endDate);
@@ -116,7 +138,13 @@ async function generatePackingList(
             const topEvent = [...dayEvents]
                 .sort((a, b) => (b.formality_score || 0) - (a.formality_score || 0))[0] || null;
 
-            const occasionType = topEvent ? mapOccasion(topEvent.event_type) : 'casual';
+            const occasionType = topEvent
+                ? mapOccasion(topEvent.event_type)
+                : (options?.defaultOccasion || 'casual');
+
+            // Build weather context for this day if forecast available
+            const dayForecast = options?.weatherForecasts?.find(f => f.date === date);
+            const weatherContext = dayForecast ? forecastToWeatherContext(dayForecast) : null;
 
             // Generate outfit for this day
             let outfitItemIds: string[] = [];
@@ -132,6 +160,24 @@ async function generatePackingList(
                 const fallback = generateFallbackOutfit(wardrobeItems);
                 if (fallback) {
                     outfitItemIds = fallback.items;
+
+                    // If we have weather context, prefer weather-appropriate items
+                    if (weatherContext) {
+                        const needs = mapWeatherToClothingNeeds(weatherContext.temp, weatherContext.weather_code);
+                        for (const requiredCat of needs.required) {
+                            const hasCategory = outfitItemIds.some(id => {
+                                const w = wardrobeItems.find(item => item.id === id);
+                                return w?.category?.toLowerCase().includes(requiredCat.toLowerCase());
+                            });
+                            if (!hasCategory) {
+                                const candidate = wardrobeItems.find(w =>
+                                    w.category?.toLowerCase().includes(requiredCat.toLowerCase()) &&
+                                    !outfitItemIds.includes(w.id)
+                                );
+                                if (candidate) outfitItemIds.push(candidate.id);
+                            }
+                        }
+                    }
                 }
             }
 
