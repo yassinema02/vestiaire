@@ -445,7 +445,15 @@ export default function TravelScreen() {
                                 )}
                             </View>
                             {'isManual' in selectedTrip && (
-                                <Ionicons name="pencil-outline" size={16} color="#9ca3af" />
+                                <View style={styles.tripCardActions}>
+                                    <Ionicons name="pencil-outline" size={16} color="#9ca3af" />
+                                    <TouchableOpacity
+                                        onPress={(e) => { e.stopPropagation(); handleDeleteTrip(selectedTrip); }}
+                                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                    >
+                                        <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                                    </TouchableOpacity>
+                                </View>
                             )}
                         </TouchableOpacity>
                     )}
@@ -718,6 +726,11 @@ const styles = StyleSheet.create({
     },
     tripCardInfo: {
         flex: 1,
+    },
+    tripCardActions: {
+        flexDirection: 'column',
+        gap: 12,
+        alignItems: 'center',
     },
     tripCardTitle: {
         fontSize: 16,

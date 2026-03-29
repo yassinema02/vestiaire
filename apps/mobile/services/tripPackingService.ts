@@ -53,7 +53,8 @@ async function generateTripDayOutfit(
     occasion: OccasionType,
     weather: WeatherContext | null,
     date: string,
-    destination: string | null
+    destination: string | null,
+    previousOutfitIds: string[] = []
 ): Promise<string[]> {
     if (!isGeminiConfigured() || wardrobeItems.length < 3) {
         return [];
@@ -99,6 +100,7 @@ Pick ONE outfit (3-5 items) from the wardrobe that is:
 1. Appropriate for the weather and temperature
 2. Suitable for a ${occasion} occasion
 3. Well-coordinated
+${previousOutfitIds.length > 0 ? `4. DIFFERENT from previous days — avoid reusing these item IDs: ${JSON.stringify(previousOutfitIds)}. Pick different pieces to create variety across the trip.` : ''}
 
 Return ONLY a JSON object: {"items": ["id1", "id2", "id3"]}`;
 
@@ -209,6 +211,7 @@ async function generatePackingList(
 
         const packingDays: PackingDay[] = [];
         const itemMap = new Map<string, PackingItem>();
+        const usedItemIds: string[] = []; // Track items across days for variety
 
         for (const date of dates) {
             // Find events on this date
@@ -241,7 +244,8 @@ async function generatePackingList(
                     occasionType,
                     weatherContext,
                     date,
-                    trip.location
+                    trip.location,
+                    usedItemIds
                 );
             }
 
@@ -265,6 +269,9 @@ async function generatePackingList(
                     };
                 })
                 .filter(Boolean) as { id: string; name: string; category: string }[];
+
+            // Track used items for variety across days
+            usedItemIds.push(...outfitItemIds);
 
             packingDays.push({
                 date,
