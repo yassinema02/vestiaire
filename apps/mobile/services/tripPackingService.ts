@@ -8,10 +8,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TripEvent, PackingList, PackingDay, PackingItem, DailyWeatherForecast } from '../types/packingList';
 import { CalendarEventRow, eventSyncService } from './eventSyncService';
 import { generateEventOutfit, generateFallbackOutfit } from './aiOutfitService';
+import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 import { WardrobeItem } from './items';
 import { OccasionType } from '../utils/occasionDetector';
 import { WeatherContext } from './weather';
-import { mapWeatherToClothingNeeds } from '../utils/weatherClothingMap';
+import { mapWeatherToClothingNeeds, getTempCategory } from '../utils/weatherClothingMap';
 
 const PACKING_LIST_PREFIX = 'packing_list_';
 
@@ -42,6 +43,85 @@ function forecastToWeatherContext(forecast: DailyWeatherForecast): WeatherContex
         weather_code: forecast.weatherCode,
         icon: forecast.weatherCode > 50 ? 'rainy' : 'sunny',
     };
+}
+
+/**
+ * Generate an outfit for a trip day using AI with weather + occasion context
+ */
+async function generateTripDayOutfit(
+    wardrobeItems: WardrobeItem[],
+    occasion: OccasionType,
+    weather: WeatherContext | null,
+    date: string,
+    destination: string | null
+): Promise<string[]> {
+    if (!isGeminiConfigured() || wardrobeItems.length < 3) {
+        return [];
+    }
+
+    const completeItems = wardrobeItems.filter(i => i.status === 'complete');
+    if (completeItems.length < 3) return [];
+
+    // Build a compact item list for the prompt
+    const itemList = completeItems.slice(0, 50).map(i => ({
+        id: i.id,
+        category: i.category || 'other',
+        subCategory: i.sub_category || '',
+        colors: i.colors || [],
+        seasons: i.seasons || [],
+        name: i.name || i.sub_category || i.category || 'Item',
+    }));
+
+    let weatherText = '';
+    if (weather) {
+        const tempCat = getTempCategory(weather.temp);
+        const needs = mapWeatherToClothingNeeds(weather.temp, weather.weather_code);
+        weatherText = `Weather: ${weather.temp}°C, ${weather.condition}. Temperature: ${tempCat}.`;
+        if (needs.required.length > 0) {
+            weatherText += ` Required: ${needs.required.join(', ')}.`;
+        }
+        if (needs.conditions.length > 0) {
+            weatherText += ` Conditions: ${needs.conditions.join(', ')}.`;
+        }
+    }
+
+    const prompt = `You are a fashion stylist helping pack for a trip.
+
+Date: ${date}
+${destination ? `Destination: ${destination}` : ''}
+Occasion: ${occasion}
+${weatherText}
+
+WARDROBE ITEMS:
+${JSON.stringify(itemList)}
+
+Pick ONE outfit (3-5 items) from the wardrobe that is:
+1. Appropriate for the weather and temperature
+2. Suitable for a ${occasion} occasion
+3. Well-coordinated
+
+Return ONLY a JSON object: {"items": ["id1", "id2", "id3"]}`;
+
+    try {
+        const result = await trackedGenerateContent({
+            model: 'gemini-2.5-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        }, 'trip_day_outfit');
+
+        const text = result.text;
+        if (!text) return [];
+
+        const jsonText = text.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '');
+        const match = jsonText.match(/\{[\s\S]*\}/);
+        if (!match) return [];
+
+        const parsed = JSON.parse(match[0]);
+        const validIds = new Set(wardrobeItems.map(i => i.id));
+        return (parsed.items || []).filter((id: string) => validIds.has(id));
+    } catch (err) {
+        console.warn('Trip day outfit generation failed:', err);
+        return [];
+    }
 }
 
 /**
@@ -149,35 +229,27 @@ async function generatePackingList(
             // Generate outfit for this day
             let outfitItemIds: string[] = [];
             if (topEvent && wardrobeItems.length >= 3) {
+                // Calendar event day — use event-based outfit generator
                 const result = await generateEventOutfit(topEvent, wardrobeItems);
                 if (result.suggestion) {
                     outfitItemIds = result.suggestion.items;
                 }
+            } else if (wardrobeItems.length >= 3) {
+                // No calendar event — use AI with weather + occasion context
+                outfitItemIds = await generateTripDayOutfit(
+                    wardrobeItems,
+                    occasionType,
+                    weatherContext,
+                    date,
+                    trip.location
+                );
             }
 
-            // Fallback if no outfit generated
+            // Fallback if AI failed
             if (outfitItemIds.length === 0 && wardrobeItems.length >= 3) {
                 const fallback = generateFallbackOutfit(wardrobeItems);
                 if (fallback) {
                     outfitItemIds = fallback.items;
-
-                    // If we have weather context, prefer weather-appropriate items
-                    if (weatherContext) {
-                        const needs = mapWeatherToClothingNeeds(weatherContext.temp, weatherContext.weather_code);
-                        for (const requiredCat of needs.required) {
-                            const hasCategory = outfitItemIds.some(id => {
-                                const w = wardrobeItems.find(item => item.id === id);
-                                return w?.category?.toLowerCase().includes(requiredCat.toLowerCase());
-                            });
-                            if (!hasCategory) {
-                                const candidate = wardrobeItems.find(w =>
-                                    w.category?.toLowerCase().includes(requiredCat.toLowerCase()) &&
-                                    !outfitItemIds.includes(w.id)
-                                );
-                                if (candidate) outfitItemIds.push(candidate.id);
-                            }
-                        }
-                    }
                 }
             }
 
