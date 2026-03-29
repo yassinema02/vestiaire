@@ -40,3 +40,49 @@ export interface PackingList {
     summary: string;
     generatedAt: string;
 }
+
+export type TripType = 'vacation' | 'business' | 'city_break' | 'adventure' | 'beach' | 'conference';
+
+export interface ManualTripEvent extends TripEvent {
+    tripType: TripType;
+    isManual: true;
+    location: string; // narrowed — always non-null for manual trips
+}
+
+export const TRIP_TYPE_LABELS: Record<TripType, string> = {
+    vacation: 'Vacation',
+    business: 'Business',
+    city_break: 'City Break',
+    adventure: 'Adventure',
+    beach: 'Beach',
+    conference: 'Conference',
+};
+
+export const TRIP_TYPE_ICONS: Record<TripType, string> = {
+    vacation: 'sunny-outline',
+    business: 'briefcase-outline',
+    city_break: 'business-outline',
+    adventure: 'trail-sign-outline',
+    beach: 'umbrella-outline',
+    conference: 'people-outline',
+};
+
+export interface GeocodedLocation {
+    lat: number;
+    lon: number;
+    displayName: string;
+}
+
+export interface DailyWeatherForecast {
+    date: string; // YYYY-MM-DD
+    tempHigh: number;
+    tempLow: number;
+    precipitationProbability: number;
+    weatherCode: number;
+}
+
+export interface TripAnalyticsEvent {
+    name: 'trip_created' | 'packing_list_generated' | 'packing_list_exported' | 'packing_item_toggled';
+    data: Record<string, string | number | boolean>;
+    timestamp: string;
+}
