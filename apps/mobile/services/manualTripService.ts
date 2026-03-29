@@ -8,6 +8,13 @@ import { TripEvent, ManualTripEvent, TripType, TRIP_TYPE_LABELS } from '../types
 import { OccasionType } from '../utils/occasionDetector';
 import { eventSyncService } from './eventSyncService';
 
+function generateId(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = (Math.random() * 16) | 0;
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+    });
+}
+
 const MANUAL_TRIPS_KEY = 'manual_trips';
 const PACKING_LIST_PREFIX = 'packing_list_';
 
@@ -64,7 +71,7 @@ async function saveManualTrip(params: {
     tripType: TripType;
 }): Promise<ManualTripEvent> {
     const trip: ManualTripEvent = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         title: buildTitle(params.tripType, params.destination),
         startDate: params.startDate,
         endDate: params.endDate,
