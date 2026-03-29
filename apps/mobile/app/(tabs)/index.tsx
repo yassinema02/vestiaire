@@ -26,7 +26,8 @@ import { useEventSync } from '../../hooks/useEventSync';
 import { useTabBarOnScroll } from '../../hooks/useTabBarOnScroll';
 import { eventSyncService, CalendarEventRow } from '../../services/eventSyncService';
 import { generateEventOutfit, OutfitSuggestion } from '../../services/aiOutfitService';
-import { TripEvent } from '../../types/packingList';
+import { TripEvent, ManualTripEvent, TRIP_TYPE_ICONS } from '../../types/packingList';
+import { manualTripService } from '../../services/manualTripService';
 import ResalePromptBanner from '../../components/features/ResalePromptBanner';
 import { resalePromptService, ResalePrompt } from '../../services/resalePromptService';
 import { appTheme } from '../../theme/tokens';
@@ -82,7 +83,8 @@ export default function HomeScreen() {
   const streakLostShown = useRef(false);
   const [nextEvent, setNextEvent] = useState<CalendarEventRow | null>(null);
   const [nextEventOutfit, setNextEventOutfit] = useState<OutfitSuggestion | null>(null);
-  const [upcomingTrip, setUpcomingTrip] = useState<TripEvent | null>(null);
+  const [allTrips, setAllTrips] = useState<TripEvent[]>([]);
+  const [travelExpanded, setTravelExpanded] = useState(false);
   const [resalePrompts, setResalePrompts] = useState<ResalePrompt[]>([]);
   const tabBarScroll = useTabBarOnScroll();
 
@@ -151,8 +153,9 @@ export default function HomeScreen() {
       loadNextEvent();
 
       const loadTrips = async () => {
-        const { trips } = await eventSyncService.detectTripEvents(30);
-        setUpcomingTrip(trips.length > 0 ? trips[0] : null);
+        const trips = await manualTripService.getAllTrips();
+        setAllTrips(trips);
+        setTravelExpanded(trips.length > 0);
       };
       loadTrips();
     }, [refreshWeather, refreshForecast, refreshEvents])
@@ -322,25 +325,73 @@ export default function HomeScreen() {
           </View>
         ) : null}
 
-        {upcomingTrip ? (
-          <TouchableOpacity
-            style={styles.tripBanner}
-            onPress={() => router.push('/(tabs)/travel')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.tripIcon}>
-              <Ionicons name="airplane" size={18} color={appTheme.palette.forest} />
-            </View>
-            <View style={styles.tripBannerInfo}>
-              <Text style={styles.tripBannerTitle}>{upcomingTrip.title}</Text>
-              <Text style={styles.tripBannerDates}>
-                {upcomingTrip.durationDays} day{upcomingTrip.durationDays !== 1 ? 's' : ''}
-                {upcomingTrip.location ? ` · ${upcomingTrip.location}` : ''}
-              </Text>
-            </View>
-            <Text style={styles.tripBannerAction}>Pack</Text>
-          </TouchableOpacity>
-        ) : null}
+                    {/* Travel Section */}
+                    {allTrips.length > 0 ? (
+                        <View style={styles.travelSection}>
+                            <TouchableOpacity
+                                style={styles.travelHeader}
+                                onPress={() => setTravelExpanded(!travelExpanded)}
+                            >
+                                <View style={styles.travelHeaderLeft}>
+                                    <Ionicons name="airplane" size={18} color="#5D4E37" />
+                                    <Text style={styles.travelHeaderTitle}>Travel</Text>
+                                </View>
+                                <Ionicons
+                                    name={travelExpanded ? 'chevron-up' : 'chevron-down'}
+                                    size={18}
+                                    color="#9ca3af"
+                                />
+                            </TouchableOpacity>
+                            {travelExpanded && (
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={styles.travelCards}
+                                >
+                                    {allTrips.map(trip => (
+                                        <TouchableOpacity
+                                            key={trip.id}
+                                            style={styles.travelCard}
+                                            onPress={() => router.push(`/(tabs)/travel?tripId=${trip.id}`)}
+                                        >
+                                            <Ionicons
+                                                name={
+                                                    ('isManual' in trip
+                                                        ? TRIP_TYPE_ICONS[(trip as ManualTripEvent).tripType]
+                                                        : 'airplane-outline') as any
+                                                }
+                                                size={20}
+                                                color="#87A96B"
+                                            />
+                                            <Text style={styles.travelCardTitle} numberOfLines={1}>
+                                                {trip.location || trip.title}
+                                            </Text>
+                                            <Text style={styles.travelCardDates}>
+                                                {trip.durationDays}d · {trip.startDate.slice(5)}
+                                            </Text>
+                                            <Text style={styles.travelCardAction}>Pack</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                    <TouchableOpacity
+                                        style={styles.travelAddCard}
+                                        onPress={() => router.push('/(tabs)/travel?showCreate=true')}
+                                    >
+                                        <Ionicons name="add-circle-outline" size={24} color="#5D4E37" />
+                                        <Text style={styles.travelAddText}>Plan a Trip</Text>
+                                    </TouchableOpacity>
+                                </ScrollView>
+                            )}
+                        </View>
+                    ) : (
+                        <TouchableOpacity
+                            style={styles.travelCollapsed}
+                            onPress={() => router.push('/(tabs)/travel?showCreate=true')}
+                        >
+                            <Ionicons name="airplane-outline" size={18} color="#5D4E37" />
+                            <Text style={styles.travelCollapsedText}>Plan a Trip</Text>
+                            <Ionicons name="chevron-forward" size={16} color="#9ca3af" />
+                        </TouchableOpacity>
+                    )}
 
         {resalePrompts.length > 0 ? (
           <View style={styles.sectionBlock}>
@@ -625,42 +676,85 @@ const styles = StyleSheet.create({
   eventButtonGhostText: {
     color: appTheme.palette.text,
   },
-  tripBanner: {
+  travelSection: {
+    marginBottom: 16,
+  },
+  travelHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    borderRadius: appTheme.radii.lg,
-    backgroundColor: appTheme.palette.surfaceRaised,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(181, 150, 120, 0.22)',
-    ...appTheme.shadows.card,
+    justifyContent: 'space-between',
+    paddingVertical: 12,
   },
-  tripIcon: {
-    width: 42,
-    height: 42,
+  travelHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  travelHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  travelCards: {
+    gap: 10,
+    paddingBottom: 4,
+  },
+  travelCard: {
+    width: 140,
+    backgroundColor: '#fff',
     borderRadius: 14,
-    backgroundColor: appTheme.palette.forestSoft,
+    padding: 14,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(181, 150, 120, 0.15)',
+  },
+  travelCardTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  travelCardDates: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  travelCardAction: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#87A96B',
+    marginTop: 2,
+  },
+  travelAddCard: {
+    width: 120,
+    backgroundColor: 'rgba(93, 78, 55, 0.06)',
+    borderRadius: 14,
+    padding: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(93, 78, 55, 0.2)',
   },
-  tripBannerInfo: {
+  travelAddText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#5D4E37',
+  },
+  travelCollapsed: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  travelCollapsedText: {
     flex: 1,
-  },
-  tripBannerTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: appTheme.palette.text,
-    marginBottom: 2,
-  },
-  tripBannerDates: {
-    fontSize: 13,
-    color: appTheme.palette.textMuted,
-  },
-  tripBannerAction: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: appTheme.palette.forest,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#5D4E37',
   },
   mosaicRow: {
     flexDirection: 'row',
