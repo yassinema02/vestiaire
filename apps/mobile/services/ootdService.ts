@@ -7,6 +7,7 @@
 import { supabase } from './supabase';
 import { requireUserId } from './auth-helpers';
 import { OotdPost, OotdPostWithAuthor, CreateOotdPostInput } from '../types/social';
+import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
 const BUCKET_NAME = 'ootd-photos';
 
@@ -23,7 +24,7 @@ export const ootdService = {
             const timestamp = Date.now();
             const filename = `${userId}/${timestamp}.jpg`;
 
-            const response = await fetch(imageUri);
+            const response = await fetchWithTimeout(imageUri, { timeout: 30_000 });
             const blob = await response.blob();
             const arrayBuffer = await new Response(blob).arrayBuffer();
 

@@ -5,6 +5,7 @@
 
 import { supabase } from './supabase';
 import { decode } from 'base64-arraybuffer';
+import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
 const BUCKET_NAME = 'wardrobe-images';
 
@@ -38,7 +39,7 @@ export const storageService = {
             onProgress?.({ loaded: 0, total: 100, percentage: 0 });
 
             // Fetch the image as blob
-            const response = await fetch(imageUri);
+            const response = await fetchWithTimeout(imageUri, { timeout: 30_000 });
             const blob = await response.blob();
 
             // Convert blob to ArrayBuffer for proper upload

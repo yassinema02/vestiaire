@@ -9,6 +9,7 @@ import { GoogleGenAI } from '@google/genai';
 import { runtimeConfig, hasRuntimeValue } from './runtimeConfig';
 import { PRODUCT_PHOTO_PROMPT } from '../constants/prompts';
 import { optimizeForAI } from './imageOptimizer';
+import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
 export interface ProductPhotoResult {
     processedImageBase64: string | null;
@@ -86,7 +87,7 @@ export const generateProductPhoto = async (
         console.log('[ProductPhoto] Starting generation...');
 
         const optimizedUri = await optimizeForAI(imageUrl);
-        const imageResponse = await fetch(optimizedUri);
+        const imageResponse = await fetchWithTimeout(optimizedUri, { timeout: 30_000 });
         const imageBlob = await imageResponse.blob();
         const imageBase64 = await blobToBase64(imageBlob);
 

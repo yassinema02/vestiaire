@@ -6,6 +6,7 @@
 import { CLOTHING_ANALYSIS_PROMPT } from '../constants/prompts';
 import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 import { optimizeForAI } from './imageOptimizer';
+import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
 // Category taxonomy
 export const CATEGORIES = {
@@ -103,7 +104,7 @@ export const analyzeClothing = async (
         const optimizedUri = await optimizeForAI(imageUrl);
 
         // Fetch image and convert to base64
-        const imageResponse = await fetch(optimizedUri);
+        const imageResponse = await fetchWithTimeout(optimizedUri, { timeout: 30_000 });
         const imageBlob = await imageResponse.blob();
 
         const base64 = await new Promise<string>((resolve, reject) => {
