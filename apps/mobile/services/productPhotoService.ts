@@ -69,8 +69,8 @@ function estimateComplexity(metadata?: ProductPhotoMetadata): ImageComplexity {
     const sub = (subCategory ?? '').toLowerCase();
     const pos = (positionDescription ?? '').toLowerCase();
 
-    // Mirror selfies / lifestyle → complex
-    if (pos.includes('mirror') || pos.includes('selfie') || pos.includes('lifestyle')) {
+    // Item worn by a person → complex (need describe-then-generate to isolate)
+    if (pos.includes('worn') || pos.includes('mirror') || pos.includes('selfie') || pos.includes('lifestyle') || pos.includes('person')) {
         return 'complex';
     }
 
