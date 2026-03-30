@@ -5,6 +5,7 @@
  * Story 8.2: URL Product Scraping
  */
 
+import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 import { supabase } from './supabase';
 import { requireUserId } from './auth-helpers';
 import { ShoppingScan, ProductAnalysis, AiInsight, ScrapedProduct } from '../types/shopping';
@@ -75,25 +76,6 @@ function extractColorFromText(text: string): string | null {
     return null;
 }
 
-/**
- * Fetch HTML with a timeout
- */
-async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-        const response = await fetch(url, {
-            signal: controller.signal,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-            },
-        });
-        return response;
-    } finally {
-        clearTimeout(timer);
-    }
-}
-
 export interface UploadResult {
     url: string | null;
     path: string | null;
@@ -112,7 +94,7 @@ export const shoppingService = {
             const timestamp = Date.now();
             const filename = `${userId}/${timestamp}.jpg`;
 
-            const response = await fetch(imageUri);
+            const response = await fetchWithTimeout(imageUri, { timeout: 30_000 });
             const blob = await response.blob();
             const arrayBuffer = await new Response(blob).arrayBuffer();
 
@@ -159,7 +141,7 @@ export const shoppingService = {
             const optimizedUri = await optimizeForAI(imageUri);
 
             // Fetch optimized image and convert to base64
-            const imageResponse = await fetch(optimizedUri);
+            const imageResponse = await fetchWithTimeout(optimizedUri, { timeout: 30_000 });
             const imageBlob = await imageResponse.blob();
 
             // Detect actual mime type from response or blob
@@ -626,7 +608,12 @@ export const shoppingService = {
         url: string
     ): Promise<{ product: ScrapedProduct | null; error: Error | null }> => {
         try {
-            const response = await fetchWithTimeout(url, SCRAPE_TIMEOUT_MS);
+            const response = await fetchWithTimeout(url, {
+                timeout: SCRAPE_TIMEOUT_MS,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+                },
+            });
 
             if (!response.ok) {
                 return {
