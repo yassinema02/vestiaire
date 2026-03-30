@@ -110,49 +110,64 @@ export const extractionService = {
    */
   processJob: async (
     jobId: string,
-    onProgress?: (processed: number, total: number) => void
+    onProgress?: (processed: number, total: number) => void,
+    photoUrls?: string[]
   ): Promise<{ result: ExtractionJobResult | null; error: Error | null }> => {
     if (!isGeminiConfigured()) {
       return { result: null, error: new Error('AI proxy not configured') };
     }
 
+    const isLocalJob = jobId.startsWith('local-');
+
     try {
-      // Fetch job
-      const { data: job, error: fetchError } = await supabase
-        .from('wardrobe_extraction_jobs')
-        .select()
-        .eq('id', jobId)
-        .single();
+      let jobPhotoUrls: string[];
 
-      if (fetchError || !job) {
-        return { result: null, error: fetchError || new Error('Job not found') };
+      if (photoUrls) {
+        // Use provided URLs directly (local-only flow)
+        jobPhotoUrls = photoUrls;
+      } else if (!isLocalJob) {
+        // Fetch job from DB
+        const { data: job, error: fetchError } = await supabase
+          .from('wardrobe_extraction_jobs')
+          .select()
+          .eq('id', jobId)
+          .single();
+
+        if (fetchError || !job) {
+          return { result: null, error: fetchError || new Error('Job not found') };
+        }
+        jobPhotoUrls = job.photo_urls;
+
+        // Update status → processing
+        await supabase
+          .from('wardrobe_extraction_jobs')
+          .update({ status: 'processing', started_at: new Date().toISOString() })
+          .eq('id', jobId);
+      } else {
+        return { result: null, error: new Error('Local job requires photoUrls parameter') };
       }
-
-      // Update status → processing
-      await supabase
-        .from('wardrobe_extraction_jobs')
-        .update({ status: 'processing', started_at: new Date().toISOString() })
-        .eq('id', jobId);
 
       const allResults: PhotoDetectionResult[] = [];
       let totalItems = 0;
       let failedPhotos = 0;
 
       // Process each photo sequentially
-      for (let i = 0; i < job.photo_urls.length; i++) {
-        const photoResult = await detectItemsInPhoto(job.photo_urls[i], i);
+      for (let i = 0; i < jobPhotoUrls.length; i++) {
+        const photoResult = await detectItemsInPhoto(jobPhotoUrls[i], i);
 
         allResults.push(photoResult);
         totalItems += photoResult.detected_items.length;
         if (photoResult.error) failedPhotos++;
 
-        // Update progress on job row
-        await supabase
-          .from('wardrobe_extraction_jobs')
-          .update({ processed_photos: i + 1 })
-          .eq('id', jobId);
+        // Update progress on job row (skip for local jobs)
+        if (!isLocalJob) {
+          await supabase
+            .from('wardrobe_extraction_jobs')
+            .update({ processed_photos: i + 1 })
+            .eq('id', jobId);
+        }
 
-        onProgress?.(i + 1, job.photo_urls.length);
+        onProgress?.(i + 1, jobPhotoUrls.length);
       }
 
       const jobResult: ExtractionJobResult = {
@@ -161,27 +176,30 @@ export const extractionService = {
         failed_photos: failedPhotos,
       };
 
-      // Update job with results
-      await supabase
-        .from('wardrobe_extraction_jobs')
-        .update({
-          status: 'completed',
-          detected_items: jobResult,
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', jobId);
+      // Update job with results (skip for local jobs)
+      if (!isLocalJob) {
+        await supabase
+          .from('wardrobe_extraction_jobs')
+          .update({
+            status: 'completed',
+            detected_items: jobResult,
+            completed_at: new Date().toISOString(),
+          })
+          .eq('id', jobId);
+      }
 
       return { result: jobResult, error: null };
     } catch (error: any) {
       console.error('Extraction job failed:', error);
 
-      // Mark job as failed
-      await supabase
-        .from('wardrobe_extraction_jobs')
-        .update({
-          status: 'failed',
-          error_message: error.message || 'Processing failed',
-          completed_at: new Date().toISOString(),
+      // Mark job as failed (skip for local jobs)
+      if (!isLocalJob) {
+        await supabase
+          .from('wardrobe_extraction_jobs')
+          .update({
+            status: 'failed',
+            error_message: error.message || 'Processing failed',
+            completed_at: new Date().toISOString(),
         })
         .eq('id', jobId);
 

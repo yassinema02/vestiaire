@@ -127,27 +127,42 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
     set({ isUploading: true, error: null, uploadProgress: null });
 
     try {
+      // Try uploading to Supabase first
       const { urls, error: uploadError } = await bulkUploadService.uploadBatch(
         selectedPhotos,
         (progress) => set({ uploadProgress: progress })
       );
 
-      if (uploadError || urls.length === 0) {
-        set({
-          isUploading: false,
-          error: 'Failed to upload photos. Please try again.',
-        });
-        return;
+      // Use uploaded URLs if available, otherwise fall back to local URIs
+      // Local URIs work fine for detection (converted to base64 anyway)
+      const photoUrls = urls.length > 0 ? urls : selectedPhotos;
+
+      if (uploadError && urls.length === 0) {
+        console.warn('Supabase upload failed, using local URIs for detection:', uploadError.message);
       }
 
       const { job, error: jobError } =
-        await bulkUploadService.createExtractionJob(urls);
+        await bulkUploadService.createExtractionJob(photoUrls);
 
       if (jobError || !job) {
-        set({
-          isUploading: false,
-          error: 'Photos uploaded but failed to create processing job.',
-        });
+        // If job creation also fails (e.g., no DB table), create a synthetic job
+        console.warn('Job creation failed, using local-only flow:', jobError?.message);
+        const syntheticJob: ExtractionJob = {
+          id: `local-${Date.now()}`,
+          user_id: 'local',
+          photo_urls: photoUrls,
+          total_photos: photoUrls.length,
+          processed_photos: 0,
+          status: 'pending',
+          detected_items: null,
+          items_added_count: 0,
+          error_message: null,
+          created_at: new Date().toISOString(),
+          started_at: null,
+          completed_at: null,
+        };
+        set({ isUploading: false, currentJob: syntheticJob });
+        get().startProcessing(syntheticJob.id);
         return;
       }
 
@@ -170,11 +185,14 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
 
     set({ isProcessing: true, processingProgress: null, error: null });
 
+    const { currentJob } = get();
+    const isLocalJob = jobId.startsWith('local-');
     const { result, error } = await extractionService.processJob(
       jobId,
       (processed, total) => {
         set({ processingProgress: { processed, total } });
-      }
+      },
+      isLocalJob ? currentJob?.photo_urls : undefined
     );
 
     if (error || !result) {
@@ -182,8 +200,10 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
         isProcessing: false,
         error: error?.message || 'Detection failed. Please try again.',
       });
-      const { job } = await bulkUploadService.getJob(jobId);
-      if (job) set({ currentJob: job });
+      if (!isLocalJob) {
+        const { job } = await bulkUploadService.getJob(jobId);
+        if (job) set({ currentJob: job });
+      }
       return;
     }
 
@@ -191,12 +211,21 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
     const items = extractionService.flattenDetectedItems(result);
     const summary = extractionService.getCategorySummary(result);
 
-    // Refresh job
-    const { job: updatedJob } = await bulkUploadService.getJob(jobId);
+    // Refresh job from DB (skip for local jobs)
+    let updatedJob = get().currentJob;
+    if (!isLocalJob) {
+      const { job: refreshed } = await bulkUploadService.getJob(jobId);
+      if (refreshed) updatedJob = refreshed;
 
-    // Cleanup uploaded photos (fire and forget)
-    if (updatedJob?.photo_urls) {
-      bulkUploadService.cleanupPhotos(updatedJob.photo_urls);
+      // Cleanup uploaded photos (fire and forget)
+      if (updatedJob?.photo_urls) {
+        bulkUploadService.cleanupPhotos(updatedJob.photo_urls);
+      }
+    }
+
+    // For local jobs, attach detected_items to the job object so photo gen can find them
+    if (isLocalJob && updatedJob) {
+      updatedJob = { ...updatedJob, detected_items: result, status: 'completed' };
     }
 
     set({
