@@ -79,7 +79,8 @@ export const batchProductPhotoService = {
             category: item.category?.toLowerCase(),
             subCategory: item.sub_category,
             colors: item.colors,
-            pattern: item.pattern,
+            pattern: (item as any).pattern,
+            positionDescription: item.position_description,
           }
         );
 
