@@ -152,6 +152,7 @@ export default function ReviewItemsScreen() {
     const displaySubCategory = item.editedSubCategory || item.sub_category;
     const displayColors = item.editedColors || item.colors;
     const photoGenFailed = item.photo_gen_status === 'failed';
+    const photoGenPending = !item.processed_image_url && item.photo_gen_status !== 'failed' && item.photo_gen_status !== 'skipped';
     const isVeryLow = item.confidence < 50;
     const isNeedsReview = item.needsReview && !isVeryLow; // 50-69
 
@@ -168,6 +169,11 @@ export default function ReviewItemsScreen() {
           {photoGenFailed && (
             <View style={styles.photoGenFailedBadge}>
               <Ionicons name="warning" size={12} color="#f59e0b" />
+            </View>
+          )}
+          {photoGenPending && (
+            <View style={styles.photoGenPendingBadge}>
+              <ActivityIndicator size="small" color="#fff" />
             </View>
           )}
         </View>
@@ -517,6 +523,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fffbeb',
     borderRadius: 10,
     padding: 2,
+  },
+  photoGenPendingBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 10,
+    padding: 4,
   },
   cardInfo: {
     padding: 8,

@@ -63,18 +63,17 @@ export default function BulkUploadScreen() {
   }, []);
 
   // Determine current phase
+  // Detection done = complete (photo gen runs in background)
   const phase = (() => {
-    if (processedItems && !isGeneratingPhotos) return 'complete';
-    if (isGeneratingPhotos) return 'photoGen';
+    if (detectedItems && !isProcessing) return 'complete';
     if (currentJob?.status === 'failed') return 'complete';
     if (isProcessing || currentJob?.status === 'processing') return 'processing';
     if (currentJob && !isProcessing && currentJob.status === 'pending') return 'processing';
-    if (detectedItems && !processedItems && !isGeneratingPhotos) return 'processing';
     if (isUploading) return 'uploading';
     return 'selection';
   })();
 
-  const isActiveProcessing = phase === 'uploading' || phase === 'processing' || phase === 'photoGen';
+  const isActiveProcessing = phase === 'uploading' || phase === 'processing';
 
   // Pulsing animation during active processing
   useEffect(() => {
@@ -436,7 +435,6 @@ export default function BulkUploadScreen() {
       {phase === 'selection' && renderSelection()}
       {phase === 'uploading' && renderProgress('upload')}
       {phase === 'processing' && renderProgress('detection')}
-      {phase === 'photoGen' && renderProgress('photoGen')}
       {phase === 'complete' && renderComplete()}
     </View>
   );

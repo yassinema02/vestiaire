@@ -206,8 +206,9 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
       categorySummary: summary,
     });
 
-    // Auto-trigger photo generation
+    // Start photo generation in background — don't block the review flow
     if (items.length > 0 && updatedJob) {
+      // Fire and forget — user can review/save while this runs
       get().startPhotoGeneration(updatedJob.id);
     }
   },
@@ -224,6 +225,27 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
     );
 
     set({ processedItems, isGeneratingPhotos: false });
+
+    // Update reviewable items with enhanced images if review is already open
+    const { reviewableItems } = get();
+    if (reviewableItems.length > 0 && processedItems.length > 0) {
+      const updated = reviewableItems.map(item => {
+        const processed = processedItems.find(
+          p => p.photo_index === item.photo_index &&
+               p.sub_category === item.sub_category &&
+               p.category === item.category
+        );
+        if (processed?.processed_image_url) {
+          return {
+            ...item,
+            processed_image_url: processed.processed_image_url,
+            photo_gen_status: processed.photo_gen_status,
+          };
+        }
+        return item;
+      });
+      set({ reviewableItems: updated });
+    }
 
     // Notify if backgrounded (Story 10.6)
     const { isBackgrounded } = get();
@@ -463,6 +485,57 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
     }
 
     set({ isImporting: false });
+
+    // If photo generation is still running, schedule a post-import update
+    // to replace original photos with enhanced ones once they're ready
+    if (get().isGeneratingPhotos) {
+      const savedItemNames = items.map(i => ({
+        category: i.editedCategory || i.category,
+        sub_category: i.editedSubCategory || i.sub_category,
+        photo_index: i.photo_index,
+      }));
+      // Wait for photo generation to finish, then update saved items
+      const waitAndUpdate = async () => {
+        // Poll until generation finishes (check every 2s, max 5 min)
+        for (let i = 0; i < 150; i++) {
+          await new Promise(r => setTimeout(r, 2000));
+          if (!get().isGeneratingPhotos) break;
+        }
+        const { processedItems: finalProcessed } = get();
+        if (!finalProcessed) return;
+
+        // Update each saved item's image_url if enhanced version is now available
+        for (const saved of savedItemNames) {
+          const processed = finalProcessed.find(
+            p => p.photo_index === saved.photo_index &&
+                 p.sub_category === saved.sub_category &&
+                 p.category === saved.category
+          );
+          if (processed?.processed_image_url) {
+            // Find the item in DB and update its image
+            const { data: existing } = await supabase
+              .from('items')
+              .select('id, image_url')
+              .eq('category', saved.category)
+              .eq('sub_category', saved.sub_category)
+              .eq('creation_method', 'ai_extraction')
+              .eq('extraction_job_id', jobId)
+              .limit(1)
+              .maybeSingle();
+
+            if (existing && existing.image_url !== processed.processed_image_url) {
+              await supabase
+                .from('items')
+                .update({ image_url: processed.processed_image_url })
+                .eq('id', existing.id);
+              console.log(`[Import] Updated image for ${saved.sub_category} with enhanced version`);
+            }
+          }
+        }
+      };
+      waitAndUpdate().catch(err => console.warn('[Import] Post-import update failed:', err));
+    }
+
     return added;
   },
 
