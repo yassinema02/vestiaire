@@ -80,7 +80,7 @@ export default function LogWearScreen() {
             // Reset selection when screen comes into focus
             setSelectedItemIds(new Set());
             setSelectedOutfitId(null);
-        }, [])
+        }, [fetchOutfits])
     );
 
     // Filter items by category
@@ -178,10 +178,11 @@ export default function LogWearScreen() {
                 gamificationService.awardWearLog().catch(() => {});
 
                 // Check badges (wear_log + streak triggers)
+                const currentWeather = useWeatherStore.getState().weather;
                 const newBadges = await gamificationService.checkBadges('wear_log', {
                     itemIds,
                     outfitId: selectedOutfitId || undefined,
-                    weatherCondition: weather?.condition,
+                    weatherCondition: currentWeather?.condition,
                 }).catch(() => [] as BadgeDefinition[]);
 
                 // Also check streak badges
