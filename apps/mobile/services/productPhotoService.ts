@@ -150,11 +150,24 @@ export const generateProductPhoto = async (
 
         const genAI = getGenAI();
 
-        // Build prompt sequence: start with best-fit, cascade to simpler fallbacks
+        // For complex items (jackets on people, mirror selfies), skip extraction entirely
+        // and go straight to describe-then-generate — extraction just removes the background
+        // but keeps the person, which isn't what we want.
+        if (complexity === 'complex') {
+            console.log('[ProductPhoto] Complex item detected — using describe-then-generate as primary strategy');
+            const generated = await describeAndGenerate(imageBase64, metadata);
+            if (generated) {
+                console.log('[ProductPhoto] Describe-then-generate succeeded for complex item');
+                return { processedImageBase64: generated, error: null };
+            }
+            console.log('[ProductPhoto] Describe-then-generate failed — falling back to extraction prompts');
+        }
+
+        // Build prompt sequence for extraction attempts
         const prompts: string[] = [];
 
         if (complexity === 'complex') {
-            // For complex images, lead with segmentation prompt (more likely to succeed)
+            // Complex items that failed describe-then-generate: try segmentation
             prompts.push(buildPrompt(PRODUCT_PHOTO_PROMPT_COMPLEX, metadata));
             prompts.push(buildPrompt(PRODUCT_PHOTO_PROMPT, metadata));
         } else {
