@@ -6,12 +6,12 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GeocodedLocation, DailyWeatherForecast } from '../types/packingList';
+import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
 const GEOCODE_CACHE_PREFIX = 'geocode_';
 const GEOCODE_API = 'https://geocoding-api.open-meteo.com/v1/search';
 const FORECAST_API = 'https://api.open-meteo.com/v1/forecast';
 const HISTORICAL_API = 'https://archive-api.open-meteo.com/v1/archive';
-const FETCH_TIMEOUT = 10_000;
 
 function getDateRange(startDate: string, endDate: string): string[] {
     const dates: string[] = [];
@@ -22,17 +22,6 @@ function getDateRange(startDate: string, endDate: string): string[] {
         current.setDate(current.getDate() + 1);
     }
     return dates;
-}
-
-async function fetchWithTimeout(url: string): Promise<Response> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-    try {
-        const res = await fetch(url, { signal: controller.signal });
-        return res;
-    } finally {
-        clearTimeout(timer);
-    }
 }
 
 /**
@@ -50,7 +39,7 @@ async function geocodeDestination(name: string): Promise<GeocodedLocation | null
 
     try {
         const params = new URLSearchParams({ name: name.trim(), count: '1', language: 'en' });
-        const res = await fetchWithTimeout(`${GEOCODE_API}?${params}`);
+        const res = await fetchWithTimeout(`${GEOCODE_API}?${params}`, { timeout: 10_000 });
         if (!res.ok) return null;
 
         const data = await res.json();
@@ -106,7 +95,7 @@ async function getTripForecast(
                 daily: 'temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code',
                 timezone: 'auto',
             });
-            const res = await fetchWithTimeout(`${FORECAST_API}?${params}`);
+            const res = await fetchWithTimeout(`${FORECAST_API}?${params}`, { timeout: 10_000 });
             if (res.ok) {
                 const data = await res.json();
                 const daily = data.daily;
@@ -144,7 +133,7 @@ async function getTripForecast(
                 daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code',
                 timezone: 'auto',
             });
-            const res = await fetchWithTimeout(`${HISTORICAL_API}?${params}`);
+            const res = await fetchWithTimeout(`${HISTORICAL_API}?${params}`, { timeout: 10_000 });
             if (res.ok) {
                 const data = await res.json();
                 const daily = data.daily;
