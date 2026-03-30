@@ -27,24 +27,77 @@ Respond ONLY with valid JSON in this exact format, no other text:
 
 // ─── productPhotoService.ts ──────────────────────────────────────
 
-export const PRODUCT_PHOTO_PROMPT = `Edit this photo to create a clean product image of the clothing item.
+export const PRODUCT_PHOTO_PROMPT = `You are a professional e-commerce photographer.
+Create a clean product photo of the clothing item described below.
 
-TASK: Remove the person/model from the photo entirely. Extract ONLY the clothing item and display it as a flat-lay or ghost mannequin on a clean white background.
-
-ITEM DETAILS:
+TARGET ITEM:
 {ITEM_DETAILS}
 
-REQUIREMENTS:
-1. REMOVE the person completely — show only the garment itself
-2. Display the garment flat or with natural 3D shape as if on an invisible mannequin
-3. Use a pure white (#FFFFFF) background
-4. Even, soft studio lighting
-5. No people, no body parts, no hanger, no props, no text
+INSTRUCTIONS:
+1. Identify the target item in the photo based on the details above
+2. Remove the person/model completely — extract ONLY the garment itself
+3. Present it as a flat-lay or ghost-mannequin style product shot
+4. Use a pure white (#FFFFFF) background with even, soft studio lighting
 
-CRITICAL:
-- Preserve the EXACT colors, pattern, texture and design of the original garment
-- Do NOT modify, redesign, or add anything to the clothing item
-- The result should look like a professional e-commerce product photo`;
+CRITICAL RULES:
+- Preserve the EXACT original colors, textures, patterns, and material details
+- Do NOT simplify, generalize, or create a generic version of the item
+- Faithfully reproduce all construction details: buttons, zippers, pockets, seams, stitching
+- For textured materials (fur, leather, knit, suede, shearling), reproduce the texture precisely
+- The output must be photorealistic — indistinguishable from a real product photo
+- No people, no body parts, no hangers, no props, no text, no watermarks
+
+OUTPUT: A single professional product photo suitable for a luxury fashion e-commerce site.`;
+
+export const PRODUCT_PHOTO_PROMPT_COMPLEX = `Extract the clothing item from this photo and place it on a white background.
+
+TARGET ITEM:
+{ITEM_DETAILS}
+
+This is a segmentation and background-removal task. Do NOT redraw or recreate the item.
+
+STEPS:
+1. Locate the specific clothing item described above
+2. Separate it from the person, background, and all other objects
+3. Place the extracted garment on a pure white (#FFFFFF) background
+4. Adjust lighting to appear even and studio-like
+
+RULES:
+- Keep the item EXACTLY as it appears — same colors, same texture, same wrinkles, same details
+- Do NOT modify, simplify, or artistically reinterpret the garment
+- Do NOT include any other clothing items, body parts, or background elements
+- The result should look like the garment was photographed flat on a white surface`;
+
+export const PRODUCT_PHOTO_DESCRIBE_PROMPT = `You are a fashion expert. Describe this clothing item in precise detail for a product photographer to recreate it.
+
+TARGET ITEM:
+{ITEM_DETAILS}
+
+Focus ONLY on the target item. Describe:
+1. GARMENT TYPE: Exact type (e.g., "cropped shearling bomber jacket")
+2. MATERIAL & TEXTURE: What it's made of and how it looks (e.g., "curly faux shearling, fluffy texture, matte finish")
+3. COLOR: Exact shades (e.g., "camel/tan body with cream shearling lining visible at collar and cuffs")
+4. CONSTRUCTION: Closure type, collar style, pockets, cuffs, hem, seams
+5. FIT & SILHOUETTE: Cropped/regular/oversized, structured/relaxed
+6. DISTINCTIVE DETAILS: Anything unique — hardware, lining, labels, distressing
+
+Respond in a single paragraph, no bullet points. Be extremely specific — the photographer must recreate this exact garment without seeing it.`;
+
+export const PRODUCT_PHOTO_GENERATE_FROM_DESC_PROMPT = `You are a professional e-commerce photographer.
+Generate a photorealistic product photo of this exact clothing item:
+
+{DESCRIPTION}
+
+REQUIREMENTS:
+- Flat-lay or ghost-mannequin style on a pure white (#FFFFFF) background
+- Even, soft studio lighting
+- Photorealistic — must look like a real photograph, not an illustration
+- Show the garment from the front, fully visible
+- No people, no body parts, no hangers, no props
+- Preserve every detail described: exact colors, textures, hardware, construction
+
+OUTPUT: A single professional product photo suitable for a luxury fashion e-commerce site.`;
+
 
 // ─── extractionService.ts ────────────────────────────────────────
 
