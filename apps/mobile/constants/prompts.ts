@@ -101,7 +101,9 @@ OUTPUT: A single professional product photo suitable for a luxury fashion e-comm
 
 // ─── extractionService.ts ────────────────────────────────────────
 
-export const ITEM_DETECTION_PROMPT = `You are a fashion wardrobe assistant. Analyze this photo and identify ALL clothing and fashion items visible.
+export const ITEM_DETECTION_PROMPT = `You are a fashion wardrobe assistant. Analyze this photo and identify EVERY clothing item and fashion accessory visible.
+
+CRITICAL: You MUST detect ALL separate garments. If someone is wearing a jacket over a top with jeans and boots, that is 4 separate items. Do NOT return only the most prominent item.
 
 For EACH item detected, return:
 - category: One of [Tops, Bottoms, Outerwear, Shoes, Accessories, Dresses, Activewear]
@@ -113,22 +115,41 @@ For EACH item detected, return:
 - confidence: 0-100 how confident you are in the detection
 
 Rules:
+- DETECT EVERY visible garment separately — outerwear, tops, bottoms, shoes, scarves, bags, etc.
 - Maximum 5 items per photo
 - Only include clothing, shoes, bags, jewelry, and fashion accessories
 - Do NOT include background objects, furniture, or non-fashion items
-- If the photo has no fashion items, return an empty array
+- Items partially visible (e.g., top under a jacket) should still be included with lower confidence
 - If unclear, include with lower confidence (50-70)
 
-Return ONLY valid JSON array, no other text:
+Return ONLY valid JSON array, no other text. Example with a full outfit:
 [
   {
-    "category": "Tops",
-    "sub_category": "Blazer",
-    "colors": ["black"],
-    "style": "formal",
-    "material": "wool blend",
-    "position_description": "worn by person, upper body",
+    "category": "Outerwear",
+    "sub_category": "Shearling Jacket",
+    "colors": ["brown", "tan"],
+    "style": "casual",
+    "material": "shearling",
+    "position_description": "worn by person, upper body, outermost layer",
     "confidence": 95
+  },
+  {
+    "category": "Bottoms",
+    "sub_category": "Jeans",
+    "colors": ["light blue"],
+    "style": "casual",
+    "material": "denim",
+    "position_description": "worn by person, lower body",
+    "confidence": 90
+  },
+  {
+    "category": "Shoes",
+    "sub_category": "Ankle Boots",
+    "colors": ["beige"],
+    "style": "casual",
+    "material": "suede",
+    "position_description": "worn by person, feet",
+    "confidence": 85
   }
 ]`;
 
