@@ -3,19 +3,16 @@
  * Story 10.1: Bulk Photo Upload
  */
 
-const mockFrom = jest.fn();
-const mockStorageFrom = jest.fn();
-
 jest.mock('../../services/supabase', () => ({
     supabase: {
-        from: mockFrom,
+        from: jest.fn(),
         auth: {
             getUser: jest.fn().mockResolvedValue({
                 data: { user: { id: 'test-user-id' } },
             }),
         },
         storage: {
-            from: mockStorageFrom,
+            from: jest.fn(),
         },
     },
 }));
@@ -33,8 +30,12 @@ jest.mock('expo-image-picker', () => ({
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
+import { supabase } from '../../services/supabase';
 import { bulkUploadService } from '../../services/bulkUploadService';
 import * as ImagePicker from 'expo-image-picker';
+
+const mockFrom = supabase.from as jest.Mock;
+const mockStorageFrom = supabase.storage.from as jest.Mock;
 
 function buildChain(overrides = {}) {
     const chain = {
@@ -113,6 +114,10 @@ describe('uploadBatch', () => {
             getPublicUrl: jest.fn().mockReturnValue({
                 data: { publicUrl: 'https://storage.test/photo.jpg' },
             }),
+            createSignedUrl: jest.fn().mockResolvedValue({
+                data: { signedUrl: 'https://storage.test/signed/photo.jpg' },
+                error: null,
+            }),
         });
 
         const { urls, error } = await bulkUploadService.uploadBatch(
@@ -156,6 +161,10 @@ describe('uploadBatch', () => {
             }),
             getPublicUrl: jest.fn().mockReturnValue({
                 data: { publicUrl: 'https://storage.test/photo2.jpg' },
+            }),
+            createSignedUrl: jest.fn().mockResolvedValue({
+                data: { signedUrl: 'https://storage.test/signed/photo2.jpg' },
+                error: null,
             }),
         });
 

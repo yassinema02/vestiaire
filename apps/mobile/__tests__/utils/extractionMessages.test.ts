@@ -24,9 +24,9 @@ describe('getStatusMessage', () => {
     );
   });
 
-  it('returns bgRemoval message with done/total', () => {
-    expect(getStatusMessage('bgRemoval', { done: 8, total: 22 })).toBe(
-      'Cleaning backgrounds... 8 of 22'
+  it('returns photoGen message with done/total', () => {
+    expect(getStatusMessage('photoGen', { done: 8, total: 22 })).toBe(
+      'Generating product photos... 8 of 22'
     );
   });
 
@@ -48,8 +48,8 @@ describe('getDetailMessage', () => {
     expect(getDetailMessage('detection', { done: 0, total: 10 }, 0)).toBeNull();
   });
 
-  it('returns "Almost done!" near end of bgRemoval', () => {
-    expect(getDetailMessage('bgRemoval', { done: 19, total: 20 })).toBe('Almost done!');
+  it('returns "Almost done!" near end of photoGen', () => {
+    expect(getDetailMessage('photoGen', { done: 19, total: 20 })).toBe('Almost done!');
   });
 
   it('returns large batch message for upload > 10 photos', () => {
@@ -78,9 +78,9 @@ describe('getEstimatedTimeRemaining', () => {
     expect(getEstimatedTimeRemaining('upload', 0)).toBe('');
   });
 
-  it('uses correct seconds per item for bgRemoval', () => {
+  it('uses correct seconds per item for photoGen', () => {
     // 10 items * 4 sec = 40 sec
-    expect(getEstimatedTimeRemaining('bgRemoval', 10)).toBe('~40 seconds remaining');
+    expect(getEstimatedTimeRemaining('photoGen', 10)).toBe('~40 seconds remaining');
   });
 
   it('uses correct seconds per item for import', () => {
@@ -124,7 +124,7 @@ describe('getPhaseTitle', () => {
   it('returns correct title for each phase', () => {
     expect(getPhaseTitle('upload')).toBe('Uploading photos...');
     expect(getPhaseTitle('detection')).toBe('Analyzing your photos...');
-    expect(getPhaseTitle('bgRemoval')).toBe('Cleaning up backgrounds...');
+    expect(getPhaseTitle('photoGen')).toBe('Generating product photos...');
     expect(getPhaseTitle('import')).toBe('Adding to wardrobe...');
   });
 });

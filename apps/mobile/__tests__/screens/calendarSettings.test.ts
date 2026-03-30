@@ -5,47 +5,29 @@
 
 // --- Mocks ---
 
-const mockRequestPermission = jest.fn();
-const mockCheckPermission = jest.fn();
-const mockGetCalendars = jest.fn();
-const mockGetSelectedCalendarIds = jest.fn();
-const mockSetSelectedCalendarIds = jest.fn();
-const mockIsConnectedApple = jest.fn();
-const mockFetchTodayEventsApple = jest.fn();
-const mockDisconnectApple = jest.fn();
-const mockGetSelectedCalendars = jest.fn();
-
 jest.mock('../../services/appleCalendar', () => ({
     appleCalendarService: {
-        requestPermission: mockRequestPermission,
-        checkPermission: mockCheckPermission,
-        getCalendars: mockGetCalendars,
-        getSelectedCalendarIds: mockGetSelectedCalendarIds,
-        setSelectedCalendarIds: mockSetSelectedCalendarIds,
-        isConnected: mockIsConnectedApple,
-        fetchTodayEvents: mockFetchTodayEventsApple,
-        disconnect: mockDisconnectApple,
-        getSelectedCalendars: mockGetSelectedCalendars,
+        requestPermission: jest.fn(),
+        checkPermission: jest.fn(),
+        getCalendars: jest.fn(),
+        getSelectedCalendarIds: jest.fn(),
+        setSelectedCalendarIds: jest.fn(),
+        isConnected: jest.fn(),
+        fetchTodayEvents: jest.fn(),
+        disconnect: jest.fn(),
+        getSelectedCalendars: jest.fn(),
     },
 }));
 
-const mockIsConnectedGoogle = jest.fn();
-const mockGetConnectedEmail = jest.fn();
-const mockDisconnectGoogle = jest.fn();
-const mockStoreAuthentication = jest.fn();
-const mockFetchTodayEventsGoogle = jest.fn();
-const mockGetStoredTokens = jest.fn();
-const mockGetStoredUserInfo = jest.fn();
-
 jest.mock('../../services/calendar', () => ({
     calendarService: {
-        isConnected: mockIsConnectedGoogle,
-        getConnectedEmail: mockGetConnectedEmail,
-        disconnect: mockDisconnectGoogle,
-        storeAuthentication: mockStoreAuthentication,
-        fetchTodayEvents: mockFetchTodayEventsGoogle,
-        getStoredTokens: mockGetStoredTokens,
-        getStoredUserInfo: mockGetStoredUserInfo,
+        isConnected: jest.fn(),
+        getConnectedEmail: jest.fn(),
+        disconnect: jest.fn(),
+        storeAuthentication: jest.fn(),
+        fetchTodayEvents: jest.fn(),
+        getStoredTokens: jest.fn(),
+        getStoredUserInfo: jest.fn(),
     },
 }));
 
@@ -54,7 +36,27 @@ jest.mock('../../utils/occasionDetector', () => ({
 }));
 
 // Import store after mocks
+import { appleCalendarService } from '../../services/appleCalendar';
+import { calendarService } from '../../services/calendar';
 import { useCalendarStore } from '../../stores/calendarStore';
+
+const mockRequestPermission = appleCalendarService.requestPermission as jest.Mock;
+const mockCheckPermission = appleCalendarService.checkPermission as jest.Mock;
+const mockGetCalendars = appleCalendarService.getCalendars as jest.Mock;
+const mockGetSelectedCalendarIds = appleCalendarService.getSelectedCalendarIds as jest.Mock;
+const mockSetSelectedCalendarIds = appleCalendarService.setSelectedCalendarIds as jest.Mock;
+const mockIsConnectedApple = appleCalendarService.isConnected as jest.Mock;
+const mockFetchTodayEventsApple = appleCalendarService.fetchTodayEvents as jest.Mock;
+const mockDisconnectApple = appleCalendarService.disconnect as jest.Mock;
+const mockGetSelectedCalendars = appleCalendarService.getSelectedCalendars as jest.Mock;
+
+const mockIsConnectedGoogle = calendarService.isConnected as jest.Mock;
+const mockGetConnectedEmail = calendarService.getConnectedEmail as jest.Mock;
+const mockDisconnectGoogle = calendarService.disconnect as jest.Mock;
+const mockStoreAuthentication = calendarService.storeAuthentication as jest.Mock;
+const mockFetchTodayEventsGoogle = calendarService.fetchTodayEvents as jest.Mock;
+const mockGetStoredTokens = calendarService.getStoredTokens as jest.Mock;
+const mockGetStoredUserInfo = calendarService.getStoredUserInfo as jest.Mock;
 
 beforeEach(() => {
     jest.clearAllMocks();

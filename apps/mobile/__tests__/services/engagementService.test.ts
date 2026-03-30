@@ -3,11 +3,9 @@
  * Story 9.4: Reactions & Comments
  */
 
-const mockFrom = jest.fn();
-
 jest.mock('../../services/supabase', () => ({
     supabase: {
-        from: mockFrom,
+        from: jest.fn(),
         auth: {
             getUser: jest.fn().mockResolvedValue({
                 data: { user: { id: 'test-user-id' } },
@@ -20,7 +18,10 @@ jest.mock('../../services/auth-helpers', () => ({
     requireUserId: jest.fn().mockResolvedValue('test-user-id'),
 }));
 
+import { supabase } from '../../services/supabase';
 import { engagementService } from '../../services/engagementService';
+
+const mockFrom = supabase.from as jest.Mock;
 
 // Helper to build chainable Supabase query mock
 function buildChain(overrides: Record<string, any> = {}) {

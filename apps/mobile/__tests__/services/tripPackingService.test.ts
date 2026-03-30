@@ -5,21 +5,14 @@
 
 // --- Mocks ---
 
-const mockGetItem = jest.fn();
-const mockSetItem = jest.fn();
-const mockRemoveItem = jest.fn();
-
-jest.mock('@react-native-async-storage/async-storage', () => ({
-    getItem: mockGetItem,
-    setItem: mockSetItem,
-    removeItem: mockRemoveItem,
-}));
-
-const mockFrom = jest.fn();
+jest.mock('@react-native-async-storage/async-storage', () => {
+    const m = { getItem: jest.fn(), setItem: jest.fn(), removeItem: jest.fn() };
+    return { __esModule: true, default: m, ...m };
+});
 
 jest.mock('../../services/supabase', () => ({
     supabase: {
-        from: (...args: any[]) => mockFrom(...args),
+        from: jest.fn(),
         auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'user-123' } } }) },
     },
 }));
@@ -68,9 +61,16 @@ jest.mock('../../stores/calendarStore', () => ({
     },
 }));
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../../services/supabase';
 import { tripPackingService } from '../../services/tripPackingService';
 import { eventSyncService, CalendarEventRow } from '../../services/eventSyncService';
 import { TripEvent, PackingList, PackingDay, PackingItem } from '../../types/packingList';
+
+const mockGetItem = AsyncStorage.getItem as jest.Mock;
+const mockSetItem = AsyncStorage.setItem as jest.Mock;
+const mockRemoveItem = AsyncStorage.removeItem as jest.Mock;
+const mockFrom = supabase.from as jest.Mock;
 
 // Helper: create a mock event row
 function mockEventRow(overrides: Partial<CalendarEventRow> = {}): CalendarEventRow {

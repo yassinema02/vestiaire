@@ -19,10 +19,9 @@ jest.mock('../../services/auth-helpers', () => ({
 }));
 
 // Mock ootdService
-const mockGetItemsByIds = jest.fn().mockResolvedValue({ items: [], error: null });
 jest.mock('../../services/ootdService', () => ({
     ootdService: {
-        getItemsByIds: mockGetItemsByIds,
+        getItemsByIds: jest.fn().mockResolvedValue({ items: [], error: null }),
         getMyFeed: jest.fn().mockResolvedValue({ posts: [], error: null }),
         getSquadFeed: jest.fn().mockResolvedValue({ posts: [], error: null }),
     },

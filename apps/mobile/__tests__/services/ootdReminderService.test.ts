@@ -3,11 +3,9 @@
  * Story 9.7: OOTD Posting Reminder
  */
 
-const mockFrom = jest.fn();
-
 jest.mock('../../services/supabase', () => ({
     supabase: {
-        from: mockFrom,
+        from: jest.fn(),
         auth: {
             getUser: jest.fn().mockResolvedValue({
                 data: { user: { id: 'test-user-id' } },
@@ -20,7 +18,10 @@ jest.mock('../../services/auth-helpers', () => ({
     requireUserId: jest.fn().mockResolvedValue('test-user-id'),
 }));
 
+import { supabase } from '../../services/supabase';
 import { ootdReminderService } from '../../services/ootdReminderService';
+
+const mockFrom = supabase.from as jest.Mock;
 
 // Helper to build chainable Supabase query mock
 function buildChain(overrides = {}) {

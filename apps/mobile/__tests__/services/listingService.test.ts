@@ -5,19 +5,9 @@
 
 // ─── Supabase mock ──────────────────────────────────────────────
 
-const mockInsert = jest.fn();
-const mockUpdate = jest.fn();
-const mockSelect = jest.fn();
-const mockEq = jest.fn();
-const mockSingle = jest.fn();
-
 jest.mock('../../services/supabase', () => ({
     supabase: {
-        from: jest.fn((table: string) => ({
-            insert: mockInsert,
-            update: mockUpdate,
-            select: mockSelect,
-        })),
+        from: jest.fn(),
         auth: {
             getUser: jest.fn().mockResolvedValue({
                 data: { user: { id: 'user-123' } },
@@ -30,25 +20,31 @@ jest.mock('../../services/secureStorage', () => ({
     secureStorageAdapter: {},
 }));
 
-// Mock Gemini / aiUsageLogger
 jest.mock('../../services/aiUsageLogger', () => ({
     trackedGenerateContent: jest.fn(),
+    isGeminiConfigured: jest.fn().mockReturnValue(false),
 }));
 
-// Mock gamificationService
 jest.mock('../../services/gamificationService', () => ({
     gamificationService: {
         addPoints: jest.fn().mockResolvedValue({ newTotal: 10, error: null }),
     },
 }));
 
-// Mock expo-constants
 jest.mock('expo-constants', () => ({
-    expoConfig: { extra: { geminiApiKey: '' } },
+    __esModule: true,
+    default: { expoConfig: { extra: { geminiApiKey: '' } } },
 }));
 
+import { supabase } from '../../services/supabase';
 import { buildListingPrompt, LISTING_TONE_INSTRUCTIONS } from '../../constants/prompts';
 import { WardrobeItem } from '../../services/items';
+
+const mockInsert = jest.fn();
+const mockUpdate = jest.fn();
+const mockSelect = jest.fn();
+const mockEq = jest.fn();
+const mockSingle = jest.fn();
 
 // Helper
 function makeItem(overrides: Partial<WardrobeItem> = {}): WardrobeItem {
@@ -71,6 +67,11 @@ beforeEach(() => {
     mockSingle.mockResolvedValue({ data: { id: 'listing-1', status: 'listed' }, error: null });
     mockUpdate.mockReturnValue({ eq: mockEq });
     mockEq.mockResolvedValue({ error: null });
+    (supabase.from as jest.Mock).mockImplementation(() => ({
+        insert: mockInsert,
+        update: mockUpdate,
+        select: mockSelect,
+    }));
 });
 
 // ─── Prompt Enhancement Tests ────────────────────────────────────
@@ -138,7 +139,7 @@ describe('buildListingPrompt (enhanced)', () => {
 describe('fallback listing generation', () => {
     it('includes sustainability note in fallback', async () => {
         // Import after mocks are set up (Gemini key is empty → uses fallback)
-        const { listingService } = await import('../../services/listingService');
+        const { listingService } = require('../../services/listingService');
         const item = makeItem({ brand: 'Nike', category: 'shoes', wear_count: 5 });
         const { listing } = await listingService.generateListing(item, 'casual');
 
@@ -146,7 +147,7 @@ describe('fallback listing generation', () => {
     });
 
     it('fallback for never-worn item says "Brand new"', async () => {
-        const { listingService } = await import('../../services/listingService');
+        const { listingService } = require('../../services/listingService');
         const item = makeItem({ brand: 'Zara', category: 'tops', wear_count: 0 });
         const { listing } = await listingService.generateListing(item, 'casual');
 
@@ -158,7 +159,7 @@ describe('fallback listing generation', () => {
 
 describe('saveToHistory', () => {
     it('updates items.resale_status to listed after saving', async () => {
-        const { listingService } = await import('../../services/listingService');
+        const { listingService } = require('../../services/listingService');
         const item = makeItem({ id: 'item-42' });
         const listing = { title: 'Test', description: 'Desc', suggested_price_range: '$10-$20', hashtags: [] };
 
@@ -185,7 +186,7 @@ describe('getResaleStats', () => {
             }),
         });
 
-        const { listingService } = await import('../../services/listingService');
+        const { listingService } = require('../../services/listingService');
         const stats = await listingService.getResaleStats();
 
         expect(stats.totalListed).toBe(2);

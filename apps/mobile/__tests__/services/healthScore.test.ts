@@ -5,13 +5,10 @@
 
 // ─── Supabase mock ──────────────────────────────────────────────
 
-const mockUpdate = jest.fn();
-const mockIn = jest.fn();
-
 jest.mock('../../services/supabase', () => ({
     supabase: {
         from: jest.fn(() => ({
-            update: mockUpdate,
+            update: jest.fn(),
         })),
         auth: {
             getUser: jest.fn().mockResolvedValue({
@@ -31,10 +28,21 @@ jest.mock('../../services/gamificationService', () => ({
     },
 }));
 
+jest.mock('../../services/donationService', () => ({
+    donationService: {
+        logDonation: jest.fn().mockResolvedValue({ error: null }),
+    },
+}));
+
+import { supabase } from '../../services/supabase';
 import { calculateHealthScore, HealthScore } from '../../services/analyticsService';
 import { springCleanService } from '../../services/springCleanService';
 import { gamificationService } from '../../services/gamificationService';
 import { WardrobeItem } from '../../services/items';
+
+// Get mock references after import
+const mockUpdate = jest.fn();
+const mockIn = jest.fn();
 
 function makeItem(overrides: Partial<WardrobeItem> = {}): WardrobeItem {
     return {
@@ -57,6 +65,7 @@ beforeEach(() => {
     jest.clearAllMocks();
     mockUpdate.mockReturnValue({ in: mockIn });
     mockIn.mockResolvedValue({ error: null });
+    (supabase.from as jest.Mock).mockReturnValue({ update: mockUpdate });
 });
 
 // ─── calculateHealthScore ────────────────────────────────────────
@@ -207,16 +216,18 @@ describe('calculateHealthScore', () => {
 
 describe('springCleanService.applySpringCleanResults', () => {
     it('updates resale_status for selling and donating items', async () => {
+        const { donationService } = require('../../services/donationService');
+
         await springCleanService.applySpringCleanResults({
             kept: ['a'],
             selling: ['b', 'c'],
             donating: ['d'],
         });
 
-        // Two update calls: one for selling, one for donating
-        expect(mockUpdate).toHaveBeenCalledTimes(2);
+        // Selling calls update({ resale_status: 'listed' })
         expect(mockUpdate).toHaveBeenCalledWith({ resale_status: 'listed' });
-        expect(mockUpdate).toHaveBeenCalledWith({ resale_status: 'donated' });
+        // Donating goes through donationService.logDonation
+        expect(donationService.logDonation).toHaveBeenCalledWith('d');
     });
 
     it('awards 5 points per actioned item', async () => {

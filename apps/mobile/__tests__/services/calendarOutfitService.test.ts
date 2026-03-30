@@ -25,11 +25,10 @@ const mockGetItem = jest.fn();
 const mockSetItem = jest.fn();
 const mockRemoveItem = jest.fn();
 
-jest.mock('@react-native-async-storage/async-storage', () => ({
-    getItem: mockGetItem,
-    setItem: mockSetItem,
-    removeItem: mockRemoveItem,
-}));
+jest.mock('@react-native-async-storage/async-storage', () => {
+    const m = { getItem: mockGetItem, setItem: mockSetItem, removeItem: mockRemoveItem };
+    return { __esModule: true, default: m, ...m };
+});
 
 jest.mock('../../services/items', () => ({
     itemsService: {

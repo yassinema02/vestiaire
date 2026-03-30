@@ -7,17 +7,20 @@
 
 const mockStorage: Record<string, string> = {};
 
-jest.mock('@react-native-async-storage/async-storage', () => ({
-    getItem: jest.fn((key: string) => Promise.resolve(mockStorage[key] ?? null)),
-    setItem: jest.fn((key: string, value: string) => {
-        mockStorage[key] = value;
-        return Promise.resolve();
-    }),
-    removeItem: jest.fn((key: string) => {
-        delete mockStorage[key];
-        return Promise.resolve();
-    }),
-}));
+jest.mock('@react-native-async-storage/async-storage', () => {
+    const m = {
+        getItem: jest.fn((key: string) => Promise.resolve(mockStorage[key] ?? null)),
+        setItem: jest.fn((key: string, value: string) => {
+            mockStorage[key] = value;
+            return Promise.resolve();
+        }),
+        removeItem: jest.fn((key: string) => {
+            delete mockStorage[key];
+            return Promise.resolve();
+        }),
+    };
+    return { __esModule: true, default: m, ...m };
+});
 
 // ─── Supabase mock ──────────────────────────────────────────────
 

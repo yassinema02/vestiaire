@@ -5,55 +5,20 @@
 
 // --- Mocks ---
 
-const mockGetItem = jest.fn();
-const mockSetItem = jest.fn();
+jest.mock('@react-native-async-storage/async-storage', () => {
+    const m = { getItem: jest.fn(), setItem: jest.fn() };
+    return { __esModule: true, default: m, ...m };
+});
 
-jest.mock('@react-native-async-storage/async-storage', () => ({
-    getItem: mockGetItem,
-    setItem: mockSetItem,
-}));
-
-const mockSupabaseFrom = jest.fn();
-const mockUpsert = jest.fn().mockResolvedValue({ error: null });
+const mockUpsert = jest.fn();
 const mockSelect = jest.fn();
 const mockDelete = jest.fn();
 const mockUpdate = jest.fn();
+const mockSupabaseFrom = jest.fn();
 
 jest.mock('../../services/supabase', () => ({
     supabase: {
-        from: (...args: any[]) => {
-            mockSupabaseFrom(...args);
-            return {
-                upsert: mockUpsert,
-                select: (...sArgs: any[]) => {
-                    mockSelect(...sArgs);
-                    return {
-                        eq: jest.fn().mockReturnValue({
-                            is: jest.fn().mockResolvedValue({ data: [], error: null }),
-                            gte: jest.fn().mockReturnValue({
-                                lte: jest.fn().mockReturnValue({
-                                    order: jest.fn().mockResolvedValue({ data: [], error: null }),
-                                }),
-                            }),
-                        }),
-                    };
-                },
-                delete: () => {
-                    mockDelete();
-                    return {
-                        eq: jest.fn().mockReturnValue({
-                            lt: jest.fn().mockResolvedValue({ error: null }),
-                        }),
-                    };
-                },
-                update: (data: any) => {
-                    mockUpdate(data);
-                    return {
-                        eq: jest.fn().mockResolvedValue({ error: null }),
-                    };
-                },
-            };
-        },
+        from: jest.fn(),
     },
 }));
 
@@ -113,12 +78,53 @@ jest.mock('../../stores/calendarStore', () => ({
     },
 }));
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../../services/supabase';
 import { eventSyncService } from '../../services/eventSyncService';
 import { eventClassificationService } from '../../services/eventClassificationService';
 
+const mockGetItem = AsyncStorage.getItem as jest.Mock;
+const mockSetItem = AsyncStorage.setItem as jest.Mock;
+
+// Wire up supabase.from to return a chainable mock
 beforeEach(() => {
     jest.clearAllMocks();
     mockGetItem.mockResolvedValue(null); // No last sync
+    mockUpsert.mockResolvedValue({ error: null });
+
+    (supabase.from as jest.Mock).mockImplementation((...args: any[]) => {
+        mockSupabaseFrom(...args);
+        return {
+            upsert: mockUpsert,
+            select: (...sArgs: any[]) => {
+                mockSelect(...sArgs);
+                return {
+                    eq: jest.fn().mockReturnValue({
+                        is: jest.fn().mockResolvedValue({ data: [], error: null }),
+                        gte: jest.fn().mockReturnValue({
+                            lte: jest.fn().mockReturnValue({
+                                order: jest.fn().mockResolvedValue({ data: [], error: null }),
+                            }),
+                        }),
+                    }),
+                };
+            },
+            delete: () => {
+                mockDelete();
+                return {
+                    eq: jest.fn().mockReturnValue({
+                        lt: jest.fn().mockResolvedValue({ error: null }),
+                    }),
+                };
+            },
+            update: (data: any) => {
+                mockUpdate(data);
+                return {
+                    eq: jest.fn().mockResolvedValue({ error: null }),
+                };
+            },
+        };
+    });
 });
 
 // --- Event Sync Tests ---

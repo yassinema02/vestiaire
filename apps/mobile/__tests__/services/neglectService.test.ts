@@ -7,37 +7,36 @@
 
 const mockStorage: Record<string, string> = {};
 
-jest.mock('@react-native-async-storage/async-storage', () => ({
-    getItem: jest.fn((key: string) => Promise.resolve(mockStorage[key] ?? null)),
-    setItem: jest.fn((key: string, value: string) => {
-        mockStorage[key] = value;
-        return Promise.resolve();
-    }),
-    removeItem: jest.fn((key: string) => {
-        delete mockStorage[key];
-        return Promise.resolve();
-    }),
-}));
+jest.mock('@react-native-async-storage/async-storage', () => {
+    const m = {
+        getItem: jest.fn((key: string) => Promise.resolve(mockStorage[key] ?? null)),
+        setItem: jest.fn((key: string, value: string) => {
+            mockStorage[key] = value;
+            return Promise.resolve();
+        }),
+        removeItem: jest.fn((key: string) => {
+            delete mockStorage[key];
+            return Promise.resolve();
+        }),
+    };
+    return { __esModule: true, default: m, ...m };
+});
 
 // ─── Supabase mock ──────────────────────────────────────────────
 
-const mockRpc = jest.fn().mockResolvedValue({ error: null });
-
 jest.mock('../../services/supabase', () => ({
     supabase: {
-        rpc: mockRpc,
+        rpc: jest.fn(),
+        from: jest.fn(),
     },
 }));
 
-// ─── secure storage mock (needed by supabase import chain) ──────
-
-jest.mock('../../services/secureStorage', () => ({
-    secureStorageAdapter: {},
-}));
-
+import { supabase } from '../../services/supabase';
 import { neglectService, NeglectStats } from '../../services/neglectService';
 import { isNeglected, isNeglectedFromDb, NEGLECTED_THRESHOLD_DAYS } from '../../utils/neglectedItems';
 import { WardrobeItem } from '../../services/items';
+
+const mockRpc = supabase.rpc as jest.Mock;
 
 // Helper to create a test item
 function makeItem(overrides: Partial<WardrobeItem> = {}): WardrobeItem {
@@ -58,6 +57,7 @@ beforeEach(() => {
     // Clear mock storage between tests
     Object.keys(mockStorage).forEach((k) => delete mockStorage[k]);
     mockRpc.mockClear();
+    mockRpc.mockResolvedValue({ error: null });
 });
 
 describe('neglectService.getNeglectThreshold', () => {

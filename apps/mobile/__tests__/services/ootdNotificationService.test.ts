@@ -3,18 +3,17 @@
  * Story 9.6: OOTD Notifications
  */
 
-const mockGetItem = jest.fn();
-const mockSetItem = jest.fn();
-const mockGetAllKeys = jest.fn().mockResolvedValue([]);
-const mockMultiRemove = jest.fn();
+jest.mock('@react-native-async-storage/async-storage', () => {
+    const m = {
+        getItem: jest.fn(),
+        setItem: jest.fn(),
+        getAllKeys: jest.fn().mockResolvedValue([]),
+        multiRemove: jest.fn(),
+    };
+    return { __esModule: true, default: m, ...m };
+});
 
-jest.mock('@react-native-async-storage/async-storage', () => ({
-    getItem: mockGetItem,
-    setItem: mockSetItem,
-    getAllKeys: mockGetAllKeys,
-    multiRemove: mockMultiRemove,
-}));
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     getPreference,
     updatePreference,
@@ -26,6 +25,11 @@ import {
     getNotificationBody,
     cleanupOldCounts,
 } from '../../services/ootdNotificationService';
+
+const mockGetItem = AsyncStorage.getItem as jest.Mock;
+const mockSetItem = AsyncStorage.setItem as jest.Mock;
+const mockGetAllKeys = AsyncStorage.getAllKeys as jest.Mock;
+const mockMultiRemove = AsyncStorage.multiRemove as jest.Mock;
 
 beforeEach(() => {
     jest.clearAllMocks();
@@ -235,21 +239,30 @@ describe('shouldNotify', () => {
 
 describe('cleanupOldCounts', () => {
     it('removes keys older than 7 days', async () => {
+        // Use dates relative to today
+        const today = new Date();
+        const old = new Date(today.getTime() - 10 * 86400000); // 10 days ago
+        const recent = new Date(today.getTime() - 3 * 86400000); // 3 days ago
+        const todayStr = today.toISOString().split('T')[0];
+        const oldStr = old.toISOString().split('T')[0];
+        const recentStr = recent.toISOString().split('T')[0];
+
         mockGetAllKeys.mockResolvedValue([
-            'notif_ootd_count_2026-02-10',
-            'notif_ootd_count_2026-02-14',
-            'notif_ootd_count_2026-02-22',
+            `notif_ootd_count_${oldStr}`,
+            `notif_ootd_count_${recentStr}`,
+            `notif_ootd_count_${todayStr}`,
             'some_other_key',
         ]);
         await cleanupOldCounts();
         expect(mockMultiRemove).toHaveBeenCalledWith([
-            'notif_ootd_count_2026-02-10',
+            `notif_ootd_count_${oldStr}`,
         ]);
     });
 
     it('does nothing when no old keys exist', async () => {
+        const todayStr = new Date().toISOString().split('T')[0];
         mockGetAllKeys.mockResolvedValue([
-            'notif_ootd_count_2026-02-22',
+            `notif_ootd_count_${todayStr}`,
         ]);
         await cleanupOldCounts();
         expect(mockMultiRemove).not.toHaveBeenCalled();

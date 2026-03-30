@@ -5,15 +5,10 @@
 
 // --- Mocks ---
 
-const mockGetItem = jest.fn();
-const mockSetItem = jest.fn();
-const mockRemoveItem = jest.fn();
-
-jest.mock('@react-native-async-storage/async-storage', () => ({
-    getItem: mockGetItem,
-    setItem: mockSetItem,
-    removeItem: mockRemoveItem,
-}));
+jest.mock('@react-native-async-storage/async-storage', () => {
+    const m = { getItem: jest.fn(), setItem: jest.fn(), removeItem: jest.fn() };
+    return { __esModule: true, default: m, ...m };
+});
 
 jest.mock('expo-constants', () => ({
     expoConfig: { extra: { geminiApiKey: '' } },
@@ -54,6 +49,7 @@ jest.mock('../../utils/occasionDetector', () => ({
     detectOccasion: jest.fn().mockReturnValue('casual'),
 }));
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     getFormalityGuidance,
     getEventTimeOfDay,
@@ -63,6 +59,10 @@ import {
     OutfitSuggestion,
 } from '../../services/aiOutfitService';
 import { CalendarEventRow } from '../../services/eventSyncService';
+
+const mockGetItem = AsyncStorage.getItem as jest.Mock;
+const mockSetItem = AsyncStorage.setItem as jest.Mock;
+const mockRemoveItem = AsyncStorage.removeItem as jest.Mock;
 
 const mockEvent: CalendarEventRow = {
     id: 'evt-1',
