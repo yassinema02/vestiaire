@@ -3,7 +3,7 @@
  * Tinder-style swipe interface for outfit suggestions
  */
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Modal, ScrollView, Image, Alert } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
@@ -66,9 +66,12 @@ export default function OutfitSwipeScreen() {
     };
 
     // Get full item details for detail modal
-    const detailItems = detailSuggestion?.items
-        .map(id => wardrobeItems.find(i => i.id === id))
-        .filter((item): item is WardrobeItem => item !== undefined) || [];
+    const detailItems = useMemo(() =>
+        detailSuggestion?.items
+            .map(id => wardrobeItems.find(i => i.id === id))
+            .filter((item): item is WardrobeItem => item !== undefined) || [],
+        [detailSuggestion, wardrobeItems]
+    );
 
     return (
         <GestureHandlerRootView style={styles.container}>
