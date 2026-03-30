@@ -200,8 +200,9 @@ export const extractionService = {
             status: 'failed',
             error_message: error.message || 'Processing failed',
             completed_at: new Date().toISOString(),
-        })
-        .eq('id', jobId);
+          })
+          .eq('id', jobId);
+      }
 
       return { result: null, error: error as Error };
     }
