@@ -108,6 +108,10 @@ function buildPrompt(template: string, metadata?: ProductPhotoMetadata): string 
     if (metadata?.pattern) {
         details.push(`- Pattern: ${metadata.pattern}`);
     }
+    if (metadata?.positionDescription) {
+        details.push(`- Position in photo: ${metadata.positionDescription}`);
+        details.push(`- IMPORTANT: This photo may contain MULTIPLE clothing items. Extract ONLY the ${metadata.subCategory || metadata.category || 'item'} described above, ignore all other garments.`);
+    }
 
     const itemDetails = details.length > 0
         ? details.join('\n')
