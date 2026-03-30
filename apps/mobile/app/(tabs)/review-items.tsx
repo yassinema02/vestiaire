@@ -99,6 +99,97 @@ export default function ReviewItemsScreen() {
     router.replace('/(tabs)/wardrobe');
   };
 
+  const renderItemCard = useCallback(({ item, index }: { item: ReviewableItem; index: number }) => {
+    const imageUrl = item.processed_image_url || item.photo_url;
+    const displayCategory = item.editedCategory || item.category;
+    const displaySubCategory = item.editedSubCategory || item.sub_category;
+    const displayColors = item.editedColors || item.colors;
+    const photoGenFailed = item.photo_gen_status === 'failed';
+    const photoGenPending = !item.processed_image_url && item.photo_gen_status !== 'failed' && item.photo_gen_status !== 'skipped';
+    const isVeryLow = item.confidence < 50;
+    const isNeedsReview = item.needsReview && !isVeryLow;
+
+    return (
+      <TouchableOpacity
+        style={[styles.itemCard, !item.isSelected && styles.itemCardDeselected]}
+        onPress={() => openEditModal(index)}
+        onLongPress={() => toggleItem(index)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.cardImageContainer}>
+          <Image source={{ uri: imageUrl }} style={styles.cardImage} />
+          {photoGenFailed && (
+            <View style={styles.photoGenFailedBadge}>
+              <Ionicons name="warning" size={12} color="#f59e0b" />
+            </View>
+          )}
+          {photoGenPending && (
+            <View style={styles.photoGenPendingBadge}>
+              <ActivityIndicator size="small" color="#fff" />
+            </View>
+          )}
+        </View>
+        <View style={styles.cardInfo}>
+          <Text style={styles.cardSubCategory} numberOfLines={1}>
+            {displaySubCategory}
+          </Text>
+          <View style={styles.cardCategoryRow}>
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryBadgeText}>{displayCategory}</Text>
+            </View>
+            {isVeryLow && (
+              <View style={styles.veryLowConfidenceBadge}>
+                <Text style={styles.veryLowConfidenceText}>Low {item.confidence}%</Text>
+              </View>
+            )}
+            {isNeedsReview && (
+              <View style={styles.needsReviewBadge}>
+                <Text style={styles.needsReviewText}>{item.confidence}%</Text>
+              </View>
+            )}
+          </View>
+          {displayColors.length > 0 && (
+            <View style={styles.colorDotsRow}>
+              {displayColors.slice(0, 3).map((color) => {
+                const colorDef = COLORS.find(
+                  (c) => c.name.toLowerCase() === color.toLowerCase()
+                );
+                return (
+                  <View
+                    key={color}
+                    style={[
+                      styles.colorDot,
+                      { backgroundColor: colorDef?.hex || '#ccc' },
+                    ]}
+                  />
+                );
+              })}
+            </View>
+          )}
+          {item.duplicateOf && (
+            <View style={styles.duplicateBadge}>
+              <Ionicons name="copy-outline" size={10} color="#f59e0b" />
+              <Text style={styles.duplicateText}>Similar item exists</Text>
+            </View>
+          )}
+        </View>
+        <TouchableOpacity
+          style={styles.checkboxContainer}
+          onPress={() => toggleItem(index)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons
+            name={item.isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+            size={24}
+            color={item.isSelected ? '#22c55e' : '#d1d5db'}
+          />
+        </TouchableOpacity>
+      </TouchableOpacity>
+    );
+  }, [reviewableItems]);
+
+  // All hooks declared above — early returns below are safe.
+
   // Import complete screen
   if (importComplete) {
     return (
@@ -145,100 +236,6 @@ export default function ReviewItemsScreen() {
       </View>
     );
   }
-
-  const renderItemCard = useCallback(({ item, index }: { item: ReviewableItem; index: number }) => {
-    const imageUrl = item.processed_image_url || item.photo_url;
-    const displayCategory = item.editedCategory || item.category;
-    const displaySubCategory = item.editedSubCategory || item.sub_category;
-    const displayColors = item.editedColors || item.colors;
-    const photoGenFailed = item.photo_gen_status === 'failed';
-    const photoGenPending = !item.processed_image_url && item.photo_gen_status !== 'failed' && item.photo_gen_status !== 'skipped';
-    const isVeryLow = item.confidence < 50;
-    const isNeedsReview = item.needsReview && !isVeryLow; // 50-69
-
-    return (
-      <TouchableOpacity
-        style={[styles.itemCard, !item.isSelected && styles.itemCardDeselected]}
-        onPress={() => openEditModal(index)}
-        onLongPress={() => toggleItem(index)}
-        activeOpacity={0.7}
-      >
-        {/* Image */}
-        <View style={styles.cardImageContainer}>
-          <Image source={{ uri: imageUrl }} style={styles.cardImage} />
-          {photoGenFailed && (
-            <View style={styles.photoGenFailedBadge}>
-              <Ionicons name="warning" size={12} color="#f59e0b" />
-            </View>
-          )}
-          {photoGenPending && (
-            <View style={styles.photoGenPendingBadge}>
-              <ActivityIndicator size="small" color="#fff" />
-            </View>
-          )}
-        </View>
-
-        {/* Info */}
-        <View style={styles.cardInfo}>
-          <Text style={styles.cardSubCategory} numberOfLines={1}>
-            {displaySubCategory}
-          </Text>
-          <View style={styles.cardCategoryRow}>
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryBadgeText}>{displayCategory}</Text>
-            </View>
-            {isVeryLow && (
-              <View style={styles.veryLowConfidenceBadge}>
-                <Text style={styles.veryLowConfidenceText}>Low {item.confidence}%</Text>
-              </View>
-            )}
-            {isNeedsReview && (
-              <View style={styles.needsReviewBadge}>
-                <Text style={styles.needsReviewText}>{item.confidence}%</Text>
-              </View>
-            )}
-          </View>
-          {displayColors.length > 0 && (
-            <View style={styles.colorDotsRow}>
-              {displayColors.slice(0, 3).map((color) => {
-                const colorDef = COLORS.find(
-                  (c) => c.name.toLowerCase() === color.toLowerCase()
-                );
-                return (
-                  <View
-                    key={color}
-                    style={[
-                      styles.colorDot,
-                      { backgroundColor: colorDef?.hex || '#ccc' },
-                    ]}
-                  />
-                );
-              })}
-            </View>
-          )}
-          {item.duplicateOf && (
-            <View style={styles.duplicateBadge}>
-              <Ionicons name="copy-outline" size={10} color="#f59e0b" />
-              <Text style={styles.duplicateText}>Similar item exists</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Checkbox */}
-        <TouchableOpacity
-          style={styles.checkboxContainer}
-          onPress={() => toggleItem(index)}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons
-            name={item.isSelected ? 'checkmark-circle' : 'ellipse-outline'}
-            size={24}
-            color={item.isSelected ? '#22c55e' : '#d1d5db'}
-          />
-        </TouchableOpacity>
-      </TouchableOpacity>
-    );
-  }, [reviewableItems]);
 
   return (
     <View style={styles.container}>
