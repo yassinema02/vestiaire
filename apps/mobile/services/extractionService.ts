@@ -82,6 +82,9 @@ async function detectItemsInPhoto(
         style: item.style || 'casual',
         material: item.material || 'unknown',
         position_description: item.position_description || '',
+        bounding_box: Array.isArray(item.bounding_box) && item.bounding_box.length === 4
+          ? item.bounding_box as [number, number, number, number]
+          : undefined,
         confidence: typeof item.confidence === 'number' ? Math.min(100, Math.max(0, item.confidence)) : 50,
         photo_index: photoIndex,
         photo_url: photoUrl,

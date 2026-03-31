@@ -24,8 +24,11 @@ export default function ReviewItemsScreen() {
   const {
     reviewableItems,
     isImporting,
+    isGeneratingPhotos,
+    photoGenProgress,
     importProgress,
     categorySummary,
+    failedExtractionItems,
     initReview,
     toggleItem,
     editItem,
@@ -45,6 +48,7 @@ export default function ReviewItemsScreen() {
   const [showCategoryFilter, setShowCategoryFilter] = useState(false);
   const [importComplete, setImportComplete] = useState(false);
   const [importedCount, setImportedCount] = useState(0);
+  const [failedCount, setFailedCount] = useState(0);
 
   useEffect(() => {
     if (reviewableItems.length === 0) {
@@ -89,8 +93,10 @@ export default function ReviewItemsScreen() {
   };
 
   const handleImport = async () => {
+    const selectedTotal = getSelectedCount();
     const count = await importToWardrobe();
     setImportedCount(count);
+    setFailedCount(selectedTotal - count);
     setImportComplete(true);
   };
 
@@ -100,7 +106,7 @@ export default function ReviewItemsScreen() {
   };
 
   const renderItemCard = useCallback(({ item, index }: { item: ReviewableItem; index: number }) => {
-    const imageUrl = item.processed_image_url || item.photo_url;
+    const imageUrl = item.processed_image_url || item.cropped_image_url || item.photo_url;
     const displayCategory = item.editedCategory || item.category;
     const displaySubCategory = item.editedSubCategory || item.sub_category;
     const displayColors = item.editedColors || item.colors;
@@ -195,43 +201,64 @@ export default function ReviewItemsScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.importCompleteContainer}>
-          <Ionicons name="checkmark-circle" size={72} color="#22c55e" />
+          {importedCount > 0 ? (
+            <Ionicons name="checkmark-circle" size={72} color="#22c55e" />
+          ) : (
+            <Ionicons name="alert-circle" size={72} color="#f59e0b" />
+          )}
           <Text style={styles.importCompleteTitle}>
-            {importedCount} item{importedCount !== 1 ? 's' : ''} added to your wardrobe!
+            {importedCount > 0
+              ? `${importedCount} item${importedCount !== 1 ? 's' : ''} added to your wardrobe!`
+              : 'No items could be imported'}
           </Text>
+          {failedCount > 0 && (
+            <View style={styles.failedNotice}>
+              <Ionicons name="information-circle-outline" size={18} color="#92400e" />
+              <Text style={styles.failedNoticeText}>
+                {failedCount} item{failedCount !== 1 ? 's' : ''} couldn't be processed.{'\n'}
+                Try taking a photo of each item by itself, or use a different outfit photo.
+              </Text>
+            </View>
+          )}
           <TouchableOpacity style={styles.primaryButton} onPress={handleDone}>
             <Ionicons name="shirt-outline" size={18} color="#fff" />
-            <Text style={styles.primaryButtonText}>View Wardrobe</Text>
+            <Text style={styles.primaryButtonText}>
+              {importedCount > 0 ? 'View Wardrobe' : 'Done'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   }
 
-  // Import in progress overlay
+  // Import in progress overlay (includes waiting for photo gen)
   if (isImporting) {
+    const isWaitingForPhotoGen = isGeneratingPhotos;
+    const progressLabel = isWaitingForPhotoGen
+      ? `Generating photo ${photoGenProgress ? `${photoGenProgress.processed} of ${photoGenProgress.total}` : '...'}`
+      : importProgress
+        ? `Adding item ${importProgress.done} of ${importProgress.total}...`
+        : 'Preparing...';
+    const progressPct = isWaitingForPhotoGen
+      ? (photoGenProgress ? Math.round((photoGenProgress.processed / photoGenProgress.total) * 100) : 0)
+      : (importProgress ? Math.round((importProgress.done / importProgress.total) * 100) : 0);
+
     return (
       <View style={styles.container}>
         <View style={styles.importingContainer}>
           <ActivityIndicator size="large" color="#87A96B" />
-          <Text style={styles.importingTitle}>Adding items to wardrobe...</Text>
-          {importProgress && (
-            <Text style={styles.importingProgress}>
-              Adding item {importProgress.done} of {importProgress.total}...
+          <Text style={styles.importingTitle}>
+            {isWaitingForPhotoGen ? 'Creating product photos...' : 'Adding items to wardrobe...'}
+          </Text>
+          <Text style={styles.importingProgress}>{progressLabel}</Text>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${progressPct}%` }]} />
+          </View>
+          {isWaitingForPhotoGen && (
+            <Text style={styles.importingHint}>
+              Each item is being isolated from the outfit photo
             </Text>
           )}
-          <View style={styles.progressBarBg}>
-            <View
-              style={[
-                styles.progressBarFill,
-                {
-                  width: importProgress
-                    ? `${Math.round((importProgress.done / importProgress.total) * 100)}%`
-                    : '0%',
-                },
-              ]}
-            />
-          </View>
         </View>
       </View>
     );
@@ -360,6 +387,7 @@ export default function ReviewItemsScreen() {
                   source={{
                     uri:
                       reviewableItems[editingIndex]?.processed_image_url ||
+                      reviewableItems[editingIndex]?.cropped_image_url ||
                       reviewableItems[editingIndex]?.photo_url,
                   }}
                   style={styles.modalImage}
@@ -737,6 +765,27 @@ const styles = StyleSheet.create({
   importingProgress: {
     fontSize: 14,
     color: '#6b7280',
+  },
+  importingHint: {
+    fontSize: 13,
+    color: '#9ca3af',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  failedNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: '#fffbeb',
+    borderRadius: 12,
+    padding: 14,
+    marginHorizontal: 20,
+  },
+  failedNoticeText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#92400e',
+    lineHeight: 20,
   },
   progressBarBg: {
     width: 200,

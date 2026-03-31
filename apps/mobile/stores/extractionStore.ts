@@ -17,6 +17,7 @@ import {
   ProcessedDetectedItem,
   PhotoGenProgress,
   ReviewableItem,
+  FailedExtractionItem,
 } from '../types/extraction';
 import { supabase } from '../services/supabase';
 import { bulkUploadService } from '../services/bulkUploadService';
@@ -48,6 +49,8 @@ interface ExtractionState {
   completionPending: boolean;
   retryCount: number;
   failedPhotoUrls: string[];
+  // Failed extraction items (shown on home screen)
+  failedExtractionItems: FailedExtractionItem[];
 }
 
 interface ExtractionActions {
@@ -71,6 +74,7 @@ interface ExtractionActions {
   setBackgrounded: (value: boolean) => void;
   retryFailedPhotos: () => Promise<void>;
   skipFailedPhotos: () => void;
+  dismissFailedItems: () => void;
   reset: () => void;
 }
 
@@ -100,6 +104,7 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
   completionPending: false,
   retryCount: 0,
   failedPhotoUrls: [],
+  failedExtractionItems: [],
 
   // Actions
 
@@ -264,10 +269,11 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
                p.sub_category === item.sub_category &&
                p.category === item.category
         );
-        if (processed?.processed_image_url) {
+        if (processed?.processed_image_url || processed?.cropped_image_url) {
           return {
             ...item,
             processed_image_url: processed.processed_image_url,
+            cropped_image_url: processed.cropped_image_url,
             photo_gen_status: processed.photo_gen_status,
           };
         }
@@ -303,6 +309,7 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
             return {
               ...item,
               processed_image_url: processed.processed_image_url,
+              cropped_image_url: processed.cropped_image_url,
               photo_gen_status: processed.photo_gen_status,
             };
           }
@@ -480,20 +487,58 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
     const jobId = get().currentJob?.id;
     set({ isImporting: true, importProgress: { done: 0, total: items.length }, error: null });
 
+    // Wait for photo generation to finish before importing
+    if (get().isGeneratingPhotos) {
+      console.log('[Import] Waiting for photo generation to complete...');
+      for (let i = 0; i < 150; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        if (!get().isGeneratingPhotos) break;
+      }
+    }
+
+    // Get the final processed items with generated/cropped photos
+    const { processedItems: finalProcessed } = get();
+
     let added = 0;
+    const failed: FailedExtractionItem[] = [];
+
     for (const item of items) {
+      // Match this item to its processed version
+      const processed = finalProcessed?.find(
+        p => p.photo_index === item.photo_index &&
+             p.sub_category === item.sub_category &&
+             p.category === item.category
+      );
+
+      // Only import if we have an isolated product photo
+      const productImageUrl = processed?.processed_image_url || processed?.cropped_image_url;
+      if (!productImageUrl) {
+        // Photo gen failed — don't add to wardrobe
+        const itemName = item.editedName || `${item.editedSubCategory || item.sub_category} - ${(item.editedColors || item.colors)?.[0] || ''}`.trim();
+        console.warn(`[Import] Skipping "${itemName}" — no isolated photo available`);
+        failed.push({
+          name: itemName,
+          category: item.editedCategory || item.category,
+          sub_category: item.editedSubCategory || item.sub_category,
+          colors: item.editedColors || item.colors,
+          reason: 'photo_gen_failed',
+          timestamp: Date.now(),
+        });
+        set({ importProgress: { done: added + failed.length, total: items.length } });
+        continue;
+      }
+
       const normalizedColors = extractionCategorizationService.normalizeColors(
         item.editedColors || item.colors
       );
 
       const input: CreateItemInput = {
-        image_url: item.processed_image_url || item.photo_url,
+        image_url: productImageUrl,
         original_image_url: item.photo_url,
         name: item.editedName || `${item.editedSubCategory || item.sub_category} - ${(item.editedColors || item.colors)?.[0] || ''}`.trim(),
         category: item.editedCategory || item.category,
         sub_category: item.editedSubCategory || item.sub_category,
         colors: normalizedColors.length > 0 ? normalizedColors : (item.editedColors || item.colors),
-        // Extraction metadata (Story 10.5)
         creation_method: 'ai_extraction',
         extraction_source: 'photo_import',
         extraction_job_id: jobId,
@@ -502,7 +547,7 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
 
       const { error } = await itemsService.createItem(input);
       if (!error) added++;
-      set({ importProgress: { done: added, total: items.length } });
+      set({ importProgress: { done: added + failed.length, total: items.length } });
     }
 
     // Update job count
@@ -513,58 +558,12 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
         .eq('id', jobId);
     }
 
-    set({ isImporting: false });
-
-    // If photo generation is still running, schedule a post-import update
-    // to replace original photos with enhanced ones once they're ready
-    if (get().isGeneratingPhotos) {
-      const savedItemNames = items.map(i => ({
-        category: i.editedCategory || i.category,
-        sub_category: i.editedSubCategory || i.sub_category,
-        photo_index: i.photo_index,
-      }));
-      // Wait for photo generation to finish, then update saved items
-      const waitAndUpdate = async () => {
-        // Poll until generation finishes (check every 2s, max 5 min)
-        for (let i = 0; i < 150; i++) {
-          await new Promise(r => setTimeout(r, 2000));
-          if (!get().isGeneratingPhotos) break;
-        }
-        const { processedItems: finalProcessed } = get();
-        if (!finalProcessed) return;
-
-        // Update each saved item's image_url if enhanced version is now available
-        for (const saved of savedItemNames) {
-          const processed = finalProcessed.find(
-            p => p.photo_index === saved.photo_index &&
-                 p.sub_category === saved.sub_category &&
-                 p.category === saved.category
-          );
-          if (processed?.processed_image_url) {
-            // Find the item in DB and update its image
-            const { data: existing } = await supabase
-              .from('items')
-              .select('id, image_url')
-              .eq('category', saved.category)
-              .eq('sub_category', saved.sub_category)
-              .eq('creation_method', 'ai_extraction')
-              .eq('extraction_job_id', jobId)
-              .limit(1)
-              .maybeSingle();
-
-            if (existing && existing.image_url !== processed.processed_image_url) {
-              await supabase
-                .from('items')
-                .update({ image_url: processed.processed_image_url })
-                .eq('id', existing.id);
-              console.log(`[Import] Updated image for ${saved.sub_category} with enhanced version`);
-            }
-          }
-        }
-      };
-      waitAndUpdate().catch(err => console.warn('[Import] Post-import update failed:', err));
+    // Store failed items for home screen banner
+    if (failed.length > 0) {
+      set({ failedExtractionItems: [...get().failedExtractionItems, ...failed] });
     }
 
+    set({ isImporting: false });
     return added;
   },
 
@@ -626,6 +625,10 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
   skipFailedPhotos: () => {
     // Clear error and proceed — successful items are already in processedItems
     set({ error: null, failedPhotoUrls: [] });
+  },
+
+  dismissFailedItems: () => {
+    set({ failedExtractionItems: [] });
   },
 
   reset: () => {

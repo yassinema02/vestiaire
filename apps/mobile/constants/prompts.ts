@@ -112,6 +112,7 @@ For EACH item detected, return:
 - style: Overall style (e.g., "casual", "formal", "sporty", "bohemian")
 - material: Best guess material (e.g., "cotton", "denim", "leather", "synthetic")
 - position_description: Where in the photo (e.g., "worn by person, upper body")
+- bounding_box: [y1, x1, y2, x2] normalized coordinates (0-1000) of the item's bounding box in the image. Top-left is [0,0], bottom-right is [1000,1000].
 - confidence: 0-100 how confident you are in the detection
 
 Rules:
@@ -131,6 +132,7 @@ Return ONLY valid JSON array, no other text. Example with a full outfit:
     "style": "casual",
     "material": "shearling",
     "position_description": "worn by person, upper body, outermost layer",
+    "bounding_box": [50, 100, 550, 900],
     "confidence": 95
   },
   {
@@ -140,6 +142,7 @@ Return ONLY valid JSON array, no other text. Example with a full outfit:
     "style": "casual",
     "material": "denim",
     "position_description": "worn by person, lower body",
+    "bounding_box": [500, 150, 850, 850],
     "confidence": 90
   },
   {
@@ -149,6 +152,7 @@ Return ONLY valid JSON array, no other text. Example with a full outfit:
     "style": "casual",
     "material": "suede",
     "position_description": "worn by person, feet",
+    "bounding_box": [830, 200, 980, 800],
     "confidence": 85
   }
 ]`;

@@ -36,6 +36,8 @@ export interface DetectedItem {
   style: string;
   material: string;
   position_description: string;
+  /** Normalized bounding box [y1, x1, y2, x2] in 0-1000 coords */
+  bounding_box?: [number, number, number, number];
   confidence: number;
   photo_index: number;
   photo_url: string;
@@ -59,6 +61,8 @@ export interface ExtractionJobResult {
 export interface ProcessedDetectedItem extends DetectedItem {
   processed_image_base64?: string;
   processed_image_url?: string;
+  /** Cropped image URI from bounding box — used as fallback when photo gen fails */
+  cropped_image_url?: string;
   photo_gen_status: 'pending' | 'success' | 'failed' | 'skipped';
 }
 
@@ -80,4 +84,13 @@ export interface ReviewableItem extends ProcessedDetectedItem {
   editedColors?: string[];
   needsReview: boolean;
   duplicateOf?: { itemId: string; similarity: number; itemName?: string };
+}
+
+export interface FailedExtractionItem {
+  name: string;
+  category: string;
+  sub_category: string;
+  colors: string[];
+  reason: 'photo_gen_failed';
+  timestamp: number;
 }

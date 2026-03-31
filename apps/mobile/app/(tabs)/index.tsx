@@ -24,6 +24,7 @@ import { itemsService } from '../../services/items';
 import { neglectService } from '../../services/neglectService';
 import { useEventSync } from '../../hooks/useEventSync';
 import { useTabBarOnScroll } from '../../hooks/useTabBarOnScroll';
+import { FailedImportBanner } from '../../components/features/FailedImportBanner';
 import { eventSyncService, CalendarEventRow } from '../../services/eventSyncService';
 import { generateEventOutfit, OutfitSuggestion } from '../../services/aiOutfitService';
 import { TripEvent, ManualTripEvent, TRIP_TYPE_ICONS } from '../../types/packingList';
@@ -248,6 +249,8 @@ export default function HomeScreen() {
             <Text style={styles.quickActionMeta}>Build around your actual schedule.</Text>
           </TouchableOpacity>
         </View>
+
+        <FailedImportBanner />
 
         {userStats ? (
           <View style={styles.sectionBlock}>

@@ -12,6 +12,8 @@ import { generateProductPhoto } from './productPhotoService';
 import { storageService } from './storage';
 import { requireUserId } from './auth-helpers';
 import { extractionService } from './extractionService';
+import { cropFromBoundingBox } from './imageOptimizer';
+import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 import {
   ExtractionJob,
   DetectedItem,
@@ -71,10 +73,39 @@ export const batchProductPhotoService = {
         continue;
       }
 
+      // Step 1: Crop item from photo if bounding box available
+      let sourceUrl = item.photo_url;
+      let croppedUrl: string | undefined;
+
+      if (item.bounding_box) {
+        try {
+          const croppedLocalUri = await cropFromBoundingBox(item.photo_url, item.bounding_box);
+          if (croppedLocalUri !== item.photo_url) {
+            sourceUrl = croppedLocalUri;
+            // Upload cropped image to Supabase so it persists
+            const cropResponse = await fetchWithTimeout(croppedLocalUri, { timeout: 10_000 });
+            const cropBlob = await cropResponse.blob();
+            const cropBase64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+              reader.onerror = reject;
+              reader.readAsDataURL(cropBlob);
+            });
+            const { url: cropSupabaseUrl } = await storageService.uploadProcessedImage(userId, cropBase64);
+            if (cropSupabaseUrl) {
+              croppedUrl = cropSupabaseUrl;
+              console.log(`[Product Photo] Cropped & uploaded item ${i} (${item.sub_category})`);
+            }
+          }
+        } catch (cropErr: any) {
+          console.warn(`[Product Photo] Crop failed for item ${i}, using original:`, cropErr.message);
+        }
+      }
+
       try {
-        // 1. Generate product photo using productPhotoService
+        // Step 2: Generate product photo from cropped (or original) image
         const { processedImageBase64, error: genError } = await generateProductPhoto(
-          item.photo_url,
+          sourceUrl,
           {
             category: item.category?.toLowerCase(),
             subCategory: item.sub_category,
@@ -88,7 +119,7 @@ export const batchProductPhotoService = {
           throw genError || new Error('No processed image data');
         }
 
-        // 2. Upload processed image to wardrobe-images bucket
+        // Step 3: Upload processed image to wardrobe-images bucket
         const { url, error: uploadError } = await storageService.uploadProcessedImage(
           userId,
           processedImageBase64
@@ -101,14 +132,16 @@ export const batchProductPhotoService = {
         processedItems.push({
           ...item,
           processed_image_url: url,
+          cropped_image_url: croppedUrl,
           photo_gen_status: 'success',
         });
         succeeded++;
       } catch (err: any) {
         console.warn(`Product photo generation failed for item ${i} (${item.sub_category}):`, err.message);
-        // Fallback: keep original photo URL
+        // Fallback: use cropped image if available, otherwise original
         processedItems.push({
           ...item,
+          cropped_image_url: croppedUrl,
           photo_gen_status: 'failed',
         });
         failed++;
