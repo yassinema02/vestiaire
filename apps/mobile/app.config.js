@@ -13,12 +13,10 @@ export default {
         owner: expoOwner,
         version: '1.0.0',
         orientation: 'portrait',
-        icon: './assets/icon.png',
         userInterfaceStyle: 'light',
         scheme: 'vestiaire',
         newArchEnabled: true,
         splash: {
-            image: './assets/splash-icon.png',
             resizeMode: 'contain',
             backgroundColor: '#F5F0E8',
         },
@@ -35,10 +33,6 @@ export default {
             },
         },
         android: {
-            adaptiveIcon: {
-                foregroundImage: './assets/adaptive-icon.png',
-                backgroundColor: '#F5F0E8',
-            },
             package: 'com.vestiaire.app',
             permissions: [
                 'android.permission.CAMERA',
@@ -50,7 +44,6 @@ export default {
         },
         web: {
             bundler: 'metro',
-            favicon: './assets/favicon.png',
         },
         plugins: [
             'expo-router',
