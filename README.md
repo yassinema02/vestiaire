@@ -135,12 +135,11 @@ npm run ios
 
 ## Architecture
 
-- **Monorepo** with npm workspaces (`apps/mobile`, `packages/shared`)
-- **File-based routing** via Expo Router with tab navigation (Home, Wardrobe, Add, Social, Profile)
-- **Service layer** pattern: 58 service modules encapsulating business logic and API calls
-- **Zustand stores** for lightweight state management (auth, outfit, weather, calendar, UI, etc.)
-- **Row-Level Security** on all Supabase tables for user data isolation
-- **AI integration** runs client-side via `@google/genai` SDK (not through Edge Functions)
+- **Frontend:** React Native, Expo SDK 52+, TypeScript
+- **Styling:** NativeWind (Tailwind for RN)
+- **State:** Zustand + TanStack Query
+- **Backend:** Supabase (PostgreSQL, Auth, Storage, Edge Functions)
+- **AI:** OpenAI Gemini 2.5 Flash
 
 ## Documentation
 
