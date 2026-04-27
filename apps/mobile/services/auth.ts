@@ -101,6 +101,23 @@ export const authService = {
     },
 
     /**
+     * Sign in with Apple identity token (iOS).
+     * `nonce` must be the raw nonce passed to AppleAuthentication.signInAsync;
+     * Supabase verifies the SHA256 of this nonce against the JWT's nonce claim.
+     */
+    signInWithApple: async (
+        identityToken: string,
+        nonce: string,
+    ): Promise<AuthResponse> => {
+        const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: 'apple',
+            token: identityToken,
+            nonce,
+        });
+        return { user: data.user, session: data.session, error };
+    },
+
+    /**
      * Subscribe to auth state changes
      */
     onAuthStateChange: (callback: (event: string, session: Session | null) => void) => {

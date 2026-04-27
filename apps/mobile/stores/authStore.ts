@@ -8,7 +8,10 @@
  */
 
 import { create } from 'zustand';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import { authService } from '../services/auth';
+import { supabase } from '../services/supabase';
 import type { User, Session, AuthError } from '@supabase/supabase-js';
 
 interface AuthState {
@@ -23,6 +26,7 @@ interface AuthActions {
     initialize: () => Promise<void>;
     signUp: (email: string, password: string) => Promise<{ success: boolean; needsVerification: boolean }>;
     signIn: (email: string, password: string) => Promise<boolean>;
+    signInWithApple: () => Promise<boolean>;
     signOut: () => Promise<void>;
     resetPassword: (email: string) => Promise<boolean>;
     clearError: () => void;
@@ -153,6 +157,71 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             return true;
         } catch (err) {
             set({ isLoading: false, error: 'Sign in failed. Please try again.' });
+            return false;
+        }
+    },
+
+    signInWithApple: async () => {
+        set({ isLoading: true, error: null });
+        try {
+            // Apple requires the JWT's nonce claim to be sha256(rawNonce).
+            // Pass rawNonce to Apple, hashed nonce is what Apple signs into the JWT.
+            const rawNonce = Crypto.randomUUID();
+            const hashedNonce = await Crypto.digestStringAsync(
+                Crypto.CryptoDigestAlgorithm.SHA256,
+                rawNonce,
+            );
+
+            const credential = await AppleAuthentication.signInAsync({
+                requestedScopes: [
+                    AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                    AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                ],
+                nonce: hashedNonce,
+            });
+
+            if (!credential.identityToken) {
+                set({ isLoading: false, error: 'Apple sign-in did not return an identity token.' });
+                return false;
+            }
+
+            const { user, session, error } = await authService.signInWithApple(
+                credential.identityToken,
+                rawNonce,
+            );
+
+            if (error) {
+                set({ isLoading: false, error: translateAuthError(error) });
+                return false;
+            }
+
+            // Apple returns fullName ONLY on the very first sign-in. Persist it now or it's lost forever.
+            const fullName = credential.fullName;
+            const displayName = [fullName?.givenName, fullName?.familyName]
+                .filter(Boolean)
+                .join(' ')
+                .trim();
+            if (user && displayName) {
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .update({ display_name: displayName })
+                    .eq('id', user.id)
+                    .is('display_name', null);
+                if (profileError) {
+                    console.warn('Failed to persist Apple display name:', profileError.message);
+                }
+            }
+
+            set({ user, session, isLoading: false, error: null });
+            return true;
+        } catch (err: any) {
+            // User-cancelled is not an error worth surfacing.
+            if (err?.code === 'ERR_REQUEST_CANCELED') {
+                set({ isLoading: false, error: null });
+                return false;
+            }
+            console.warn('Apple sign-in failed:', err?.message ?? err);
+            set({ isLoading: false, error: 'Apple sign-in failed. Please try again.' });
             return false;
         }
     },

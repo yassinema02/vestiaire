@@ -25,6 +25,7 @@ export default {
         ios: {
             supportsTablet: false,
             bundleIdentifier: 'com.vestiaire.app',
+            usesAppleSignIn: true,
             infoPlist: {
                 NSCameraUsageDescription: 'Allow Vestiaire to access your camera to photograph clothing items.',
                 NSPhotoLibraryUsageDescription: 'Allow Vestiaire to access your photos to add clothing items.',
@@ -80,6 +81,7 @@ export default {
             ],
             'expo-web-browser',
             'expo-secure-store',
+            'expo-apple-authentication',
             [
                 'expo-calendar',
                 {

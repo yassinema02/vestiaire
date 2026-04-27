@@ -12,6 +12,7 @@ import { validateEmail, validatePassword, passwordsMatch } from '../../utils/val
 import { challengeService } from '../../services/challengeService';
 import ChallengeInviteModal from '../../components/gamification/ChallengeInviteModal';
 import { AuthScreenShell } from '../../components/ui/AuthScreenShell';
+import { AppleSignInBlock } from '../../components/auth/AppleSignInBlock';
 import { appTheme } from '../../theme/tokens';
 import { Text } from '../../components/ui/Typography';
 
@@ -124,6 +125,8 @@ export default function SignUpScreen() {
           <Text style={styles.formKicker}>Create account</Text>
           <Text style={styles.formTitle}>Join Vestiaire</Text>
         </View>
+
+        <AppleSignInBlock label="signUp" />
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>

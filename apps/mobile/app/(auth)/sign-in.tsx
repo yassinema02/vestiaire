@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/authStore';
 import { validateEmail } from '../../utils/validation';
 import { AuthScreenShell } from '../../components/ui/AuthScreenShell';
+import { AppleSignInBlock } from '../../components/auth/AppleSignInBlock';
 import { appTheme } from '../../theme/tokens';
 import { Text } from '../../components/ui/Typography';
 
@@ -68,6 +69,8 @@ export default function SignInScreen() {
           <Text style={styles.formKicker}>Sign in</Text>
           <Text style={styles.formTitle}>Welcome back</Text>
         </View>
+
+        <AppleSignInBlock label="signIn" />
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
