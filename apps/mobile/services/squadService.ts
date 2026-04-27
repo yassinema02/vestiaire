@@ -174,6 +174,11 @@ export const squadService = {
             const userId = await requireUserId();
             const code = inviteCode.trim().toUpperCase();
 
+            // Validate invite code format before querying DB
+            if (code.length !== 6 || !/^[A-Z0-9]{6}$/.test(code)) {
+                return { squad: null, error: 'Invalid invite code format. Code should be 6 characters.' };
+            }
+
             // Find squad by code
             const { data: squad, error: findError } = await supabase
                 .from('style_squads')

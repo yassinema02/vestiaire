@@ -176,7 +176,7 @@ export default function SignUpScreen() {
               <Text style={[styles.strengthText, { color: strength.color }]}>{strength.label}</Text>
             </View>
           ) : null}
-          <Text style={styles.helperText}>Use 1 uppercase letter and 1 number.</Text>
+          <Text style={styles.helperText}>Use 1 uppercase, 1 lowercase, 1 number, and 1 special character.</Text>
         </View>
 
         <View style={styles.inputGroup}>

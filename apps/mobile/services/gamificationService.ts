@@ -375,10 +375,7 @@ export const gamificationService = {
     awardWearLog: async (): Promise<{ pointsEarned: number; error: Error | null }> => {
         try {
             // Use atomic RPC to award base points + first-of-day bonus
-            const { data, error } = await supabase.rpc('award_wear_log_with_bonus', {
-                p_base_points: POINTS.LOG_OUTFIT,
-                p_first_day_points: POINTS.FIRST_ITEM_OF_DAY,
-            });
+            const { data, error } = await supabase.rpc('award_wear_log_with_bonus');
 
             if (error) {
                 // Fallback to non-atomic path if RPC not deployed yet

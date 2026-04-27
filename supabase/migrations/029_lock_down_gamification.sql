@@ -342,7 +342,8 @@ BEGIN
 
     UPDATE items
     SET wear_count = wear_count + 1,
-        last_worn = NOW()
+        last_worn_at = NOW(),
+        updated_at = NOW()
     WHERE id = p_item_id
     AND user_id = p_user_id;
 END;

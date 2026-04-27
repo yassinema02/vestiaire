@@ -70,7 +70,15 @@ async function detectItemsInPhoto(
       return { photo_url: photoUrl, photo_index: photoIndex, detected_items: [], error: 'Failed to parse AI response' };
     }
 
-    const rawItems = JSON.parse(jsonMatch[0]) as any[];
+    let rawItems: any[];
+    try {
+      rawItems = JSON.parse(jsonMatch[0]);
+    } catch {
+      return { photo_url: photoUrl, photo_index: photoIndex, detected_items: [], error: 'Invalid JSON in AI response' };
+    }
+    if (!Array.isArray(rawItems)) {
+      return { photo_url: photoUrl, photo_index: photoIndex, detected_items: [], error: 'AI response is not an array' };
+    }
 
     // Validate and cap at MAX_ITEMS_PER_PHOTO
     const validatedItems: DetectedItem[] = rawItems

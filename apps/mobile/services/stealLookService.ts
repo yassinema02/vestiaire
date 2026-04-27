@@ -148,7 +148,7 @@ async function matchWithAI(
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('Failed to parse AI response');
 
-    const parsed = JSON.parse(jsonMatch[0]) as {
+    let parsed: {
         matches: Array<{
             targetId: string;
             matchedItemId: string | null;
@@ -157,6 +157,17 @@ async function matchWithAI(
             reason: string;
         }>;
     };
+    try {
+        parsed = JSON.parse(jsonMatch[0]);
+    } catch (parseErr) {
+        console.warn('StealLook AI JSON parse failed, falling back:', parseErr);
+        return matchWithFallback(targets, userItems);
+    }
+
+    if (!parsed.matches || !Array.isArray(parsed.matches)) {
+        console.warn('StealLook AI response missing matches array, falling back');
+        return matchWithFallback(targets, userItems);
+    }
 
     // Validate and build StealMatchResult array
     const validUserIds = new Set(userItems.map((i) => i.id));

@@ -78,33 +78,25 @@ export const subscriptionService = {
 
     /**
      * Purchase premium subscription.
-     * TODO: Replace with RevenueCat `Purchases.purchasePackage()` for production.
-     * Currently simulates a purchase by setting premium_until to 30 days from now.
+     *
+     * ⚠️  SECURITY (audit 2026-04-05): This method previously simulated a purchase
+     * by directly writing premium_until to the database — any authenticated user
+     * could grant themselves premium for free. The simulated path has been disabled.
+     *
+     * TODO: Replace with RevenueCat `Purchases.purchasePackage()` for production
+     * and verify the receipt server-side before updating premium_until.
      */
     purchasePremium: async (): Promise<{ success: boolean; error: string | null }> => {
-        try {
-            const { data: userData } = await supabase.auth.getUser();
-            if (!userData.user) {
-                return { success: false, error: 'Not authenticated' };
-            }
-
-            // Simulate purchase — set premium for 30 days
-            const premiumUntil = new Date();
-            premiumUntil.setDate(premiumUntil.getDate() + 30);
-
-            const { error } = await supabase
-                .from('profiles')
-                .update({ premium_until: premiumUntil.toISOString() })
-                .eq('id', userData.user.id);
-
-            if (error) {
-                return { success: false, error: error.message };
-            }
-
-            return { success: true, error: null };
-        } catch (err) {
-            return { success: false, error: 'Purchase failed. Please try again.' };
-        }
+        // SECURITY: Simulated purchase disabled — real payment integration required.
+        // When RevenueCat is integrated, the flow should be:
+        // 1. Call Purchases.purchasePackage() to process payment via App Store / Play Store
+        // 2. Server-side webhook from RevenueCat validates the receipt
+        // 3. Server-side webhook updates premium_until in the database
+        // The client should NEVER directly update premium_until.
+        return {
+            success: false,
+            error: 'In-app purchases are not yet available. Coming soon!',
+        };
     },
 
     /**

@@ -98,67 +98,91 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      let cancelled = false;
+
       refreshWeather();
       refreshForecast();
       refreshEvents();
 
       neglectService.computeNeglectStatuses().then(() => {
         itemsService.getItems().then(({ items }) => {
+          if (cancelled) return;
           setNeglectedCount(items.filter(i => i.neglect_status).length);
           resalePromptService
             .getResalePrompts(items)
-            .then(setResalePrompts)
-            .catch(() => {});
-        });
-      });
+            .then((prompts) => { if (!cancelled) setResalePrompts(prompts); })
+            .catch((err) => console.warn('[Home] Failed to load resale prompts:', err?.message));
+        }).catch((err) => console.warn('[Home] Failed to load items:', err?.message));
+      }).catch((err) => console.warn('[Home] Failed to compute neglect statuses:', err?.message));
 
       challengeService.getChallenge().then(({ challenge }) => {
+        if (cancelled) return;
         setActiveChallenge(challenge?.status === 'active' ? challenge : null);
-      });
+      }).catch((err) => console.warn('[Home] Failed to load challenge:', err?.message));
 
       const loadStats = async () => {
-        const { stats } = await gamificationService.getUserStats();
-        if (stats) setUserStats(stats);
+        try {
+          const { stats } = await gamificationService.getUserStats();
+          if (cancelled) return;
+          if (stats) setUserStats(stats);
 
-        if (!streakLostShown.current) {
-          const status = await gamificationService.checkStreakStatus();
-          if (status.wasLost) {
-            streakLostShown.current = true;
-            Alert.alert(
-              'Streak Lost',
-              'Oh no! You lost your streak. Start a new one today by logging an outfit!'
-            );
+          if (!streakLostShown.current) {
+            const status = await gamificationService.checkStreakStatus();
+            if (cancelled) return;
+            if (status.wasLost) {
+              streakLostShown.current = true;
+              Alert.alert(
+                'Streak Lost',
+                'Oh no! You lost your streak. Start a new one today by logging an outfit!'
+              );
+            }
           }
+        } catch (err) {
+          console.warn('[Home] Failed to load stats:', (err as Error)?.message);
         }
       };
       loadStats();
 
       const loadNextEvent = async () => {
-        const { events } = await eventSyncService.getUpcomingEvents(7);
-        if (events.length > 0) {
-          const sorted = [...events].sort(
-            (a, b) => (b.formality_score || 0) - (a.formality_score || 0)
-          );
-          setNextEvent(sorted[0]);
+        try {
+          const { events } = await eventSyncService.getUpcomingEvents(7);
+          if (cancelled) return;
+          if (events.length > 0) {
+            const sorted = [...events].sort(
+              (a, b) => (b.formality_score || 0) - (a.formality_score || 0)
+            );
+            setNextEvent(sorted[0]);
 
-          const { items } = await itemsService.getItems();
-          if (items) {
-            const { suggestion } = await generateEventOutfit(sorted[0], items);
-            setNextEventOutfit(suggestion);
+            const { items } = await itemsService.getItems();
+            if (cancelled) return;
+            if (items) {
+              const { suggestion } = await generateEventOutfit(sorted[0], items);
+              if (cancelled) return;
+              setNextEventOutfit(suggestion);
+            }
+          } else {
+            setNextEvent(null);
+            setNextEventOutfit(null);
           }
-        } else {
-          setNextEvent(null);
-          setNextEventOutfit(null);
+        } catch (err) {
+          console.warn('[Home] Failed to load next event:', (err as Error)?.message);
         }
       };
       loadNextEvent();
 
       const loadTrips = async () => {
-        const trips = await manualTripService.getAllTrips();
-        setAllTrips(trips);
-        setTravelExpanded(trips.length > 0);
+        try {
+          const trips = await manualTripService.getAllTrips();
+          if (cancelled) return;
+          setAllTrips(trips);
+          setTravelExpanded(trips.length > 0);
+        } catch (err) {
+          console.warn('[Home] Failed to load trips:', (err as Error)?.message);
+        }
       };
       loadTrips();
+
+      return () => { cancelled = true; };
     }, [refreshWeather, refreshForecast, refreshEvents])
   );
 

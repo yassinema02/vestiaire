@@ -53,6 +53,9 @@ export const useOutfitStore = create<OutfitStore>((set, get) => ({
 
         if (state.isLoading) return;
 
+        // Snapshot current outfits for rollback on refresh failure
+        const previousOutfits = state.outfits;
+
         // Reset if refreshing (after the guard to prevent double-refresh)
         if (options?.refresh) {
             set({ outfits: [], hasMore: true });
@@ -61,7 +64,7 @@ export const useOutfitStore = create<OutfitStore>((set, get) => ({
         set({ isLoading: true, error: null });
 
         try {
-            const offset = options?.refresh ? 0 : state.outfits.length;
+            const offset = options?.refresh ? 0 : previousOutfits.length;
 
             const { outfits, error } = await outfitService.getOutfits({
                 limit: ITEMS_PER_PAGE,
@@ -70,13 +73,18 @@ export const useOutfitStore = create<OutfitStore>((set, get) => ({
             });
 
             if (error) {
-                set({ error: error.message, isLoading: false });
+                // Restore previous outfits on refresh failure
+                if (options?.refresh) {
+                    set({ outfits: previousOutfits, error: error.message, isLoading: false });
+                } else {
+                    set({ error: error.message, isLoading: false });
+                }
                 return;
             }
 
             const newOutfits = options?.refresh
                 ? outfits
-                : [...state.outfits, ...outfits];
+                : [...previousOutfits, ...outfits];
 
             set({
                 outfits: newOutfits,
@@ -114,8 +122,12 @@ export const useOutfitStore = create<OutfitStore>((set, get) => ({
 
     // Fetch total count
     fetchOutfitCount: async () => {
-        const { count } = await outfitService.getOutfitCount();
-        set({ totalCount: count });
+        try {
+            const { count } = await outfitService.getOutfitCount();
+            set({ totalCount: count });
+        } catch (error) {
+            console.warn('Failed to fetch outfit count:', error);
+        }
     },
 
     // Create outfit

@@ -113,8 +113,16 @@ Deno.serve(async (req: Request) => {
         }
 
         // Parse request body
-        const body = await req.json();
-        const { image_url, image_base64 } = body;
+        let body: Record<string, unknown>;
+        try {
+            body = await req.json();
+        } catch {
+            return new Response(
+                JSON.stringify({ error: 'Invalid JSON body' }),
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
+        const { image_url, image_base64 } = body as { image_url?: string; image_base64?: string };
 
         if (!image_url && !image_base64) {
             return new Response(
@@ -196,9 +204,12 @@ Deno.serve(async (req: Request) => {
         const geminiController = new AbortController();
         const geminiTimeout = setTimeout(() => geminiController.abort(), 30000);
 
-        const geminiResponse = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+        const geminiResponse = await fetch(GEMINI_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'x-goog-api-key': GEMINI_API_KEY,
+            },
             body: JSON.stringify({
                 contents: [{
                     parts: [
@@ -239,7 +250,16 @@ Deno.serve(async (req: Request) => {
             );
         }
 
-        const rawAnalysis = JSON.parse(jsonMatch[0]);
+        let rawAnalysis: Record<string, unknown>;
+        try {
+            rawAnalysis = JSON.parse(jsonMatch[0]);
+        } catch (parseErr) {
+            console.error('Failed to parse Gemini JSON:', parseErr);
+            return new Response(
+                JSON.stringify({ error: 'AI returned malformed JSON' }),
+                { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
 
         // Validate and sanitize LLM output before returning
         const VALID_CATEGORIES = ['tops', 'bottoms', 'dresses', 'outerwear', 'shoes', 'accessories'];

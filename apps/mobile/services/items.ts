@@ -120,7 +120,8 @@ export const itemsService = {
                 .from('items')
                 .select('*')
                 .eq('user_id', userId)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(500);
 
             if (error) {
                 console.error('Get items error:', error);

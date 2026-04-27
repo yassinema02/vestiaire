@@ -345,9 +345,23 @@ export const useExtractionStore = create<ExtractionStore>((set, get) => ({
     const poll = async () => {
       if (pollCancelled) return;
 
-      const { job, error } = await bulkUploadService.getJob(jobId);
+      let job: ExtractionJob | null = null;
+      let error: Error | null = null;
 
-      if (pollCancelled) return;
+      try {
+        const result = await bulkUploadService.getJob(jobId);
+        job = result.job;
+        error = result.error;
+      } catch (err) {
+        error = err as Error;
+      }
+
+      // Re-check cancellation after async gap to prevent scheduling
+      // new timers on a cancelled poll loop
+      if (pollCancelled) {
+        pollTimer = null;
+        return;
+      }
 
       if (error) {
         console.warn('Poll error:', error.message);

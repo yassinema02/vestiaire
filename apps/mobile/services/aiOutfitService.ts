@@ -13,6 +13,7 @@ import { OccasionType } from '../utils/occasionDetector';
 import { getTimeOfDay, TimeOfDay } from '../types/context';
 import { useWeatherStore } from '../stores/weatherStore';
 import { CalendarEventRow } from './eventSyncService';
+import { sanitizeText } from '../utils/validation';
 
 /**
  * AI-generated outfit suggestion
@@ -274,14 +275,14 @@ const buildEventOutfitPromptLocal = (
     const formalityGuide = getFormalityGuidance(event.formality_score || 3);
 
     const contextLines = [
-        `Event: "${event.title}" (${event.event_type || 'casual'}, formality ${event.formality_score || 3}/10)`,
+        `Event: "${sanitizeText(event.title)}" (${sanitizeText(event.event_type || 'casual')}, formality ${event.formality_score || 3}/10)`,
         `Time: ${timeOfDay} event`,
-        weather ? `Weather: ${weather.temperature}°C, ${weather.condition}` : null,
+        weather ? `Weather: ${weather.temperature}°C, ${sanitizeText(weather.condition)}` : null,
         `Dress code guidance: ${formalityGuide}`,
-        event.location ? `Location: ${event.location}` : null,
+        event.location ? `Location: ${sanitizeText(event.location)}` : null,
     ].filter(Boolean).join('\n');
 
-    return buildEventOutfitPromptTemplate(itemsJson, contextLines, event.event_type || 'casual');
+    return buildEventOutfitPromptTemplate(itemsJson, contextLines, sanitizeText(event.event_type || 'casual'));
 };
 
 /**
@@ -299,7 +300,8 @@ const getCachedEventOutfit = async (eventId: string): Promise<OutfitSuggestion |
         }
 
         return parsed.suggestion;
-    } catch {
+    } catch (error) {
+        console.warn(`Failed to retrieve cached event outfit for event ${eventId}:`, error);
         return null;
     }
 };
@@ -313,8 +315,8 @@ const cacheEventOutfit = async (eventId: string, suggestion: OutfitSuggestion): 
             `${EVENT_OUTFIT_CACHE_PREFIX}${eventId}`,
             JSON.stringify({ suggestion, generatedAt: Date.now() })
         );
-    } catch {
-        // Ignore cache write errors
+    } catch (error) {
+        console.warn(`Failed to cache event outfit for event ${eventId}:`, error);
     }
 };
 
@@ -324,10 +326,21 @@ const cacheEventOutfit = async (eventId: string, suggestion: OutfitSuggestion): 
 export const clearEventOutfitCache = async (eventId: string): Promise<void> => {
     try {
         await AsyncStorage.removeItem(`${EVENT_OUTFIT_CACHE_PREFIX}${eventId}`);
-    } catch {
-        // Ignore
+    } catch (error) {
+        console.warn(`Failed to clear cached outfit for event ${eventId}:`, error);
     }
 };
+
+/**
+ * In-flight deduplication map: if two callers request the same event's outfit
+ * at the same time, they share a single AI call / cache write instead of
+ * racing and producing duplicate Gemini requests + clobbering the cache.
+ * Keyed by event.id. skipCache=true bypasses dedup (explicit regenerate).
+ */
+const inFlightEventOutfits = new Map<
+    string,
+    Promise<{ suggestion: OutfitSuggestion | null; fromCache: boolean; error: Error | null }>
+>();
 
 /**
  * Generate outfit for a specific calendar event
@@ -336,6 +349,35 @@ export const generateEventOutfit = async (
     event: CalendarEventRow,
     wardrobeItems: WardrobeItem[],
     skipCache: boolean = false
+): Promise<{ suggestion: OutfitSuggestion | null; fromCache: boolean; error: Error | null }> => {
+    // Dedupe concurrent calls for the same event (unless forced regenerate)
+    if (!skipCache) {
+        const existing = inFlightEventOutfits.get(event.id);
+        if (existing) {
+            return existing;
+        }
+    }
+
+    const run = _generateEventOutfitInner(event, wardrobeItems, skipCache);
+
+    if (!skipCache) {
+        inFlightEventOutfits.set(event.id, run);
+        run.finally(() => {
+            // Remove once resolved so subsequent calls can re-run if cache
+            // has since been invalidated.
+            if (inFlightEventOutfits.get(event.id) === run) {
+                inFlightEventOutfits.delete(event.id);
+            }
+        });
+    }
+
+    return run;
+};
+
+const _generateEventOutfitInner = async (
+    event: CalendarEventRow,
+    wardrobeItems: WardrobeItem[],
+    skipCache: boolean
 ): Promise<{ suggestion: OutfitSuggestion | null; fromCache: boolean; error: Error | null }> => {
     // Check cache first
     if (!skipCache) {

@@ -13,6 +13,9 @@ import { ootdService } from '../services/ootdService';
 import { engagementService } from '../services/engagementService';
 import { stealLookService } from '../services/stealLookService';
 
+// Guard against concurrent toggleReaction calls on the same post
+const reactionInFlight = new Set<string>();
+
 interface SocialState {
     squads: StyleSquad[];
     activeSquad: StyleSquad | null;
@@ -208,6 +211,10 @@ export const useSocialStore = create<SocialStore>((set, get) => ({
     },
 
     toggleReaction: async (postId: string) => {
+        // Prevent concurrent toggles on the same post (rapid double-tap guard)
+        if (reactionInFlight.has(postId)) return;
+        reactionInFlight.add(postId);
+
         const currentState = get().postReactions[postId] || false;
         const delta = currentState ? -1 : 1;
 
@@ -221,17 +228,21 @@ export const useSocialStore = create<SocialStore>((set, get) => ({
             ),
         }));
 
-        const { error } = await engagementService.toggleReaction(postId);
-        if (error) {
-            // Revert on error
-            set((state) => ({
-                postReactions: { ...state.postReactions, [postId]: currentState },
-                feedPosts: state.feedPosts.map((p) =>
-                    p.id === postId
-                        ? { ...p, reaction_count: Math.max(0, p.reaction_count - delta) }
-                        : p
-                ),
-            }));
+        try {
+            const { error } = await engagementService.toggleReaction(postId);
+            if (error) {
+                // Revert on error using fresh state
+                set((state) => ({
+                    postReactions: { ...state.postReactions, [postId]: currentState },
+                    feedPosts: state.feedPosts.map((p) =>
+                        p.id === postId
+                            ? { ...p, reaction_count: Math.max(0, p.reaction_count - delta) }
+                            : p
+                    ),
+                }));
+            }
+        } finally {
+            reactionInFlight.delete(postId);
         }
     },
 

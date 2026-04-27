@@ -23,6 +23,10 @@ interface RequestManagerConfig {
     baseRetryDelayMs: number;
     /** Max requests per minute (default: 30) */
     maxRequestsPerMinute: number;
+    /** Max requests per rolling 24h window (default: 500) */
+    maxRequestsPerDay: number;
+    /** Max requests per rolling 30d window (default: 5000) */
+    maxRequestsPerMonth: number;
 }
 
 const DEFAULT_CONFIG: RequestManagerConfig = {
@@ -31,7 +35,25 @@ const DEFAULT_CONFIG: RequestManagerConfig = {
     maxRetries: 2,
     baseRetryDelayMs: 1_000,
     maxRequestsPerMinute: 30,
+    maxRequestsPerDay: 500,
+    maxRequestsPerMonth: 5_000,
 };
+
+const ONE_MINUTE_MS = 60_000;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const ONE_MONTH_MS = 30 * ONE_DAY_MS;
+
+/**
+ * Thrown when the daily or monthly request ceiling is exceeded. These are
+ * hard caps (not merely throttled) so callers see a clear failure instead
+ * of waiting forever in the queue.
+ */
+export class AIQuotaExceededError extends Error {
+    constructor(public readonly window: 'day' | 'month', public readonly cap: number) {
+        super(`AI request quota exceeded for window=${window} cap=${cap}`);
+        this.name = 'AIQuotaExceededError';
+    }
+}
 
 class AIRequestManager {
     private config: RequestManagerConfig;
@@ -52,6 +74,19 @@ class AIRequestManager {
         feature: string
     ): Promise<T> {
         return new Promise<T>((resolve, reject) => {
+            // Fail fast on daily/monthly caps so users see a real error
+            // instead of the request sitting in the queue forever.
+            const dailyCount = this.getRequestCountSince(ONE_DAY_MS);
+            if (dailyCount >= this.config.maxRequestsPerDay) {
+                reject(new AIQuotaExceededError('day', this.config.maxRequestsPerDay));
+                return;
+            }
+            const monthlyCount = this.getRequestCountSince(ONE_MONTH_MS);
+            if (monthlyCount >= this.config.maxRequestsPerMonth) {
+                reject(new AIQuotaExceededError('month', this.config.maxRequestsPerMonth));
+                return;
+            }
+
             this.queue.push({
                 execute,
                 resolve,
@@ -71,6 +106,8 @@ class AIRequestManager {
             queued: this.queue.length,
             active: this.activeCount,
             requestsInLastMinute: this.getRecentRequestCount(),
+            requestsInLastDay: this.getRequestCountSince(ONE_DAY_MS),
+            requestsInLastMonth: this.getRequestCountSince(ONE_MONTH_MS),
         };
     }
 
@@ -173,11 +210,18 @@ class AIRequestManager {
     }
 
     private getRecentRequestCount(): number {
-        const oneMinuteAgo = Date.now() - 60_000;
+        return this.getRequestCountSince(ONE_MINUTE_MS);
+    }
+
+    private getRequestCountSince(windowMs: number): number {
+        // Prune the buffer based on the longest window we care about so it
+        // doesn't grow unbounded. Monthly is the largest here.
+        const maxWindowCutoff = Date.now() - ONE_MONTH_MS;
         this.requestTimestamps = this.requestTimestamps.filter(
-            (ts) => ts > oneMinuteAgo
+            (ts) => ts > maxWindowCutoff
         );
-        return this.requestTimestamps.length;
+        const cutoff = Date.now() - windowMs;
+        return this.requestTimestamps.filter((ts) => ts > cutoff).length;
     }
 
     private recordRequest() {

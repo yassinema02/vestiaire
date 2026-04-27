@@ -11,6 +11,7 @@ import { supabase } from './supabase';
 import { requireUserId } from './auth-helpers';
 import { buildListingPrompt as buildListingPromptTemplate, LISTING_TONE_INSTRUCTIONS } from '../constants/prompts';
 import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
+import { sanitizeText } from '../utils/validation';
 
 export type ListingTone = 'casual' | 'detailed' | 'minimal';
 export type ListingStatus = 'listed' | 'sold' | 'cancelled';
@@ -62,9 +63,9 @@ function formatRelativeTime(dateStr: string): string {
 
 function buildListingPrompt(item: WardrobeItem, tone: ListingTone): string {
     const features: string[] = [];
-    if (item.colors?.length) features.push(`Colors: ${item.colors.join(', ')}`);
-    if (item.seasons?.length) features.push(`Seasons: ${item.seasons.join(', ')}`);
-    if (item.occasions?.length) features.push(`Occasions: ${item.occasions.join(', ')}`);
+    if (item.colors?.length) features.push(`Colors: ${item.colors.map(c => sanitizeText(c)).join(', ')}`);
+    if (item.seasons?.length) features.push(`Seasons: ${item.seasons.map(s => sanitizeText(s)).join(', ')}`);
+    if (item.occasions?.length) features.push(`Occasions: ${item.occasions.map(o => sanitizeText(o)).join(', ')}`);
 
     // Calculate CPW if possible
     const cpw = item.purchase_price && item.wear_count > 0
@@ -72,10 +73,10 @@ function buildListingPrompt(item: WardrobeItem, tone: ListingTone): string {
         : undefined;
 
     return buildListingPromptTemplate({
-        name: item.name || 'Not specified',
-        brand: item.brand || 'Not specified',
-        category: item.category || 'Not specified',
-        subCategory: item.sub_category || undefined,
+        name: sanitizeText(item.name || 'Not specified'),
+        brand: sanitizeText(item.brand || 'Not specified'),
+        category: sanitizeText(item.category || 'Not specified'),
+        subCategory: item.sub_category ? sanitizeText(item.sub_category) : undefined,
         features,
         purchasePrice: item.purchase_price || undefined,
         wearCount: item.wear_count || 0,
@@ -253,7 +254,8 @@ export const listingService = {
                 .from('resale_listings')
                 .select('*, item:items(*)')
                 .eq('user_id', userId)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(200);
 
             if (statusFilter) {
                 query = query.eq('status', statusFilter);

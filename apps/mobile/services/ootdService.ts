@@ -66,9 +66,27 @@ export const ootdService = {
                 return { posts: [], error: uploadError || new Error('Photo upload failed') };
             }
 
-            // 2. Insert one row per squad
+            // 2. Verify user is a member of all target squads before inserting
+            const { data: memberships } = await supabase
+                .from('squad_memberships')
+                .select('squad_id')
+                .eq('user_id', userId)
+                .in('squad_id', input.squad_ids);
+
+            const memberSquadIds = new Set((memberships || []).map(m => m.squad_id));
+            const validSquadIds = input.squad_ids.filter(id => memberSquadIds.has(id));
+
+            if (validSquadIds.length === 0) {
+                // Clean up uploaded photo since no valid squads
+                if (photoPath) {
+                    await supabase.storage.from(BUCKET_NAME).remove([photoPath]);
+                }
+                return { posts: [], error: new Error('You are not a member of any selected squads') };
+            }
+
+            // 3. Insert one row per verified squad
             const posts: OotdPost[] = [];
-            for (const squadId of input.squad_ids) {
+            for (const squadId of validSquadIds) {
                 const { data, error } = await supabase
                     .from('ootd_posts')
                     .insert({
@@ -110,6 +128,19 @@ export const ootdService = {
         limit: number = 20
     ): Promise<{ posts: OotdPostWithAuthor[]; error: Error | null }> {
         try {
+            // Verify caller is a member of this squad
+            const userId = await requireUserId();
+            const { data: membership } = await supabase
+                .from('squad_memberships')
+                .select('id')
+                .eq('squad_id', squadId)
+                .eq('user_id', userId)
+                .maybeSingle();
+
+            if (!membership) {
+                return { posts: [], error: new Error('You are not a member of this squad') };
+            }
+
             const { data, error } = await supabase
                 .from('ootd_posts')
                 .select(`
@@ -250,8 +281,12 @@ export const ootdService = {
             try {
                 const url = new URL(post.photo_url);
                 const pathParts = url.pathname.split(`/${BUCKET_NAME}/`);
-                if (pathParts[1]) {
-                    await supabase.storage.from(BUCKET_NAME).remove([pathParts[1]]);
+                const storagePath = pathParts[1];
+                // Validate the storage path belongs to the user's directory to prevent path traversal
+                if (storagePath && storagePath.startsWith(`${userId}/`) && !storagePath.includes('..')) {
+                    await supabase.storage.from(BUCKET_NAME).remove([storagePath]);
+                } else {
+                    console.warn('[OOTD] Skipping photo cleanup — path does not match user directory:', storagePath);
                 }
             } catch {
                 // Storage cleanup is best-effort

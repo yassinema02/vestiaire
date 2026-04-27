@@ -204,14 +204,26 @@ export const eventSyncService = {
         userCorrected: boolean = false
     ): Promise<{ error: Error | null }> => {
         try {
+            const userId = await requireUserId();
+
+            // Validate inputs
+            const VALID_EVENT_TYPES = ['work', 'social', 'formal', 'casual', 'sport', 'date', 'travel', 'other'];
+            if (!VALID_EVENT_TYPES.includes(eventType)) {
+                return { error: new Error(`Invalid event type: ${eventType}`) };
+            }
+            if (typeof formalityScore !== 'number' || formalityScore < 0 || formalityScore > 10) {
+                return { error: new Error('Formality score must be 0-10') };
+            }
+
             const { error } = await supabase
                 .from('calendar_events')
                 .update({
                     event_type: eventType,
-                    formality_score: formalityScore,
+                    formality_score: Math.round(formalityScore),
                     user_corrected: userCorrected,
                 })
-                .eq('id', eventId);
+                .eq('id', eventId)
+                .eq('user_id', userId); // Ensure user owns this event
 
             if (error) throw error;
             return { error: null };

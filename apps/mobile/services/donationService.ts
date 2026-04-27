@@ -65,7 +65,9 @@ export const donationService = {
             // Award points
             try {
                 await gamificationService.addPoints(3, 'donate_item');
-            } catch { /* non-fatal */ }
+            } catch (err) {
+                console.warn('[Donation] Failed to award gamification points:', err);
+            }
 
             return { error: null };
         } catch (err) {
@@ -84,7 +86,8 @@ export const donationService = {
                 .from('donation_log')
                 .select('*, item:items(*)')
                 .eq('user_id', userId)
-                .order('donated_at', { ascending: false });
+                .order('donated_at', { ascending: false })
+                .limit(500);
 
             if (error) return { donations: [], error: error.message };
             return { donations: (data || []) as DonationEntry[], error: null };

@@ -47,7 +47,15 @@ function dismissedKey(userId: string): string {
 async function getDismissedIds(userId: string): Promise<Set<string>> {
     const raw = await AsyncStorage.getItem(dismissedKey(userId));
     if (!raw) return new Set();
-    return new Set(JSON.parse(raw));
+    try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return new Set();
+        return new Set(parsed);
+    } catch {
+        console.warn('[ResalePrompt] Corrupted dismissed IDs in AsyncStorage, resetting');
+        await AsyncStorage.removeItem(dismissedKey(userId));
+        return new Set();
+    }
 }
 
 async function saveDismissedIds(userId: string, ids: Set<string>): Promise<void> {

@@ -13,6 +13,7 @@ import { WardrobeItem, itemsService } from './items';
 import { PRODUCT_ANALYSIS_PROMPT } from '../constants/prompts';
 import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 import { optimizeForAI } from './imageOptimizer';
+import { sanitizeText } from '../utils/validation';
 
 const SCAN_BUCKET = 'shopping-scans';
 
@@ -40,8 +41,40 @@ const SCRAPE_TIMEOUT_MS = 10_000;
  */
 function isValidUrl(url: string): boolean {
     try {
+        // Check max URL length (2048 chars)
+        if (url.length > 2048) {
+            return false;
+        }
+
         const parsed = new URL(url);
-        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+
+        // Only allow http/https
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            return false;
+        }
+
+        // Block localhost/127.0.0.1/::1
+        const hostname = parsed.hostname.toLowerCase();
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+            return false;
+        }
+
+        // Block private IP ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
+        const ipMatch = hostname.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+        if (ipMatch) {
+            const [, first, second] = ipMatch;
+            const firstNum = parseInt(first, 10);
+            const secondNum = parseInt(second, 10);
+
+            // 10.0.0.0/8
+            if (firstNum === 10) return false;
+            // 172.16.0.0/12
+            if (firstNum === 172 && secondNum >= 16 && secondNum <= 31) return false;
+            // 192.168.0.0/16
+            if (firstNum === 192 && secondNum === 168) return false;
+        }
+
+        return true;
     } catch {
         return false;
     }
@@ -189,15 +222,15 @@ export const shoppingService = {
 
             // Validate and normalize the response
             const analysis: ProductAnalysis = {
-                product_name: raw.product_name || 'Unknown Product',
-                product_brand: raw.product_brand || null,
-                category: raw.category || 'tops',
-                color: raw.color || 'Black',
-                secondary_colors: Array.isArray(raw.secondary_colors) ? raw.secondary_colors : [],
-                style: raw.style || 'casual',
-                material: raw.material || null,
-                pattern: raw.pattern || 'solid',
-                season: Array.isArray(raw.season) ? raw.season : [],
+                product_name: sanitizeText(raw.product_name || 'Unknown Product'),
+                product_brand: raw.product_brand ? sanitizeText(raw.product_brand) : null,
+                category: sanitizeText(raw.category || 'tops'),
+                color: sanitizeText(raw.color || 'Black'),
+                secondary_colors: Array.isArray(raw.secondary_colors) ? raw.secondary_colors.map((c: string) => sanitizeText(c)) : [],
+                style: sanitizeText(raw.style || 'casual'),
+                material: raw.material ? sanitizeText(raw.material) : null,
+                pattern: sanitizeText(raw.pattern || 'solid'),
+                season: Array.isArray(raw.season) ? raw.season.map((s: string) => sanitizeText(s)) : [],
                 formality: typeof raw.formality === 'number' ? raw.formality : 5,
                 confidence: typeof raw.confidence === 'number' ? raw.confidence : 0,
             };
@@ -700,11 +733,11 @@ export const shoppingService = {
             const product: ScrapedProduct = {
                 url,
                 image_url: imageUrl,
-                name,
-                brand: ogBrand || jsonLdBrand || null,
+                name: name ? sanitizeText(name) : null,
+                brand: ogBrand || jsonLdBrand ? sanitizeText(ogBrand || jsonLdBrand) : null,
                 price_amount: ogPrice ? parseFloat(ogPrice) : jsonLdPrice,
                 price_currency: ogCurrency || jsonLdCurrency || null,
-                color,
+                color: color ? sanitizeText(color) : null,
             };
 
             return { product, error: null };
@@ -809,15 +842,15 @@ export const shoppingService = {
 
             // Rebuild the ProductAnalysis from stored scan data
             const analysis: ProductAnalysis = {
-                product_name: scan.product_name || 'Unknown Product',
-                product_brand: scan.product_brand,
-                category: scan.category || 'tops',
-                color: scan.color || 'Unknown',
-                secondary_colors: scan.secondary_colors || [],
-                style: scan.style || 'casual',
-                material: scan.material,
-                pattern: scan.pattern || 'solid',
-                season: scan.season || [],
+                product_name: sanitizeText(scan.product_name || 'Unknown Product'),
+                product_brand: scan.product_brand ? sanitizeText(scan.product_brand) : null,
+                category: sanitizeText(scan.category || 'tops'),
+                color: sanitizeText(scan.color || 'Unknown'),
+                secondary_colors: (scan.secondary_colors || []).map(c => sanitizeText(c)),
+                style: sanitizeText(scan.style || 'casual'),
+                material: scan.material ? sanitizeText(scan.material) : null,
+                pattern: sanitizeText(scan.pattern || 'solid'),
+                season: (scan.season || []).map(s => sanitizeText(s)),
                 formality: scan.formality ?? 5,
                 confidence: 1, // Re-analysis uses confirmed data
             };

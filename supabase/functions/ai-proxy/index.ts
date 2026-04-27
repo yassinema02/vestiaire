@@ -19,6 +19,30 @@ const COST_TABLE: Record<string, { input: number; output: number }> = {
     'gemini-1.5-pro': { input: 1.25, output: 5.00 },
 };
 
+// Rate limiter: Map of userId -> array of request timestamps
+const rateLimitMap = new Map<string, number[]>();
+const RATE_LIMIT_REQUESTS = 10;
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+
+function checkRateLimit(userId: string): boolean {
+    const now = Date.now();
+    const timestamps = rateLimitMap.get(userId) || [];
+
+    // Remove timestamps older than the window
+    const recentTimestamps = timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+
+    // Check if limit exceeded
+    if (recentTimestamps.length >= RATE_LIMIT_REQUESTS) {
+        return false;
+    }
+
+    // Add current timestamp
+    recentTimestamps.push(now);
+    rateLimitMap.set(userId, recentTimestamps);
+
+    return true;
+}
+
 function estimateCost(
     model: string,
     tokensInput: number | null,
@@ -58,11 +82,33 @@ Deno.serve(async (req: Request) => {
             );
         }
 
+        // Check rate limit
+        if (!checkRateLimit(user.id)) {
+            return new Response(
+                JSON.stringify({ error: 'Rate limit exceeded. Maximum 10 requests per minute.' }),
+                { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
+
         const startMs = Date.now();
 
         // Parse request body
-        const body = await req.json();
-        const feature = typeof body?.feature === 'string' ? body.feature : 'unknown';
+        let body: Record<string, unknown>;
+        try {
+            body = await req.json();
+        } catch {
+            return new Response(
+                JSON.stringify({ error: 'Invalid JSON body' }),
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
+        const ALLOWED_FEATURES = [
+            'categorization', 'outfit_gen', 'event_outfit_gen', 'gap_analysis',
+            'seasonal_report', 'packing_list', 'steal_look', 'product_photo',
+            'background_removal', 'shopping_analysis', 'extraction',
+        ];
+        const rawFeature = typeof body?.feature === 'string' ? body.feature : 'unknown';
+        const feature = ALLOWED_FEATURES.includes(rawFeature) ? rawFeature : 'unknown';
         const requestedModel = typeof body?.model === 'string' ? body.model : 'gemini-2.5-flash';
         const allowedModels = Object.keys(COST_TABLE);
         const model = allowedModels.includes(requestedModel) ? requestedModel : 'gemini-2.5-flash';
@@ -93,9 +139,12 @@ Deno.serve(async (req: Request) => {
 
         const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
-        const geminiResponse = await fetch(`${geminiUrl}?key=${GEMINI_API_KEY}`, {
+        const geminiResponse = await fetch(geminiUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'x-goog-api-key': GEMINI_API_KEY,
+            },
             body: JSON.stringify({ contents: normalizedContents }),
         });
 
@@ -117,7 +166,7 @@ Deno.serve(async (req: Request) => {
                 })
                 .then(() => { });
             return new Response(
-                JSON.stringify({ error: `AI service error: ${geminiResponse.status}`, detail: errorText }),
+                JSON.stringify({ error: `AI service error: ${geminiResponse.status}` }),
                 { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
         }

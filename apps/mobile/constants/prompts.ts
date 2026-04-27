@@ -3,6 +3,8 @@
  * All Gemini prompts in one place for easy tuning and version control.
  */
 
+import { sanitizeText } from '../utils/validation';
+
 // ─── aiCategorization.ts ─────────────────────────────────────────
 
 export const CLOTHING_ANALYSIS_PROMPT = `You are a fashion expert. Analyze this clothing item image and provide:
@@ -188,7 +190,7 @@ export function buildOutfitSuggestionPrompt(itemsJson: string, contextText: stri
     return `You are a professional fashion stylist helping someone choose outfits from their wardrobe.
 
 CONTEXT:
-${contextText}
+${sanitizeText(contextText)}
 
 AVAILABLE WARDROBE ITEMS:
 ${itemsJson}
@@ -228,7 +230,7 @@ export function buildEventOutfitPrompt(
     return `You are a professional fashion stylist. Suggest ONE outfit from this wardrobe for a specific event.
 
 CONTEXT:
-${contextLines}
+${sanitizeText(contextLines)}
 
 AVAILABLE WARDROBE ITEMS:
 ${itemsJson}
@@ -244,7 +246,7 @@ Respond ONLY with valid JSON:
 {
   "name": "Outfit Name",
   "items": ["item-id-1", "item-id-2"],
-  "occasion": "${eventType}",
+  "occasion": "${sanitizeText(eventType)}",
   "rationale": "Why this outfit works for this event..."
 }`;
 }
@@ -272,9 +274,9 @@ export function buildListingPrompt(params: {
 }): string {
     const featureStr = params.features.length > 0 ? `- Features: ${params.features.join('; ')}` : '';
     const priceStr = params.purchasePrice ? `- Original price: £${params.purchasePrice.toFixed(0)}` : '';
-    const lastWornStr = params.lastWornAt ? `- Last worn: ${params.lastWornAt}` : '';
+    const lastWornStr = params.lastWornAt ? `- Last worn: ${sanitizeText(params.lastWornAt)}` : '';
     const cpwStr = params.cpw ? `- Cost per wear: £${params.cpw.toFixed(2)}` : '';
-    const purchaseDateStr = params.purchaseDate ? `- Purchased: ${params.purchaseDate}` : '';
+    const purchaseDateStr = params.purchaseDate ? `- Purchased: ${sanitizeText(params.purchaseDate)}` : '';
 
     // Sustainability instruction based on wear count
     let sustainabilityInstruction: string;
@@ -289,9 +291,9 @@ export function buildListingPrompt(params: {
     return `You are an expert reseller on Vinted with thousands of successful sales. Generate a listing for this clothing item.
 
 ITEM DETAILS:
-- Name: ${params.name}
-- Brand: ${params.brand}
-- Category: ${params.category}${params.subCategory ? ` / ${params.subCategory}` : ''}
+- Name: ${sanitizeText(params.name)}
+- Brand: ${sanitizeText(params.brand)}
+- Category: ${sanitizeText(params.category)}${params.subCategory ? ` / ${sanitizeText(params.subCategory)}` : ''}
 ${featureStr}
 ${priceStr}
 - Times worn: ${params.wearCount}
@@ -326,10 +328,10 @@ export function buildStealLookPrompt(targetsSummaryJson: string, wardrobeSummary
     return `You are a fashion matching assistant. Given TARGET items from a friend's outfit, find the BEST match for each from the user's wardrobe.
 
 TARGET ITEMS (friend's outfit):
-${targetsSummaryJson}
+${sanitizeText(targetsSummaryJson)}
 
 USER'S WARDROBE:
-${wardrobeSummaryJson}
+${sanitizeText(wardrobeSummaryJson)}
 
 For EACH target item, find the best match. Rules:
 - "exact": same category AND very similar color/style (confidence 85-100)
@@ -359,7 +361,7 @@ export function buildEventClassificationPrompt(
     location?: string | null
 ): string {
     return `Classify this calendar event. Return ONLY valid JSON, no other text.
-Title: "${title}"${description ? `\nDescription: "${description}"` : ''}${location ? `\nLocation: "${location}"` : ''}
+Title: "${sanitizeText(title)}"${description ? `\nDescription: "${sanitizeText(description)}"` : ''}${location ? `\nLocation: "${sanitizeText(location)}"` : ''}
 
 Return: { "type": "work|social|active|formal|casual", "formalityScore": 1-10, "confidence": 0.0-1.0 }
 
@@ -377,9 +379,9 @@ export function buildBatchEventClassificationPrompt(
 ): string {
     const eventList = events
         .map((e, i) => {
-            let entry = `${i + 1}. id="${e.id}" title="${e.title}"`;
-            if (e.description) entry += ` description="${e.description}"`;
-            if (e.location) entry += ` location="${e.location}"`;
+            let entry = `${i + 1}. id="${e.id}" title="${sanitizeText(e.title)}"`;
+            if (e.description) entry += ` description="${sanitizeText(e.description)}"`;
+            if (e.location) entry += ` location="${sanitizeText(e.location)}"`;
             return entry;
         })
         .join('\n');

@@ -34,10 +34,11 @@ export const bulkUploadService = {
   uploadBatch: async (
     photos: string[],
     onProgress: (progress: BulkUploadProgress) => void
-  ): Promise<{ urls: string[]; error: Error | null }> => {
+  ): Promise<{ urls: string[]; failedIndexes: number[]; error: Error | null }> => {
     try {
       const userId = await requireUserId();
       const urls: string[] = [];
+      const failedIndexes: number[] = [];
 
       for (let i = 0; i < photos.length; i++) {
         onProgress({
@@ -59,6 +60,7 @@ export const bulkUploadService = {
 
         if (error) {
           console.warn(`Failed to upload photo ${i + 1}:`, error.message);
+          failedIndexes.push(i);
           continue;
         }
 
@@ -69,6 +71,7 @@ export const bulkUploadService = {
 
         if (signError || !urlData?.signedUrl) {
           console.warn(`Failed to create signed URL for photo ${i + 1}:`, signError?.message);
+          failedIndexes.push(i);
           continue;
         }
 
@@ -81,10 +84,14 @@ export const bulkUploadService = {
         percentage: 100,
       });
 
-      return { urls, error: null };
+      if (failedIndexes.length > 0) {
+        console.warn(`[BulkUpload] ${failedIndexes.length}/${photos.length} photos failed to upload (indexes: ${failedIndexes.join(', ')})`);
+      }
+
+      return { urls, failedIndexes, error: null };
     } catch (error) {
       console.error('Batch upload error:', error);
-      return { urls: [], error: error as Error };
+      return { urls: [], failedIndexes: [], error: error as Error };
     }
   },
 

@@ -140,60 +140,85 @@ export default function AnalyticsScreen() {
 
     const loadDashboard = useCallback(async () => {
         setIsDashboardLoading(true);
-        const [wardrobeResult, sustainResult, itemsResult] = await Promise.all([
-            analyticsService.getWardrobeStats(),
-            analyticsService.getSustainabilityScore(),
-            itemsService.getItems(),
-        ]);
-        setStats(wardrobeResult.stats);
-        setSustainability(sustainResult.score);
-        setResaleCandidates(resaleService.getResaleCandidates(itemsResult.items));
-        // Neglect stats (Story 13.1)
-        const threshold = await neglectService.getNeglectThreshold();
-        setNeglectThreshold(threshold);
-        setNeglectStats(neglectService.getNeglectStats(itemsResult.items));
-        // Resale stats (Story 13.3)
-        listingService.getResaleStats().then(stats => {
-            if (!stats.error) setResaleStats(stats);
-        });
-        // Health score (Story 13.4)
-        setHealthScore(calculateHealthScore(itemsResult.items));
-        setNeglectedItems(itemsResult.items.filter(i => i.neglect_status && i.status === 'complete'));
-        setIsDashboardLoading(false);
+        try {
+            const [wardrobeResult, sustainResult, itemsResult] = await Promise.all([
+                analyticsService.getWardrobeStats(),
+                analyticsService.getSustainabilityScore(),
+                itemsService.getItems(),
+            ]);
+            setStats(wardrobeResult.stats);
+            setSustainability(sustainResult.score);
+            setResaleCandidates(resaleService.getResaleCandidates(itemsResult.items));
+            // Neglect stats (Story 13.1)
+            const threshold = await neglectService.getNeglectThreshold();
+            setNeglectThreshold(threshold);
+            setNeglectStats(neglectService.getNeglectStats(itemsResult.items));
+            // Resale stats (Story 13.3)
+            listingService.getResaleStats().then(stats => {
+                if (!stats.error) setResaleStats(stats);
+            }).catch((err) => console.warn('[Analytics] Failed to load resale stats:', err?.message));
+            // Health score (Story 13.4)
+            setHealthScore(calculateHealthScore(itemsResult.items));
+            setNeglectedItems(itemsResult.items.filter(i => i.neglect_status && i.status === 'complete'));
+        } catch (err) {
+            console.warn('[Analytics] Failed to load dashboard:', (err as Error)?.message);
+        } finally {
+            setIsDashboardLoading(false);
+        }
     }, []);
 
     const loadLeaderboard = useCallback(async () => {
         setIsLeaderboardLoading(true);
-        const { items } = await wearLogService.getMostWornItems({
-            limit: 10,
-            category: selectedCategory || undefined,
-            dateRange: timeFilter,
-        });
-        setMostWorn(items);
-        setIsLeaderboardLoading(false);
+        try {
+            const { items } = await wearLogService.getMostWornItems({
+                limit: 10,
+                category: selectedCategory || undefined,
+                dateRange: timeFilter,
+            });
+            setMostWorn(items);
+        } catch (err) {
+            console.warn('[Analytics] Failed to load leaderboard:', (err as Error)?.message);
+        } finally {
+            setIsLeaderboardLoading(false);
+        }
     }, [selectedCategory, timeFilter]);
 
     const loadBrandAnalytics = useCallback(async () => {
         setIsBrandLoading(true);
-        const { analytics } = await analyticsService.getBrandAnalytics(brandCategoryFilter || undefined);
-        setBrandAnalytics(analytics);
-        setIsBrandLoading(false);
+        try {
+            const { analytics } = await analyticsService.getBrandAnalytics(brandCategoryFilter || undefined);
+            setBrandAnalytics(analytics);
+        } catch (err) {
+            console.warn('[Analytics] Failed to load brand analytics:', (err as Error)?.message);
+        } finally {
+            setIsBrandLoading(false);
+        }
     }, [brandCategoryFilter]);
 
     const loadGapAnalysis = useCallback(async () => {
         setIsGapLoading(true);
-        const itemsResult = await itemsService.getItems();
-        const { result } = await gapAnalysisService.analyzeWardrobe(itemsResult.items);
-        setGapResult(result);
-        setIsGapLoading(false);
+        try {
+            const itemsResult = await itemsService.getItems();
+            const { result } = await gapAnalysisService.analyzeWardrobe(itemsResult.items);
+            setGapResult(result);
+        } catch (err) {
+            console.warn('[Analytics] Failed to load gap analysis:', (err as Error)?.message);
+        } finally {
+            setIsGapLoading(false);
+        }
     }, []);
 
     const loadSeasonalReport = useCallback(async (season?: Season) => {
         setIsSeasonalLoading(true);
-        const { result } = await seasonalReportService.getSeasonalReport(season ?? selectedSeason ?? undefined);
-        setSeasonalResult(result);
-        if (!selectedSeason) setSelectedSeason(result.currentSeason);
-        setIsSeasonalLoading(false);
+        try {
+            const { result } = await seasonalReportService.getSeasonalReport(season ?? selectedSeason ?? undefined);
+            setSeasonalResult(result);
+            if (!selectedSeason) setSelectedSeason(result.currentSeason);
+        } catch (err) {
+            console.warn('[Analytics] Failed to load seasonal report:', (err as Error)?.message);
+        } finally {
+            setIsSeasonalLoading(false);
+        }
     }, [selectedSeason]);
 
     // loadHeatmap reads view/ref from refs so it has no state dependencies and

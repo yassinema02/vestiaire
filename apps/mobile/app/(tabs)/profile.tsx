@@ -117,9 +117,10 @@ export default function ProfileScreen() {
         ],
     });
 
-    // Log the request URL for debugging
+    // OAuth request ready check (token logging removed for security)
     useEffect(() => {
-        if (request?.url) {
+        // Request URL available for debugging only in __DEV__ mode
+        if (__DEV__ && request?.url) {
             console.log('OAuth Request URL:', request.url);
         }
     }, [request]);
@@ -238,11 +239,10 @@ export default function ProfileScreen() {
 
     // Handle Google OAuth response
     useEffect(() => {
-        console.log('OAuth Response:', JSON.stringify(response, null, 2));
         if (response?.type === 'success') {
             const { authentication } = response;
             if (authentication?.accessToken) {
-                console.log('Access token obtained successfully');
+                if (__DEV__) console.log('OAuth: access token obtained');
                 handleGoogleOAuthSuccess(authentication.accessToken, authentication.refreshToken || undefined);
             }
         } else if (response?.type === 'error') {
@@ -262,8 +262,7 @@ export default function ProfileScreen() {
 
         try {
             // Use showInRecents to help with redirect handling
-            const result = await promptAsync({ showInRecents: true });
-            console.log('PromptAsync result:', result);
+            await promptAsync({ showInRecents: true });
         } catch (error) {
             console.error('OAuth prompt error:', error);
             Alert.alert('Error', 'Failed to open Google sign-in');

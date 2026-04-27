@@ -12,11 +12,32 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET');
 
+/**
+ * Constant-time string comparison to prevent timing attacks.
+ * Uses XOR-based byte comparison — runs in constant time regardless of
+ * where (or whether) the strings diverge.
+ */
+function timingSafeCompare(a: string, b: string): boolean {
+    const encoder = new TextEncoder();
+    const aBytes = encoder.encode(a);
+    const bBytes = encoder.encode(b);
+
+    // Length mismatch: still iterate full max length to avoid timing leak
+    const maxLen = Math.max(aBytes.length, bBytes.length);
+    let mismatch = aBytes.length !== bBytes.length ? 1 : 0;
+
+    for (let i = 0; i < maxLen; i++) {
+        mismatch |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
+    }
+
+    return mismatch === 0;
+}
+
 serve(async (req: Request) => {
     try {
         // 1. Verify webhook signature/secret
         const receivedSecret = req.headers.get('x-webhook-secret');
-        if (!WEBHOOK_SECRET || receivedSecret !== WEBHOOK_SECRET) {
+        if (!WEBHOOK_SECRET || !timingSafeCompare(receivedSecret || '', WEBHOOK_SECRET)) {
             return new Response(
                 JSON.stringify({ error: 'Unauthorized' }),
                 { status: 401, headers: { 'Content-Type': 'application/json' } }
@@ -120,7 +141,20 @@ serve(async (req: Request) => {
         });
         clearTimeout(timeout);
 
-        const pushResult = await pushResponse.json();
+        let pushResult: unknown;
+        try {
+            pushResult = await pushResponse.json();
+        } catch {
+            console.warn('Failed to parse Expo push response');
+        }
+
+        if (!pushResponse.ok) {
+            console.error('Expo push API error:', pushResponse.status, pushResult);
+            return new Response(
+                JSON.stringify({ error: 'Push notification delivery failed', sent: 0 }),
+                { status: 502, headers: { 'Content-Type': 'application/json' } }
+            );
+        }
 
         return new Response(
             JSON.stringify({ sent: tokens.length }),

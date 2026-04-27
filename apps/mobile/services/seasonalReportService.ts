@@ -293,7 +293,7 @@ export const seasonalReportService = {
             await saveReportToCache(userId, currentReport);
 
             // Try to get previous year's report for same season
-            const prevYear = targetSeason === 'winter' ? targetYear - 1 : targetYear - 1;
+            const prevYear = targetYear - 1;
             let previousYearReport: SeasonalReport | undefined;
             let comparisonText: string | undefined;
 
