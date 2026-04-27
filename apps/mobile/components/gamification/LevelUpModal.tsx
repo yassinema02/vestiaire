@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Modal, View, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -15,6 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { LEVELS } from '@vestiaire/shared';
+import { Text } from '../ui/Typography';
 
 interface LevelUpModalProps {
     visible: boolean;
@@ -80,7 +81,7 @@ export default function LevelUpModal({ visible, newLevel, onDismiss }: LevelUpMo
                     <Text style={styles.levelBadge}>Level {newLevel}</Text>
 
                     <View style={styles.unlockRow}>
-                        <Ionicons name="ribbon-outline" size={18} color="#6366f1" />
+                        <Ionicons name="ribbon-outline" size={18} color="#87A96B" />
                         <Text style={styles.unlockText}>New badge unlocked!</Text>
                     </View>
 
@@ -108,7 +109,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '100%',
         maxWidth: 320,
-        shadowColor: '#6366f1',
+        shadowColor: '#87A96B',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.2,
         shadowRadius: 24,
@@ -138,13 +139,13 @@ const styles = StyleSheet.create({
     levelName: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#6366f1',
+        color: '#87A96B',
     },
     levelBadge: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6366f1',
-        backgroundColor: '#eef2ff',
+        color: '#87A96B',
+        backgroundColor: '#F4E2D6',
         paddingHorizontal: 14,
         paddingVertical: 6,
         borderRadius: 12,
@@ -162,12 +163,12 @@ const styles = StyleSheet.create({
     },
     unlockText: {
         fontSize: 14,
-        color: '#6366f1',
+        color: '#87A96B',
         fontWeight: '500',
     },
     button: {
         marginTop: 24,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 48,

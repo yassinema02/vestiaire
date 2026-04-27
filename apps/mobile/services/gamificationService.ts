@@ -178,61 +178,33 @@ export const gamificationService = {
     },
 
     /**
-     * Core function: add points and update stats
+     * Core function: add points and update stats via server-side RPC.
+     * Points are awarded atomically to prevent client-side manipulation.
      */
     addPoints: async (
         amount: number,
         actionType: string
     ): Promise<{ newTotal: number; error: Error | null }> => {
         try {
-            const { data: userData } = await supabase.auth.getUser();
-            if (!userData.user) {
-                return { newTotal: 0, error: new Error('User not authenticated') };
-            }
+            const { data, error } = await supabase.rpc('award_points', {
+                p_amount: amount,
+                p_action_type: actionType,
+            });
 
-            const userId = userData.user.id;
-
-            // Insert point history entry
-            const { error: historyError } = await supabase
-                .from('point_history')
-                .insert({
-                    user_id: userId,
-                    points: amount,
-                    action_type: actionType,
-                });
-
-            if (historyError) {
-                if (historyError.code === 'PGRST205' || historyError.code === '42P01') {
+            if (error) {
+                if (error.code === 'PGRST205' || error.code === '42P01') {
                     return { newTotal: 0, error: null };
                 }
-                console.warn('Insert point history error:', historyError);
-                return { newTotal: 0, error: historyError };
+                console.warn('Award points RPC error:', error);
+                return { newTotal: 0, error };
             }
 
-            // Get current stats
-            const { stats } = await gamificationService.getUserStats();
-            if (!stats) {
-                return { newTotal: 0, error: new Error('Could not load user stats') };
+            const result = data as { new_total?: number; error?: string };
+            if (result.error) {
+                return { newTotal: 0, error: new Error(result.error) };
             }
 
-            const newTotal = stats.style_points + amount;
-            const newLevel = calculateLevel(newTotal);
-
-            // Update stats
-            const { error: updateError } = await supabase
-                .from('user_stats')
-                .update({
-                    style_points: newTotal,
-                    level: newLevel,
-                })
-                .eq('user_id', userId);
-
-            if (updateError) {
-                console.warn('Update user stats error:', updateError);
-                return { newTotal: 0, error: updateError };
-            }
-
-            return { newTotal, error: null };
+            return { newTotal: result.new_total || 0, error: null };
         } catch (error) {
             console.warn('Add points exception:', error);
             return { newTotal: 0, error: error as Error };
@@ -258,61 +230,20 @@ export const gamificationService = {
                 return defaultResult;
             }
 
-            const { data: userData } = await supabase.auth.getUser();
-            if (!userData.user) return defaultResult;
+            // Use server-side RPC to update streak atomically
+            const { data, error } = await supabase.rpc('update_user_streak');
 
-            // Lazy freeze replenishment: if >7 days since last replenish, grant 1 freeze
-            let freezesAvailable = stats.streak_freezes_available ?? 0;
-            let lastReplenish = stats.last_freeze_replenish_date;
-            if (lastReplenish && freezesAvailable < 1 && daysBetween(lastReplenish, today) >= 7) {
-                freezesAvailable = 1;
-                lastReplenish = today;
+            if (error) {
+                console.warn('Update streak RPC error:', error);
+                return defaultResult;
             }
 
-            let newStreak: number;
-            let streakLost = false;
-            let freezeUsed = false;
-
-            if (lastActive === yesterday) {
-                // Consecutive day — increment
-                newStreak = stats.current_streak + 1;
-            } else if (lastActive && daysBetween(lastActive, today) > 1) {
-                // Gap > 1 day
-                if (freezesAvailable > 0) {
-                    // Use freeze to protect streak
-                    newStreak = stats.current_streak + 1;
-                    freezesAvailable -= 1;
-                    freezeUsed = true;
-                } else {
-                    // Streak broken
-                    newStreak = 1;
-                    streakLost = stats.current_streak > 1;
-                }
-            } else {
-                // First ever activity
-                newStreak = 1;
-            }
-
-            const newLongest = Math.max(newStreak, stats.longest_streak);
-
-            // Build update payload
-            const updatePayload: Record<string, any> = {
-                current_streak: newStreak,
-                longest_streak: newLongest,
-                last_active_date: today,
-                streak_freezes_available: freezesAvailable,
-            };
-            if (freezeUsed || lastReplenish !== stats.last_freeze_replenish_date) {
-                updatePayload.last_freeze_replenish_date = lastReplenish || today;
-            }
-
-            await supabase
-                .from('user_stats')
-                .update(updatePayload)
-                .eq('user_id', userData.user.id);
+            const result = data as { streak?: number; streak_lost?: boolean; longest?: number };
+            const streakLost = result.streak_lost ?? false;
+            const newStreak = result.streak ?? 1;
 
             // Award streak continuation points (day 2+)
-            if (!streakLost && newStreak >= 2 && (lastActive === yesterday || freezeUsed)) {
+            if (!streakLost && newStreak >= 2) {
                 await gamificationService.addPoints(POINTS.COMPLETE_STREAK, 'streak_bonus');
             }
 
@@ -424,18 +355,9 @@ export const gamificationService = {
                 return { leveledUp: false, newLevel: 1, itemCount, error: null };
             }
 
-            // Ratchet: only go up
+            // Ratchet: only go up — level is now managed by award_points RPC
+            // but we still check here for level-up detection
             if (calculatedLevel > stats.level) {
-                const { data: userData } = await supabase.auth.getUser();
-                if (!userData.user) {
-                    return { leveledUp: false, newLevel: stats.level, itemCount, error: null };
-                }
-
-                await supabase
-                    .from('user_stats')
-                    .update({ level: calculatedLevel })
-                    .eq('user_id', userData.user.id);
-
                 return { leveledUp: true, newLevel: calculatedLevel, itemCount, error: null };
             }
 
@@ -452,31 +374,26 @@ export const gamificationService = {
      */
     awardWearLog: async (): Promise<{ pointsEarned: number; error: Error | null }> => {
         try {
-            let totalEarned = 0;
+            // Use atomic RPC to award base points + first-of-day bonus
+            const { data, error } = await supabase.rpc('award_wear_log_with_bonus');
 
-            // Base wear log points
-            const { error } = await gamificationService.addPoints(POINTS.LOG_OUTFIT, 'wear_log');
-            if (!error) totalEarned += POINTS.LOG_OUTFIT;
-
-            // Check if this is the first log of the day for bonus
-            const today = todayStr();
-            const userId = await requireUserId();
-            const { data: todayLogs } = await supabase
-                .from('point_history')
-                .select('id')
-                .eq('user_id', userId)
-                .eq('action_type', 'wear_log')
-                .gte('created_at', `${today}T00:00:00`)
-                .lte('created_at', `${today}T23:59:59`);
-
-            // If exactly 1 entry (the one we just created), this is the first
-            if (todayLogs && todayLogs.length === 1) {
-                const { error: bonusError } = await gamificationService.addPoints(
-                    POINTS.FIRST_ITEM_OF_DAY,
-                    'first_of_day'
-                );
-                if (!bonusError) totalEarned += POINTS.FIRST_ITEM_OF_DAY;
+            if (error) {
+                // Fallback to non-atomic path if RPC not deployed yet
+                if (error.code === 'PGRST205' || error.code === '42883') {
+                    const { error: addErr } = await gamificationService.addPoints(POINTS.LOG_OUTFIT, 'wear_log');
+                    await gamificationService.updateStreak();
+                    return { pointsEarned: addErr ? 0 : POINTS.LOG_OUTFIT, error: addErr };
+                }
+                console.warn('Award wear log RPC error:', error);
+                return { pointsEarned: 0, error };
             }
+
+            const result = data as { base_points: number; bonus_awarded: boolean; bonus_points: number; error?: string };
+            if (result.error) {
+                return { pointsEarned: 0, error: new Error(result.error) };
+            }
+
+            const totalEarned = result.base_points + (result.bonus_points || 0);
 
             // Update streak
             await gamificationService.updateStreak();
@@ -544,12 +461,12 @@ export const gamificationService = {
 
                 const earned = await checkBadgeCondition(badge.id, trigger, userId, context);
                 if (earned) {
-                    // Insert into user_badges
-                    const { error } = await supabase
-                        .from('user_badges')
-                        .insert({ user_id: userId, badge_id: badge.id });
+                    // Award badge via server-side RPC
+                    const { data, error } = await supabase.rpc('award_badge', {
+                        p_badge_id: badge.id,
+                    });
 
-                    if (!error) {
+                    if (!error && data && !(data as { error?: string }).error) {
                         newlyEarned.push(badge);
                     }
                 }
@@ -591,6 +508,10 @@ export const gamificationService = {
                 .eq('user_id', userId);
 
             if (error) {
+                // Handle DB trigger enforcing the limit
+                if (error.message?.includes('Maximum 3 featured badges')) {
+                    return { error: new Error('Maximum 3 featured badges allowed') };
+                }
                 console.warn('Toggle featured badge error:', error);
                 return { error };
             }
@@ -660,8 +581,32 @@ async function checkBadgeCondition(
                 return (items || []).some((i: any) => (i.wear_count ?? 0) >= 10);
             }
             case 'circular_seller': {
-                // Resale feature not yet implemented — skip
-                return false;
+                // Story 13.3: Check if user has sold any items via resale listings
+                const { data: soldListings } = await supabase
+                    .from('resale_listings')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .eq('status', 'sold')
+                    .limit(1);
+                return (soldListings || []).length > 0;
+            }
+            case 'circular_champion': {
+                // Story 13.5: Check if user has sold 10+ items
+                const { data: championListings } = await supabase
+                    .from('resale_listings')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .eq('status', 'sold');
+                return (championListings || []).length >= 10;
+            }
+            case 'generous_giver': {
+                // Story 13.6: Check if user has donated 20+ items
+                const { data: donatedItems } = await supabase
+                    .from('items')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .eq('resale_status', 'donated');
+                return (donatedItems || []).length >= 20;
             }
 
             // Secret badges

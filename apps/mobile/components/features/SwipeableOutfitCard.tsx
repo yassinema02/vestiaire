@@ -4,13 +4,7 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Image,
-    Dimensions,
-} from 'react-native';
+import { View, StyleSheet, Image, Dimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
     useSharedValue,
@@ -25,6 +19,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { OutfitSuggestion } from '../../services/aiOutfitService';
 import { WardrobeItem } from '../../services/items';
 import { OccasionType } from '../../utils/occasionDetector';
+import { Text } from '../ui/Typography';
+import { appTheme } from '../../theme/tokens';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 120;
@@ -40,11 +36,11 @@ interface SwipeableOutfitCardProps {
 }
 
 const OCCASION_COLORS: Record<OccasionType, string> = {
-    casual: '#10b981',
-    work: '#3b82f6',
-    formal: '#8b5cf6',
-    sport: '#f59e0b',
-    social: '#ec4899',
+    casual: '#87A96B',
+    work: '#475569',
+    formal: '#1F2937',
+    sport: '#CEB186',
+    social: '#C2847A',
 };
 
 export const SwipeableOutfitCard: React.FC<SwipeableOutfitCardProps> = ({
@@ -136,15 +132,15 @@ export const SwipeableOutfitCard: React.FC<SwipeableOutfitCardProps> = ({
 
     return (
         <GestureDetector gesture={gesture}>
-            <Animated.View style={[styles.card, cardStyle]}>
+            <Animated.View style={[styles.card, cardStyle] as any}>
                 {/* Like indicator */}
-                <Animated.View style={[styles.actionIndicator, styles.likeIndicator, likeOpacity]}>
+                <Animated.View style={[styles.actionIndicator, styles.likeIndicator, likeOpacity] as any}>
                     <Ionicons name="heart" size={48} color="#10b981" />
                     <Text style={styles.likeText}>SAVE</Text>
                 </Animated.View>
 
                 {/* Nope indicator */}
-                <Animated.View style={[styles.actionIndicator, styles.nopeIndicator, nopeOpacity]}>
+                <Animated.View style={[styles.actionIndicator, styles.nopeIndicator, nopeOpacity] as any}>
                     <Ionicons name="close" size={48} color="#ef4444" />
                     <Text style={styles.nopeText}>SKIP</Text>
                 </Animated.View>
@@ -175,7 +171,7 @@ export const SwipeableOutfitCard: React.FC<SwipeableOutfitCardProps> = ({
                 {/* Rationale */}
                 <View style={styles.rationaleSection}>
                     <View style={styles.rationaleHeader}>
-                        <Ionicons name="sparkles" size={16} color="#6366f1" />
+                        <Ionicons name="sparkles" size={16} color="#87A96B" />
                         <Text style={styles.rationaleTitle}>Why this outfit?</Text>
                     </View>
                     <Text style={styles.rationaleText} numberOfLines={3}>
@@ -197,14 +193,10 @@ const styles = StyleSheet.create({
         position: 'absolute',
         width: SCREEN_WIDTH - 40,
         height: SCREEN_HEIGHT * 0.65,
-        backgroundColor: '#fff',
+        backgroundColor: appTheme.palette.surfaceRaised,
         borderRadius: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        elevation: 8,
         padding: 20,
+        ...appTheme.shadows.float,
     },
     actionIndicator: {
         position: 'absolute',
@@ -245,7 +237,7 @@ const styles = StyleSheet.create({
     outfitName: {
         fontSize: 22,
         fontWeight: '700',
-        color: '#1f2937',
+        color: appTheme.palette.text,
         flex: 1,
     },
     occasionBadge: {
@@ -268,19 +260,22 @@ const styles = StyleSheet.create({
     itemCard: {
         width: '47%',
         aspectRatio: 0.85,
-        backgroundColor: '#f9fafb',
+        backgroundColor: appTheme.palette.canvas,
         borderRadius: 12,
         overflow: 'hidden',
     },
     itemImage: {
         width: '100%',
         height: '100%',
+        backgroundColor: appTheme.palette.surfaceInverse,
     },
     rationaleSection: {
-        backgroundColor: '#f5f3ff',
+        backgroundColor: appTheme.palette.canvas,
         borderRadius: 12,
         padding: 12,
         marginBottom: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(181, 150, 120, 0.16)',
     },
     rationaleHeader: {
         flexDirection: 'row',
@@ -291,11 +286,11 @@ const styles = StyleSheet.create({
     rationaleTitle: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6366f1',
+        color: appTheme.palette.accent,
     },
     rationaleText: {
         fontSize: 13,
-        color: '#4b5563',
+        color: appTheme.palette.textSoft,
         lineHeight: 18,
     },
     swipeHint: {
@@ -303,6 +298,6 @@ const styles = StyleSheet.create({
     },
     swipeHintText: {
         fontSize: 13,
-        color: '#9ca3af',
+        color: appTheme.palette.textMuted,
     },
 });

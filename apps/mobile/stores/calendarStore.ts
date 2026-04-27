@@ -324,7 +324,7 @@ export const useCalendarStore = create<CalendarStore>((set, get) => ({
         }
 
         // Check cache validity (unless forced)
-        if (!force && !shouldRefreshEvents(state.lastFetched) && state.events.length >= 0) {
+        if (!force && !shouldRefreshEvents(state.lastFetched) && state.events.length > 0) {
             return;
         }
 

@@ -4,18 +4,13 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Image,
-    TouchableOpacity,
-    ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { OutfitSuggestion } from '../../services/aiOutfitService';
 import { WardrobeItem } from '../../services/items';
 import { OccasionType } from '../../utils/occasionDetector';
+import { Text } from '../ui/Typography';
+import { appTheme } from '../../theme/tokens';
 
 interface OutfitCardProps {
     suggestion: OutfitSuggestion;
@@ -27,11 +22,11 @@ interface OutfitCardProps {
 }
 
 const OCCASION_COLORS: Record<OccasionType, string> = {
-    casual: '#10b981',
-    work: '#3b82f6',
-    formal: '#8b5cf6',
-    sport: '#f59e0b',
-    social: '#ec4899',
+    casual: '#87A96B',
+    work: '#475569',
+    formal: '#1F2937',
+    sport: '#CEB186',
+    social: '#C2847A',
 };
 
 const OCCASION_LABELS: Record<OccasionType, string> = {
@@ -96,7 +91,7 @@ export const OutfitCard: React.FC<OutfitCardProps> = ({
             {/* Rationale */}
             <View style={styles.rationaleSection}>
                 <View style={styles.rationaleHeader}>
-                    <Ionicons name="sparkles" size={16} color="#6366f1" />
+                    <Ionicons name="sparkles" size={16} color="#87A96B" />
                     <Text style={styles.rationaleTitle}>Why this outfit?</Text>
                 </View>
                 <Text style={styles.rationaleText}>{suggestion.rationale}</Text>
@@ -193,7 +188,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 4,
     },
     rationaleSection: {
-        backgroundColor: '#f5f3ff',
+        backgroundColor: '#F8F6F0',
         borderRadius: 12,
         padding: 12,
         marginBottom: 16,
@@ -207,7 +202,7 @@ const styles = StyleSheet.create({
     rationaleTitle: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#87A96B',
     },
     rationaleText: {
         fontSize: 13,
@@ -224,7 +219,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         paddingVertical: 12,
         borderRadius: 12,
     },

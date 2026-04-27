@@ -5,6 +5,7 @@
 
 import * as SecureStore from 'expo-secure-store';
 import { detectOccasion, OccasionType } from '../utils/occasionDetector';
+import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
 // Secure storage keys
 const GOOGLE_TOKENS_KEY = 'google_calendar_tokens';
@@ -154,7 +155,7 @@ function getTodayBounds(): { timeMin: string; timeMax: string } {
  */
 async function fetchUserInfo(accessToken: string): Promise<{ user: GoogleUserInfo | null; error: Error | null }> {
     try {
-        const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        const response = await fetchWithTimeout('https://www.googleapis.com/oauth2/v2/userinfo', {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
             },
@@ -258,7 +259,7 @@ export const calendarService = {
                 maxResults: '10',
             });
 
-            const response = await fetch(
+            const response = await fetchWithTimeout(
                 `${CALENDAR_API_BASE}/calendars/primary/events?${params}`,
                 {
                     headers: {
@@ -300,6 +301,71 @@ export const calendarService = {
             return { events, error: null };
         } catch (error) {
             console.error('Error fetching events:', error);
+            return { events: null, error: error as Error };
+        }
+    },
+
+    /**
+     * Fetch events in a date range from Google Calendar
+     */
+    fetchEventsInRange: async (
+        startDate: Date,
+        endDate: Date
+    ): Promise<{ events: CalendarEvent[] | null; error: Error | null }> => {
+        try {
+            const tokens = await getStoredTokens();
+            if (!tokens?.accessToken) {
+                return { events: null, error: new Error('Not authenticated') };
+            }
+
+            const params = new URLSearchParams({
+                timeMin: startDate.toISOString(),
+                timeMax: endDate.toISOString(),
+                singleEvents: 'true',
+                orderBy: 'startTime',
+                maxResults: '50',
+            });
+
+            const response = await fetchWithTimeout(
+                `${CALENDAR_API_BASE}/calendars/primary/events?${params}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${tokens.accessToken}`,
+                    },
+                }
+            );
+
+            if (response.status === 401) {
+                await clearStoredData();
+                return { events: null, error: new Error('Session expired. Please reconnect.') };
+            }
+
+            if (!response.ok) {
+                throw new Error(`Calendar API error: ${response.status}`);
+            }
+
+            const data: GoogleCalendarResponse = await response.json();
+
+            const events: CalendarEvent[] = (data.items || [])
+                .filter(event => event.status !== 'cancelled')
+                .map(event => {
+                    const isAllDay = !event.start.dateTime;
+                    const title = event.summary || 'Untitled Event';
+
+                    return {
+                        id: event.id,
+                        title,
+                        startTime: event.start.dateTime || new Date(event.start.date!).toISOString(),
+                        endTime: event.end.dateTime || new Date(event.end.date!).toISOString(),
+                        location: event.location || null,
+                        isAllDay,
+                        occasion: detectOccasion(title, event.location),
+                    };
+                });
+
+            return { events, error: null };
+        } catch (error) {
+            console.error('Error fetching events in range:', error);
             return { events: null, error: error as Error };
         }
     },

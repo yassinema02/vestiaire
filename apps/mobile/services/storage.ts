@@ -5,6 +5,7 @@
 
 import { supabase } from './supabase';
 import { decode } from 'base64-arraybuffer';
+import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
 const BUCKET_NAME = 'wardrobe-images';
 
@@ -38,7 +39,7 @@ export const storageService = {
             onProgress?.({ loaded: 0, total: 100, percentage: 0 });
 
             // Fetch the image as blob
-            const response = await fetch(imageUri);
+            const response = await fetchWithTimeout(imageUri, { timeout: 30_000 });
             const blob = await response.blob();
 
             // Convert blob to ArrayBuffer for proper upload
@@ -123,10 +124,24 @@ export const storageService = {
         try {
             // Generate unique filename for processed image
             const timestamp = Date.now();
-            const filename = `${userId}/processed_${timestamp}.png`;
+            const filename = `${userId}/${timestamp}_product.png`;
+
+            // Validate base64 size before decoding
+            if (base64Data.length > 10_000_000) {
+                const error = new Error('Base64 data exceeds maximum size (10MB)');
+                console.error('Base64 size validation failed:', error);
+                return { url: null, path: null, error };
+            }
 
             // Convert base64 to ArrayBuffer
             const arrayBuffer = decode(base64Data);
+
+            // Validate decoded size
+            if (arrayBuffer.byteLength > 7_500_000) {
+                const error = new Error('Decoded image exceeds maximum size (7.5MB)');
+                console.error('Decoded size validation failed:', error);
+                return { url: null, path: null, error };
+            }
 
             // Upload to Supabase
             const { data, error } = await supabase.storage

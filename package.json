@@ -10,11 +10,15 @@
     "ios": "npm run ios --workspace=apps/mobile",
     "android": "npm run android --workspace=apps/mobile",
     "start": "npm run start --workspace=apps/mobile",
+    "test": "npm exec --workspace=apps/mobile -- jest --config apps/mobile/jest.config.js",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -b --pretty false",
+    "ci": "npm run typecheck"
   },
   "devDependencies": {
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.57.0",
@@ -22,14 +26,15 @@
     "eslint-plugin-prettier": "^5.1.0",
     "eslint-plugin-react": "^7.33.0",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "jest-expo": "^54.0.17",
     "prettier": "^3.2.0",
+    "react-test-renderer": "^19.1.0",
     "source-map-support": "^0.5.21",
     "typescript": "^5.3.0"
   },
   "dependencies": {
     "expo": "~54.0.32",
     "expo-calendar": "~15.0.8",
-    "expo-clipboard": "~8.0.8",
     "react": "19.1.0",
     "react-native": "0.81.5",
     "supabase": "^2.74.5"

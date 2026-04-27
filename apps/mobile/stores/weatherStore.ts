@@ -70,24 +70,45 @@ export const useWeatherStore = create<WeatherStore>((set, get) => ({
             ]);
 
             if (cachedWeather) {
-                const parsed = JSON.parse(cachedWeather);
-                set({
-                    weather: parsed.weather,
-                    lastFetched: parsed.lastFetched,
-                });
+                try {
+                    const parsed = JSON.parse(cachedWeather);
+                    if (parsed && parsed.weather) {
+                        set({
+                            weather: parsed.weather,
+                            lastFetched: parsed.lastFetched,
+                        });
+                    }
+                } catch {
+                    console.warn('Corrupted weather cache — resetting');
+                    await AsyncStorage.removeItem(WEATHER_CACHE_KEY);
+                }
             }
 
             if (cachedLocation) {
-                const location = JSON.parse(cachedLocation);
-                set({ location });
+                try {
+                    const location = JSON.parse(cachedLocation);
+                    if (location && typeof location.latitude === 'number') {
+                        set({ location });
+                    }
+                } catch {
+                    console.warn('Corrupted location cache — resetting');
+                    await AsyncStorage.removeItem(LOCATION_KEY);
+                }
             }
 
             if (cachedForecast) {
-                const parsed = JSON.parse(cachedForecast);
-                set({
-                    forecast: parsed.forecast,
-                    forecastLastFetched: parsed.forecastLastFetched,
-                });
+                try {
+                    const parsed = JSON.parse(cachedForecast);
+                    if (parsed && Array.isArray(parsed.forecast)) {
+                        set({
+                            forecast: parsed.forecast,
+                            forecastLastFetched: parsed.forecastLastFetched,
+                        });
+                    }
+                } catch {
+                    console.warn('Corrupted forecast cache — resetting');
+                    await AsyncStorage.removeItem(FORECAST_CACHE_KEY);
+                }
             }
 
             // Attempt to refresh weather and forecast

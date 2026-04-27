@@ -5,19 +5,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Image,
-    Alert,
-    ActivityIndicator,
-    Dimensions,
-    Animated,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator, Dimensions, Animated, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -29,6 +17,7 @@ import { useWeatherStore } from '../../stores/weatherStore';
 import { Outfit } from '../../types/outfit';
 import { BadgeDefinition } from '@vestiaire/shared';
 import BadgeUnlockModal from '../../components/gamification/BadgeUnlockModal';
+import { Text } from '../../components/ui/Typography';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ITEM_SIZE = (SCREEN_WIDTH - 60) / 3;
@@ -91,7 +80,7 @@ export default function LogWearScreen() {
             // Reset selection when screen comes into focus
             setSelectedItemIds(new Set());
             setSelectedOutfitId(null);
-        }, [])
+        }, [fetchOutfits])
     );
 
     // Filter items by category
@@ -189,10 +178,11 @@ export default function LogWearScreen() {
                 gamificationService.awardWearLog().catch(() => {});
 
                 // Check badges (wear_log + streak triggers)
+                const currentWeather = useWeatherStore.getState().weather;
                 const newBadges = await gamificationService.checkBadges('wear_log', {
                     itemIds,
                     outfitId: selectedOutfitId || undefined,
-                    weatherCondition: weather?.condition,
+                    weatherCondition: currentWeather?.condition,
                 }).catch(() => [] as BadgeDefinition[]);
 
                 // Also check streak badges
@@ -578,7 +568,7 @@ const styles = StyleSheet.create({
     },
     clearText: {
         fontSize: 14,
-        color: '#6366f1',
+        color: '#87A96B',
         fontWeight: '500',
     },
     // Category Filter

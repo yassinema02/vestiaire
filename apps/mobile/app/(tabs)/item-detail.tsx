@@ -4,20 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    ScrollView,
-    TextInput,
-    Alert,
-    ActivityIndicator,
-    Platform,
-    Dimensions,
-    Modal,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, Alert, ActivityIndicator, Platform, Dimensions, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { itemsService, WardrobeItem } from '../../services/items';
@@ -27,6 +14,9 @@ import { COLORS, CATEGORIES } from '../../services/aiCategorization';
 import { getCPWResult, formatCPWBreakdown } from '../../utils/cpwCalculator';
 import { isNeglected, formatNeglectedLabel } from '../../utils/neglectedItems';
 import ListingGeneratorModal from '../../components/features/ListingGeneratorModal';
+import { resalePromptService } from '../../services/resalePromptService';
+import { donationService } from '../../services/donationService';
+import { Text } from '../../components/ui/Typography';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -48,7 +38,7 @@ const OCCASIONS = ['Casual', 'Work', 'Formal', 'Sport', 'Night Out'];
 
 export default function ItemDetailScreen() {
     const router = useRouter();
-    const { itemId, itemIds, openListing } = useLocalSearchParams<{ itemId: string; itemIds?: string; openListing?: string }>();
+    const { itemId, itemIds, openListing, fromResalePrompt } = useLocalSearchParams<{ itemId: string; itemIds?: string; openListing?: string; fromResalePrompt?: string }>();
 
     const [item, setItem] = useState<WardrobeItem | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -114,6 +104,13 @@ export default function ItemDetailScreen() {
             setShowListingModal(true);
         }
     }, [openListing, item, isLoading]);
+
+    // Record resale prompt tap (Story 13.2)
+    useEffect(() => {
+        if (fromResalePrompt === 'true' && itemId) {
+            resalePromptService.recordPromptTapped(itemId).catch(() => {});
+        }
+    }, [fromResalePrompt, itemId]);
 
     const handleDeleteWearLog = (logId: string) => {
         Alert.alert(
@@ -259,7 +256,7 @@ export default function ItemDetailScreen() {
                     <View style={{ width: 40 }} />
                 </View>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#6366f1" />
+                    <ActivityIndicator size="large" color="#87A96B" />
                 </View>
             </View>
         );
@@ -331,7 +328,7 @@ export default function ItemDetailScreen() {
                             onPress={() => navigateToItem('prev')}
                             disabled={currentIndex === 0}
                         >
-                            <Ionicons name="chevron-back" size={20} color={currentIndex === 0 ? '#d1d5db' : '#6366f1'} />
+                            <Ionicons name="chevron-back" size={20} color={currentIndex === 0 ? '#d1d5db' : '#87A96B'} />
                             <Text style={[styles.navButtonText, currentIndex === 0 && styles.navButtonTextDisabled]}>Previous</Text>
                         </TouchableOpacity>
                         <Text style={styles.navCounter}>{currentIndex + 1} / {allItemIds.length}</Text>
@@ -341,7 +338,7 @@ export default function ItemDetailScreen() {
                             disabled={currentIndex === allItemIds.length - 1}
                         >
                             <Text style={[styles.navButtonText, currentIndex === allItemIds.length - 1 && styles.navButtonTextDisabled]}>Next</Text>
-                            <Ionicons name="chevron-forward" size={20} color={currentIndex === allItemIds.length - 1 ? '#d1d5db' : '#6366f1'} />
+                            <Ionicons name="chevron-forward" size={20} color={currentIndex === allItemIds.length - 1 ? '#d1d5db' : '#87A96B'} />
                         </TouchableOpacity>
                     </View>
                 )}
@@ -415,6 +412,22 @@ export default function ItemDetailScreen() {
                     );
                 })()}
 
+                {/* Listed for Resale Status (Story 13.3) */}
+                {item.resale_status === 'listed' && (
+                    <View style={styles.listedStatusCard}>
+                        <Ionicons name="pricetag" size={16} color="#22c55e" />
+                        <Text style={styles.listedStatusText}>Listed for Resale</Text>
+                    </View>
+                )}
+
+                {/* Donated Status (Story 13.6) */}
+                {item.resale_status === 'donated' && (
+                    <View style={styles.donatedStatusCard}>
+                        <Ionicons name="heart" size={16} color="#f59e0b" />
+                        <Text style={styles.donatedStatusText}>Donated</Text>
+                    </View>
+                )}
+
                 {/* Neglected Item Actions */}
                 {isNeglected(item) && (
                     <View style={styles.neglectedCard}>
@@ -446,6 +459,31 @@ export default function ItemDetailScreen() {
                                 <Text style={[styles.resaleButtonText, { color: '#22c55e' }]}>Generate Listing</Text>
                             </TouchableOpacity>
                         </View>
+                        <TouchableOpacity
+                            style={styles.donateButton}
+                            onPress={() => {
+                                Alert.prompt(
+                                    'Donate Item',
+                                    'Enter charity name (optional):',
+                                    [
+                                        { text: 'Cancel', style: 'cancel' },
+                                        {
+                                            text: 'Donate',
+                                            onPress: async (charityName?: string) => {
+                                                await donationService.logDonation(item.id, charityName || undefined);
+                                                loadItem();
+                                            },
+                                        },
+                                    ],
+                                    'plain-text',
+                                    '',
+                                    'default'
+                                );
+                            }}
+                        >
+                            <Ionicons name="heart-outline" size={16} color="#fff" />
+                            <Text style={styles.donateButtonText}>Mark as Donated</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
 
@@ -453,7 +491,7 @@ export default function ItemDetailScreen() {
                 <View style={styles.wearHistoryCard}>
                     <Text style={styles.cardTitle}>Wear History</Text>
                     {isLoadingHistory ? (
-                        <ActivityIndicator size="small" color="#6366f1" style={{ paddingVertical: 16 }} />
+                        <ActivityIndicator size="small" color="#87A96B" style={{ paddingVertical: 16 }} />
                     ) : wearHistory.length === 0 ? (
                         <Text style={styles.noHistoryText}>No wear logs yet</Text>
                     ) : (
@@ -498,7 +536,7 @@ export default function ItemDetailScreen() {
                         <Text style={styles.cardTitle}>Details</Text>
                         {!isEditing ? (
                             <TouchableOpacity onPress={() => setIsEditing(true)} style={styles.editButton}>
-                                <Ionicons name="pencil" size={16} color="#6366f1" />
+                                <Ionicons name="pencil" size={16} color="#87A96B" />
                                 <Text style={styles.editButtonText}>Edit</Text>
                             </TouchableOpacity>
                         ) : (
@@ -802,7 +840,7 @@ const styles = StyleSheet.create({
     },
     navButtonText: {
         fontSize: 14,
-        color: '#6366f1',
+        color: '#87A96B',
         fontWeight: '500'
     },
     navButtonTextDisabled: {
@@ -841,7 +879,7 @@ const styles = StyleSheet.create({
     statValue: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#6366f1'
+        color: '#87A96B'
     },
     statLabel: {
         fontSize: 12,
@@ -876,7 +914,7 @@ const styles = StyleSheet.create({
     },
     editButtonText: {
         fontSize: 14,
-        color: '#6366f1',
+        color: '#87A96B',
         marginLeft: 4,
         fontWeight: '500'
     },
@@ -893,7 +931,7 @@ const styles = StyleSheet.create({
         color: '#6b7280'
     },
     saveButton: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         paddingHorizontal: 16,
         paddingVertical: 6,
         borderRadius: 8,
@@ -972,8 +1010,8 @@ const styles = StyleSheet.create({
         borderColor: '#e5e7eb'
     },
     chipSelected: {
-        backgroundColor: '#6366f1',
-        borderColor: '#6366f1'
+        backgroundColor: '#87A96B',
+        borderColor: '#87A96B'
     },
     chipText: {
         fontSize: 13,
@@ -1080,6 +1118,38 @@ const styles = StyleSheet.create({
         color: '#9ca3af',
         flex: 1,
     },
+    // Listed for Resale Status (Story 13.3)
+    listedStatusCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: '#f0fdf4',
+        borderRadius: 12,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: '#bbf7d0',
+    },
+    listedStatusText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#16a34a',
+    },
+    // Donated Status (Story 13.6)
+    donatedStatusCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: '#fffbeb',
+        borderRadius: 12,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: '#fde68a',
+    },
+    donatedStatusText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#b45309',
+    },
     // Neglected Item Actions
     neglectedCard: {
         backgroundColor: '#fffbeb',
@@ -1115,7 +1185,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 6,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         paddingVertical: 12,
         borderRadius: 10,
     },
@@ -1138,6 +1208,21 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
         color: '#22c55e',
+    },
+    donateButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        backgroundColor: '#f59e0b',
+        borderRadius: 10,
+        paddingVertical: 10,
+        marginTop: 8,
+    },
+    donateButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#fff',
     },
     // Generate Listing
     generateListingButton: {
@@ -1177,7 +1262,7 @@ const styles = StyleSheet.create({
     },
     wearSummary: {
         fontSize: 14,
-        color: '#6366f1',
+        color: '#87A96B',
         fontWeight: '500',
         marginBottom: 12,
     },

@@ -5,10 +5,11 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BADGES, BADGE_CATEGORY_LABELS, BadgeCategory, BadgeDefinition } from '@vestiaire/shared';
 import { UserBadge, gamificationService } from '../../services/gamificationService';
+import { Text } from '../ui/Typography';
 
 interface BadgeGridProps {
     earnedBadges: UserBadge[];
@@ -71,7 +72,7 @@ export default function BadgeGrid({ earnedBadges, onBadgesChanged }: BadgeGridPr
                             return (
                                 <View key={ub.id} style={styles.showcaseBadge}>
                                     <View style={styles.showcaseIconWrap}>
-                                        <Ionicons name={def.iconName as any} size={28} color="#6366f1" />
+                                        <Ionicons name={def.iconName as any} size={28} color="#87A96B" />
                                     </View>
                                     <Text style={styles.showcaseName} numberOfLines={1}>{def.name}</Text>
                                 </View>
@@ -121,7 +122,7 @@ export default function BadgeGrid({ earnedBadges, onBadgesChanged }: BadgeGridPr
                                         <Ionicons
                                             name={earned ? badge.iconName as any : 'lock-closed'}
                                             size={24}
-                                            color={earned ? '#6366f1' : '#d1d5db'}
+                                            color={earned ? '#87A96B' : '#d1d5db'}
                                         />
                                     </View>
                                     <Text
@@ -156,7 +157,7 @@ export default function BadgeGrid({ earnedBadges, onBadgesChanged }: BadgeGridPr
                     style={styles.editShowcaseButton}
                     onPress={() => setEditShowcase(true)}
                 >
-                    <Ionicons name="star-outline" size={16} color="#6366f1" />
+                    <Ionicons name="star-outline" size={16} color="#87A96B" />
                     <Text style={styles.editShowcaseText}>Edit Showcase</Text>
                 </TouchableOpacity>
             )}
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
     editText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#87A96B',
     },
     showcaseRow: {
         flexDirection: 'row',
@@ -200,12 +201,12 @@ const styles = StyleSheet.create({
         width: 56,
         height: 56,
         borderRadius: 28,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 6,
         borderWidth: 2,
-        borderColor: '#c7d2fe',
+        borderColor: '#D9C7B4',
     },
     showcaseName: {
         fontSize: 11,
@@ -218,7 +219,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 10,
         paddingHorizontal: 14,
         paddingVertical: 10,
@@ -226,13 +227,13 @@ const styles = StyleSheet.create({
     },
     editBannerText: {
         fontSize: 13,
-        color: '#4338ca',
+        color: '#7D3825',
         flex: 1,
     },
     doneText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#87A96B',
         marginLeft: 12,
     },
     // Category
@@ -267,14 +268,14 @@ const styles = StyleSheet.create({
         backgroundColor: '#fafbff',
     },
     badgeCellFeatured: {
-        borderColor: '#6366f1',
+        borderColor: '#87A96B',
         borderWidth: 2,
     },
     badgeIcon: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 8,
@@ -319,6 +320,6 @@ const styles = StyleSheet.create({
     editShowcaseText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6366f1',
+        color: '#87A96B',
     },
 });

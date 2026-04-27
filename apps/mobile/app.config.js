@@ -1,10 +1,16 @@
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 
+const expoOwner = process.env.EXPO_PUBLIC_EXPO_OWNER;
+const googleAuthProxyRedirectUri = expoOwner
+    ? `https://auth.expo.io/@${expoOwner}/vestiaire`
+    : undefined;
+
 export default {
     expo: {
         name: 'Vestiaire',
         slug: 'vestiaire',
+        owner: expoOwner,
         version: '1.0.0',
         orientation: 'portrait',
         icon: './assets/icon.png',
@@ -90,9 +96,21 @@ export default {
             geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY,
             googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
             googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+            googleAuthProxyRedirectUri,
+            eas: {
+                projectId: process.env.EAS_PROJECT_ID,
+            },
             router: {
                 origin: false,
             },
+        },
+        updates: {
+            url: process.env.EAS_PROJECT_ID
+                ? `https://u.expo.dev/${process.env.EAS_PROJECT_ID}`
+                : undefined,
+        },
+        runtimeVersion: {
+            policy: 'appVersion',
         },
     },
 };

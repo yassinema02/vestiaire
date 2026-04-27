@@ -4,17 +4,10 @@
  */
 
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Modal,
-    TouchableOpacity,
-    ScrollView,
-    Image,
-} from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WearLog } from '../../types/wearLog';
+import { Text } from '../ui/Typography';
 
 interface WearDayModalProps {
     visible: boolean;

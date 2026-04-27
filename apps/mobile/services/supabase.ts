@@ -8,12 +8,11 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import { secureStorageAdapter } from './secureStorage';
-
-import Constants from 'expo-constants';
+import { runtimeConfig } from './runtimeConfig';
 
 // Get environment variables from Expo config
-const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = runtimeConfig.supabaseUrl;
+const supabaseAnonKey = runtimeConfig.supabaseAnonKey;
 
 // Validate environment variables
 if (!supabaseUrl || !supabaseAnonKey) {

@@ -4,22 +4,12 @@
  */
 
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Modal,
-    LayoutAnimation,
-    Platform,
-    UIManager,
-    ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Modal, LayoutAnimation, Platform, UIManager, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useWeatherStore } from '../../stores/weatherStore';
 import { DailyForecast } from '../../services/weather';
 import { getClothingSuggestions, getWeatherSummary } from '../../utils/weatherClothingMap';
+import { Text } from '../ui/Typography';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -200,10 +190,10 @@ export function ForecastWidget() {
             <View style={styles.container}>
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>
-                        <Ionicons name="calendar-outline" size={20} color="#6366f1" />
+                        <Ionicons name="calendar-outline" size={20} color="#87A96B" />
                         <Text style={styles.headerTitle}>5-Day Forecast</Text>
                     </View>
-                    <ActivityIndicator size="small" color="#6366f1" />
+                    <ActivityIndicator size="small" color="#87A96B" />
                 </View>
             </View>
         );
@@ -229,12 +219,12 @@ export function ForecastWidget() {
             {/* Header (always visible) */}
             <TouchableOpacity style={styles.header} onPress={toggleExpanded} activeOpacity={0.7}>
                 <View style={styles.headerLeft}>
-                    <Ionicons name="calendar-outline" size={20} color="#6366f1" />
+                    <Ionicons name="calendar-outline" size={20} color="#87A96B" />
                     <Text style={styles.headerTitle}>5-Day Forecast</Text>
                 </View>
                 <View style={styles.headerRight}>
                     {isForecastLoading && (
-                        <ActivityIndicator size="small" color="#6366f1" style={styles.loadingIndicator} />
+                        <ActivityIndicator size="small" color="#87A96B" style={styles.loadingIndicator} />
                     )}
                     <Ionicons
                         name={isExpanded ? 'chevron-up' : 'chevron-down'}
@@ -459,7 +449,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     categoryChip: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         borderRadius: 16,
         paddingVertical: 6,
         paddingHorizontal: 12,
@@ -467,7 +457,7 @@ const styles = StyleSheet.create({
     categoryText: {
         fontSize: 13,
         fontWeight: '500',
-        color: '#4f46e5',
+        color: '#7D3825',
     },
     tipsSection: {
         gap: 8,
@@ -484,7 +474,7 @@ const styles = StyleSheet.create({
         lineHeight: 18,
     },
     suggestionButton: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         borderRadius: 12,
         paddingVertical: 14,
         flexDirection: 'row',

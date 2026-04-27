@@ -3,14 +3,17 @@
  * Generates outfit suggestions using Gemini AI with wardrobe, weather, and calendar context
  */
 
-import Constants from 'expo-constants';
-import { GoogleGenAI } from '@google/genai';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { buildOutfitSuggestionPrompt, buildEventOutfitPrompt as buildEventOutfitPromptTemplate } from '../constants/prompts';
+import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
 import { WardrobeItem } from './items';
 import { buildCurrentContext, formatContextForPrompt } from './contextService';
 import { Outfit, OutfitPosition } from '../types/outfit';
 import { OccasionType } from '../utils/occasionDetector';
-
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
+import { getTimeOfDay, TimeOfDay } from '../types/context';
+import { useWeatherStore } from '../stores/weatherStore';
+import { CalendarEventRow } from './eventSyncService';
+import { sanitizeText } from '../utils/validation';
 
 /**
  * AI-generated outfit suggestion
@@ -45,7 +48,7 @@ interface ItemSummary {
  * Check if AI outfit generation is configured
  */
 export const isOutfitGenerationConfigured = (): boolean => {
-    return !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
+    return isGeminiConfigured();
 };
 
 /**
@@ -73,40 +76,7 @@ const formatItemsForAI = (items: WardrobeItem[]): ItemSummary[] => {
  */
 const buildOutfitPrompt = (items: ItemSummary[], contextText: string): string => {
     const itemsJson = JSON.stringify(items, null, 2);
-
-    return `You are a professional fashion stylist helping someone choose outfits from their wardrobe.
-
-CONTEXT:
-${contextText}
-
-AVAILABLE WARDROBE ITEMS:
-${itemsJson}
-
-TASK:
-Generate 3 outfit suggestions that are:
-1. Appropriate for the weather conditions
-2. Suitable for the occasion/events
-3. Stylish and well-coordinated
-
-RULES:
-- Each outfit MUST use items from the provided wardrobe (use exact item IDs)
-- Each outfit needs: (top + bottom) OR dress, optionally add shoes/outerwear/accessories
-- Consider color coordination and style consistency
-- Match seasons and occasions from item metadata
-
-Respond ONLY with valid JSON in this exact format:
-{
-  "suggestions": [
-    {
-      "name": "Outfit Name",
-      "items": ["item-id-1", "item-id-2", "item-id-3"],
-      "occasion": "work",
-      "rationale": "Why this outfit works..."
-    }
-  ]
-}
-
-Valid occasions: casual, work, formal, sport, social`;
+    return buildOutfitSuggestionPrompt(itemsJson, contextText);
 };
 
 /**
@@ -116,7 +86,7 @@ export const generateOutfitSuggestions = async (
     wardrobeItems: WardrobeItem[]
 ): Promise<{ suggestions: OutfitSuggestion[] | null; error: Error | null }> => {
     if (!isOutfitGenerationConfigured()) {
-        console.warn('AI outfit generation not configured - missing Gemini API key');
+        console.warn('AI outfit generation not configured - missing AI proxy configuration');
         return {
             suggestions: null,
             error: new Error('AI outfit generation not configured'),
@@ -146,21 +116,24 @@ export const generateOutfitSuggestions = async (
         const prompt = buildOutfitPrompt(itemSummaries, contextText);
 
         // Call Gemini
-        const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-        const result = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: prompt,
-        });
+        const result = await trackedGenerateContent({
+            model: 'gemini-2.5-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        }, 'outfit_gen');
 
         const text = result.text;
         if (!text) {
             throw new Error('No text response from Gemini');
         }
 
-        // Parse JSON response
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        // Parse JSON response — Gemini sometimes wraps in markdown or adds preamble
+        let jsonText = text;
+        // Strip markdown code fences
+        jsonText = jsonText.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '');
+        
+        const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
+            console.warn('[OutfitGen] Non-JSON response from Gemini:', text.substring(0, 200));
             throw new Error('Failed to parse AI response');
         }
 
@@ -267,9 +240,227 @@ export const generateOutfitsWithFallback = async (
     return { suggestions: [], fromAI: false };
 };
 
+// --- Event-Specific Outfit Generation (Story 12.3) ---
+
+const EVENT_OUTFIT_CACHE_PREFIX = 'event_outfit_';
+const EVENT_OUTFIT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+/**
+ * Get formality guidance text based on score
+ */
+export const getFormalityGuidance = (score: number): string => {
+    if (score >= 7) return 'Business or formal dress code required';
+    if (score >= 4) return 'Smart casual — polished but comfortable';
+    return 'Casual comfortable';
+};
+
+/**
+ * Get time-of-day for a specific event start time
+ */
+export const getEventTimeOfDay = (startTime: string): TimeOfDay => {
+    const hour = new Date(startTime).getHours();
+    return getTimeOfDay(hour);
+};
+
+/**
+ * Build event-specific AI prompt
+ */
+const buildEventOutfitPromptLocal = (
+    items: ItemSummary[],
+    event: { title: string; event_type: string | null; formality_score: number | null; start_time: string; location?: string | null },
+    weather?: { temperature: number; condition: string } | null
+): string => {
+    const itemsJson = JSON.stringify(items, null, 2);
+    const timeOfDay = getEventTimeOfDay(event.start_time);
+    const formalityGuide = getFormalityGuidance(event.formality_score || 3);
+
+    const contextLines = [
+        `Event: "${sanitizeText(event.title)}" (${sanitizeText(event.event_type || 'casual')}, formality ${event.formality_score || 3}/10)`,
+        `Time: ${timeOfDay} event`,
+        weather ? `Weather: ${weather.temperature}°C, ${sanitizeText(weather.condition)}` : null,
+        `Dress code guidance: ${formalityGuide}`,
+        event.location ? `Location: ${sanitizeText(event.location)}` : null,
+    ].filter(Boolean).join('\n');
+
+    return buildEventOutfitPromptTemplate(itemsJson, contextLines, sanitizeText(event.event_type || 'casual'));
+};
+
+/**
+ * Get cached event outfit
+ */
+const getCachedEventOutfit = async (eventId: string): Promise<OutfitSuggestion | null> => {
+    try {
+        const cached = await AsyncStorage.getItem(`${EVENT_OUTFIT_CACHE_PREFIX}${eventId}`);
+        if (!cached) return null;
+
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.generatedAt > EVENT_OUTFIT_TTL_MS) {
+            await AsyncStorage.removeItem(`${EVENT_OUTFIT_CACHE_PREFIX}${eventId}`);
+            return null;
+        }
+
+        return parsed.suggestion;
+    } catch (error) {
+        console.warn(`Failed to retrieve cached event outfit for event ${eventId}:`, error);
+        return null;
+    }
+};
+
+/**
+ * Cache event outfit
+ */
+const cacheEventOutfit = async (eventId: string, suggestion: OutfitSuggestion): Promise<void> => {
+    try {
+        await AsyncStorage.setItem(
+            `${EVENT_OUTFIT_CACHE_PREFIX}${eventId}`,
+            JSON.stringify({ suggestion, generatedAt: Date.now() })
+        );
+    } catch (error) {
+        console.warn(`Failed to cache event outfit for event ${eventId}:`, error);
+    }
+};
+
+/**
+ * Clear cached outfit for an event (used on regenerate)
+ */
+export const clearEventOutfitCache = async (eventId: string): Promise<void> => {
+    try {
+        await AsyncStorage.removeItem(`${EVENT_OUTFIT_CACHE_PREFIX}${eventId}`);
+    } catch (error) {
+        console.warn(`Failed to clear cached outfit for event ${eventId}:`, error);
+    }
+};
+
+/**
+ * In-flight deduplication map: if two callers request the same event's outfit
+ * at the same time, they share a single AI call / cache write instead of
+ * racing and producing duplicate Gemini requests + clobbering the cache.
+ * Keyed by event.id. skipCache=true bypasses dedup (explicit regenerate).
+ */
+const inFlightEventOutfits = new Map<
+    string,
+    Promise<{ suggestion: OutfitSuggestion | null; fromCache: boolean; error: Error | null }>
+>();
+
+/**
+ * Generate outfit for a specific calendar event
+ */
+export const generateEventOutfit = async (
+    event: CalendarEventRow,
+    wardrobeItems: WardrobeItem[],
+    skipCache: boolean = false
+): Promise<{ suggestion: OutfitSuggestion | null; fromCache: boolean; error: Error | null }> => {
+    // Dedupe concurrent calls for the same event (unless forced regenerate)
+    if (!skipCache) {
+        const existing = inFlightEventOutfits.get(event.id);
+        if (existing) {
+            return existing;
+        }
+    }
+
+    const run = _generateEventOutfitInner(event, wardrobeItems, skipCache);
+
+    if (!skipCache) {
+        inFlightEventOutfits.set(event.id, run);
+        run.finally(() => {
+            // Remove once resolved so subsequent calls can re-run if cache
+            // has since been invalidated.
+            if (inFlightEventOutfits.get(event.id) === run) {
+                inFlightEventOutfits.delete(event.id);
+            }
+        });
+    }
+
+    return run;
+};
+
+const _generateEventOutfitInner = async (
+    event: CalendarEventRow,
+    wardrobeItems: WardrobeItem[],
+    skipCache: boolean
+): Promise<{ suggestion: OutfitSuggestion | null; fromCache: boolean; error: Error | null }> => {
+    // Check cache first
+    if (!skipCache) {
+        const cached = await getCachedEventOutfit(event.id);
+        if (cached) {
+            return { suggestion: cached, fromCache: true, error: null };
+        }
+    }
+
+    if (!isOutfitGenerationConfigured()) {
+        const fallback = generateFallbackOutfit(wardrobeItems);
+        if (fallback) {
+            fallback.occasion = (event.event_type as OccasionType) || 'casual';
+            fallback.rationale = `Simple outfit for your ${event.event_type || 'casual'} event.`;
+            await cacheEventOutfit(event.id, fallback);
+        }
+        return { suggestion: fallback, fromCache: false, error: null };
+    }
+
+    const completeItems = wardrobeItems.filter(i => i.status === 'complete');
+    if (completeItems.length < 3) {
+        return { suggestion: null, fromCache: false, error: new Error('Add at least 3 items for suggestions') };
+    }
+
+    try {
+        // Get weather
+        const weatherState = useWeatherStore.getState();
+        const weather = weatherState.weather
+            ? { temperature: weatherState.weather.temp, condition: weatherState.weather.condition }
+            : null;
+
+        const itemSummaries = formatItemsForAI(wardrobeItems);
+        const prompt = buildEventOutfitPromptLocal(itemSummaries, event, weather);
+
+        const result = await trackedGenerateContent({
+            model: 'gemini-2.5-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        }, 'event_outfit_gen');
+
+        const text = result.text;
+        if (!text) throw new Error('No text response from Gemini');
+
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('Failed to parse AI response');
+
+        const parsed = JSON.parse(jsonMatch[0]) as OutfitSuggestion;
+
+        // Validate item IDs
+        const validItemIds = new Set(wardrobeItems.map(i => i.id));
+        const suggestion: OutfitSuggestion = {
+            name: parsed.name || `${event.title} Outfit`,
+            items: (parsed.items || []).filter(id => validItemIds.has(id)),
+            occasion: validateOccasion(parsed.occasion || event.event_type || 'casual'),
+            rationale: parsed.rationale || '',
+        };
+
+        if (suggestion.items.length < 2) {
+            throw new Error('Not enough valid items in suggestion');
+        }
+
+        await cacheEventOutfit(event.id, suggestion);
+        return { suggestion, fromCache: false, error: null };
+    } catch (error) {
+        console.error('Event outfit generation failed:', error);
+
+        // Fallback
+        const fallback = generateFallbackOutfit(wardrobeItems);
+        if (fallback) {
+            fallback.occasion = (event.event_type as OccasionType) || 'casual';
+            fallback.rationale = `Simple outfit for your ${event.event_type || 'casual'} event.`;
+            await cacheEventOutfit(event.id, fallback);
+        }
+        return { suggestion: fallback, fromCache: false, error: error as Error };
+    }
+};
+
 export const aiOutfitService = {
     isConfigured: isOutfitGenerationConfigured,
     generate: generateOutfitSuggestions,
     generateWithFallback: generateOutfitsWithFallback,
     generateFallback: generateFallbackOutfit,
+    generateEventOutfit,
+    clearEventOutfitCache,
+    getFormalityGuidance,
+    getEventTimeOfDay,
 };

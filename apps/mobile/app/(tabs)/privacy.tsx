@@ -4,20 +4,12 @@
  */
 
 import { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Switch,
-    Alert,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../../stores/authStore';
+import { Text } from '../../components/ui/Typography';
 
 const ANALYTICS_KEY = 'privacy_analytics_optout';
 
@@ -125,7 +117,7 @@ export default function PrivacyScreen() {
                     activeOpacity={0.7}
                 >
                     <View style={styles.sectionHeaderLeft}>
-                        <Ionicons name="server-outline" size={22} color="#6366f1" />
+                        <Ionicons name="server-outline" size={22} color="#87A96B" />
                         <Text style={styles.sectionHeaderText}>Data We Store</Text>
                     </View>
                     <Ionicons
@@ -169,8 +161,8 @@ export default function PrivacyScreen() {
                         <Switch
                             value={analyticsOptOut}
                             onValueChange={toggleAnalytics}
-                            trackColor={{ false: '#d1d5db', true: '#c7d2fe' }}
-                            thumbColor={analyticsOptOut ? '#6366f1' : '#f4f3f4'}
+                            trackColor={{ false: '#d1d5db', true: '#D9C7B4' }}
+                            thumbColor={analyticsOptOut ? '#87A96B' : '#f4f3f4'}
                         />
                     </View>
                 </View>

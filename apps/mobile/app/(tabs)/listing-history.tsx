@@ -5,19 +5,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Image,
-    ActivityIndicator,
-    Alert,
-    TextInput,
-    Modal,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, TextInput, Modal, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -25,9 +13,12 @@ import {
     listingService,
     ResaleListing,
     ListingStatus,
+    EarningsMonth,
 } from '../../services/listingService';
 import ListingGeneratorModal from '../../components/features/ListingGeneratorModal';
+import EarningsChart from '../../components/features/EarningsChart';
 import { WardrobeItem } from '../../services/items';
+import { Text } from '../../components/ui/Typography';
 
 const STATUS_FILTERS: { id: ListingStatus | 'all'; label: string }[] = [
     { id: 'all', label: 'All' },
@@ -48,6 +39,7 @@ export default function ListingHistoryScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<ListingStatus | 'all'>('all');
     const [stats, setStats] = useState({ totalListed: 0, totalSold: 0, totalRevenue: 0 });
+    const [earningsTimeline, setEarningsTimeline] = useState<EarningsMonth[]>([]);
 
     // Sold price modal
     const [showSoldModal, setShowSoldModal] = useState(false);
@@ -70,6 +62,10 @@ export default function ListingHistoryScreen() {
             totalListed: statsResult.totalListed,
             totalSold: statsResult.totalSold,
             totalRevenue: statsResult.totalRevenue,
+        });
+        // Load earnings timeline (Story 13.5)
+        listingService.getEarningsTimeline().then(result => {
+            if (!result.error) setEarningsTimeline(result.timeline);
         });
         setIsLoading(false);
     }, [statusFilter]);
@@ -141,6 +137,23 @@ export default function ListingHistoryScreen() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
+                {/* Earnings Chart (Story 13.5) */}
+                {earningsTimeline.length > 0 && stats.totalSold > 0 && (
+                    <View style={{ marginBottom: 16 }}>
+                        <EarningsChart data={earningsTimeline} />
+                    </View>
+                )}
+
+                {/* Sustainability metric (Story 13.5) */}
+                {stats.totalSold > 0 && (
+                    <View style={styles.sustainRow}>
+                        <Ionicons name="leaf-outline" size={16} color="#22c55e" />
+                        <Text style={styles.sustainText}>
+                            You kept {stats.totalSold} item{stats.totalSold !== 1 ? 's' : ''} out of landfills
+                        </Text>
+                    </View>
+                )}
+
                 {/* Stats Row */}
                 <View style={styles.statsRow}>
                     <View style={styles.statCard}>
@@ -152,7 +165,7 @@ export default function ListingHistoryScreen() {
                         <Text style={styles.statLabel}>Sold</Text>
                     </View>
                     <View style={styles.statCard}>
-                        <Text style={[styles.statValue, { color: '#6366f1' }]}>
+                        <Text style={[styles.statValue, { color: '#87A96B' }]}>
                             {stats.totalRevenue > 0 ? `$${stats.totalRevenue.toFixed(0)}` : '$0'}
                         </Text>
                         <Text style={styles.statLabel}>Revenue</Text>
@@ -182,7 +195,7 @@ export default function ListingHistoryScreen() {
                 {/* Content */}
                 {isLoading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#6366f1" />
+                        <ActivityIndicator size="large" color="#87A96B" />
                     </View>
                 ) : listings.length === 0 ? (
                     <View style={styles.emptyState}>
@@ -332,8 +345,8 @@ function ListingCard({
                             style={styles.actionBtn}
                             onPress={() => onRegenerate(item)}
                         >
-                            <Ionicons name="refresh-outline" size={16} color="#6366f1" />
-                            <Text style={[styles.actionBtnText, { color: '#6366f1' }]}>Re-generate</Text>
+                            <Ionicons name="refresh-outline" size={16} color="#87A96B" />
+                            <Text style={[styles.actionBtnText, { color: '#87A96B' }]}>Re-generate</Text>
                         </TouchableOpacity>
                     )}
                     <TouchableOpacity
@@ -355,6 +368,20 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F5F0E8',
+    },
+    sustainRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: '#f0fdf4',
+        borderRadius: 10,
+        padding: 10,
+        marginBottom: 12,
+    },
+    sustainText: {
+        fontSize: 13,
+        color: '#16a34a',
+        fontWeight: '500',
     },
     header: {
         flexDirection: 'row',
@@ -428,7 +455,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     filterChipActive: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
     },
     filterChipText: {
         fontSize: 13,

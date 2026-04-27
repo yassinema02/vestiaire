@@ -4,18 +4,12 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ActivityIndicator,
-    Dimensions,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SwipeableOutfitCard } from './SwipeableOutfitCard';
 import { OutfitSuggestion } from '../../services/aiOutfitService';
 import { WardrobeItem } from '../../services/items';
+import { Text } from '../ui/Typography';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -75,7 +69,7 @@ export const OutfitSwipeStack: React.FC<OutfitSwipeStackProps> = ({
     if (isLoading) {
         return (
             <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#6366f1" />
+                <ActivityIndicator size="large" color="#87A96B" />
                 <Text style={styles.loadingText}>Finding your perfect outfits...</Text>
             </View>
         );
@@ -175,7 +169,7 @@ export const OutfitSwipeStack: React.FC<OutfitSwipeStackProps> = ({
                     style={[styles.actionButton, styles.detailsButton]}
                     onPress={() => handleSwipeUp()}
                 >
-                    <Ionicons name="information-circle-outline" size={24} color="#6366f1" />
+                    <Ionicons name="information-circle-outline" size={24} color="#87A96B" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -213,7 +207,7 @@ const styles = StyleSheet.create({
     },
     progressFill: {
         height: '100%',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         borderRadius: 2,
     },
     cardsContainer: {
@@ -262,7 +256,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#f5f3ff',
+        backgroundColor: '#F8F6F0',
     },
     saveButton: {
         backgroundColor: '#fff',
@@ -300,7 +294,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         paddingVertical: 14,
         paddingHorizontal: 24,
         borderRadius: 12,

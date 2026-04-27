@@ -3,10 +3,10 @@
  * Uses Google Gemini Vision to analyze clothing and extract metadata
  */
 
-import Constants from 'expo-constants';
-import { GoogleGenAI } from '@google/genai';
-
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
+import { CLOTHING_ANALYSIS_PROMPT } from '../constants/prompts';
+import { trackedGenerateContent, isGeminiConfigured } from './aiUsageLogger';
+import { optimizeForAI } from './imageOptimizer';
+import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
 // Category taxonomy
 export const CATEGORIES = {
@@ -78,7 +78,7 @@ export interface ClothingAnalysis {
  * Check if AI categorization is configured
  */
 export const isCategorizationConfigured = (): boolean => {
-    return !!GEMINI_API_KEY && GEMINI_API_KEY !== 'your_api_key_here';
+    return isGeminiConfigured();
 };
 
 /**
@@ -88,7 +88,7 @@ export const analyzeClothing = async (
     imageUrl: string
 ): Promise<{ analysis: ClothingAnalysis | null; error: Error | null }> => {
     if (!isCategorizationConfigured()) {
-        console.warn('AI categorization not configured - missing Gemini API key');
+        console.warn('AI categorization not configured - missing AI proxy configuration');
         return {
             analysis: null,
             error: new Error('AI categorization not configured'),
@@ -98,28 +98,13 @@ export const analyzeClothing = async (
     try {
         console.log('Analyzing clothing image:', imageUrl);
 
-        const prompt = `You are a fashion expert. Analyze this clothing item image and provide:
+        const prompt = CLOTHING_ANALYSIS_PROMPT;
 
-IMPORTANT: Focus ONLY on the clothing item itself. IGNORE any background colors (white, gray, or transparent backgrounds are common in product photos - do NOT include these as clothing colors).
-
-1. Main category: Choose ONE from [tops, bottoms, dresses, outerwear, shoes, accessories]
-2. Sub-category: Be specific (e.g., t-shirt, jeans, sneakers, blazer, etc.)
-3. Colors: List up to 3 ACTUAL colors OF THE CLOTHING ITEM ONLY from this palette: [Black, White, Gray, Navy, Blue, Light Blue, Red, Burgundy, Pink, Orange, Yellow, Green, Olive, Brown, Tan, Cream, Purple, Lavender, Teal, Coral, Beige]
-   - Do NOT include background colors
-   - Only include colors that are part of the fabric/material of the clothing
-4. Pattern: Choose ONE from [solid, striped, plaid, floral, polka-dot, checkered, geometric, abstract, animal-print, camo, tie-dye]
-
-Respond ONLY with valid JSON in this exact format, no other text:
-{
-  "category": "tops",
-  "subCategory": "t-shirt",
-  "colors": ["Black"],
-  "pattern": "solid",
-  "confidence": 0.95
-}`;
+        // Optimize image for AI (512px, 85% JPEG)
+        const optimizedUri = await optimizeForAI(imageUrl);
 
         // Fetch image and convert to base64
-        const imageResponse = await fetch(imageUrl);
+        const imageResponse = await fetchWithTimeout(optimizedUri, { timeout: 30_000 });
         const imageBlob = await imageResponse.blob();
 
         const base64 = await new Promise<string>((resolve, reject) => {
@@ -133,10 +118,8 @@ Respond ONLY with valid JSON in this exact format, no other text:
             reader.readAsDataURL(imageBlob);
         });
 
-        const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-        const result = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+        const result = await trackedGenerateContent({
+            model: 'gemini-2.5-flash',
             contents: [{
                 role: 'user',
                 parts: [
@@ -144,7 +127,7 @@ Respond ONLY with valid JSON in this exact format, no other text:
                     { inlineData: { mimeType: 'image/jpeg', data: base64 } },
                 ],
             }],
-        });
+        }, 'categorization');
 
         const text = result.text;
         if (!text) {

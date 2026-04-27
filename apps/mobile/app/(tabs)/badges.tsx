@@ -4,12 +4,13 @@
  */
 
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { gamificationService, UserBadge } from '../../services/gamificationService';
 import BadgeGrid from '../../components/gamification/BadgeGrid';
+import { Text } from '../../components/ui/Typography';
 
 export default function BadgesScreen() {
     const router = useRouter();
@@ -82,7 +83,7 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     countBadge: {
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 12,
@@ -90,7 +91,7 @@ const styles = StyleSheet.create({
     countText: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#87A96B',
     },
     scroll: {
         flex: 1,

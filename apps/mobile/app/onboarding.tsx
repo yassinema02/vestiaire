@@ -4,20 +4,12 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Animated,
-    Dimensions,
-    Platform,
-    Alert,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated, Dimensions, Platform, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { onboardingService, OnboardingState } from '../services/onboarding';
+import { Text } from '../components/ui/Typography';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -160,7 +152,7 @@ export default function OnboardingScreen() {
                             style={[
                                 styles.confetti,
                                 {
-                                    backgroundColor: ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'][index % 5],
+                                    backgroundColor: ['#87A96B', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'][index % 5],
                                     transform: [
                                         { translateX: anim.translateX },
                                         { translateY: anim.translateY },
@@ -206,7 +198,7 @@ export default function OnboardingScreen() {
             <View style={styles.content}>
                 {/* Icon */}
                 <View style={styles.iconContainer}>
-                    <Ionicons name="shirt-outline" size={80} color="#6366f1" />
+                    <Ionicons name="shirt-outline" size={80} color="#87A96B" />
                 </View>
 
                 {/* Title */}
@@ -322,7 +314,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 24,
-        shadowColor: '#6366f1',
+        shadowColor: '#87A96B',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 12,
@@ -367,7 +359,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     progressCurrent: {
-        color: '#6366f1',
+        color: '#87A96B',
         fontWeight: '700',
         fontSize: 20,
     },
@@ -387,7 +379,7 @@ const styles = StyleSheet.create({
     },
     progressFill: {
         height: '100%',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         borderRadius: 4,
     },
     stepsContainer: {
@@ -403,12 +395,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     stepDotComplete: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
     },
     stepDotCurrent: {
         backgroundColor: '#fff',
         borderWidth: 3,
-        borderColor: '#6366f1',
+        borderColor: '#87A96B',
     },
     benefitsSection: {
         width: '100%',
@@ -434,12 +426,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         paddingVertical: 16,
         paddingHorizontal: 32,
         borderRadius: 16,
         width: '100%',
-        shadowColor: '#6366f1',
+        shadowColor: '#87A96B',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -456,7 +448,7 @@ const styles = StyleSheet.create({
     },
     viewWardrobeLinkText: {
         fontSize: 15,
-        color: '#6366f1',
+        color: '#87A96B',
         fontWeight: '500',
     },
     // Celebration styles
@@ -493,7 +485,7 @@ const styles = StyleSheet.create({
     celebrationSubtitle: {
         fontSize: 20,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#87A96B',
         marginBottom: 16,
     },
     celebrationMessage: {
@@ -508,7 +500,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         paddingVertical: 16,
         paddingHorizontal: 32,
         borderRadius: 16,

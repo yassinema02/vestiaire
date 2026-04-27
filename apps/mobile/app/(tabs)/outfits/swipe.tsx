@@ -3,17 +3,8 @@
  * Tinder-style swipe interface for outfit suggestions
  */
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Modal,
-    ScrollView,
-    Image,
-    Alert,
-} from 'react-native';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { View, StyleSheet, TouchableOpacity, Modal, ScrollView, Image, Alert } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -21,6 +12,7 @@ import { OutfitSwipeStack } from '../../../components/features/OutfitSwipeStack'
 import { useOutfitGeneration } from '../../../hooks/useOutfitGeneration';
 import { OutfitSuggestion } from '../../../services/aiOutfitService';
 import { itemsService, WardrobeItem } from '../../../services/items';
+import { Text } from '../../../components/ui/Typography';
 
 export default function OutfitSwipeScreen() {
     const router = useRouter();
@@ -74,9 +66,12 @@ export default function OutfitSwipeScreen() {
     };
 
     // Get full item details for detail modal
-    const detailItems = detailSuggestion?.items
-        .map(id => wardrobeItems.find(i => i.id === id))
-        .filter((item): item is WardrobeItem => item !== undefined) || [];
+    const detailItems = useMemo(() =>
+        detailSuggestion?.items
+            .map(id => wardrobeItems.find(i => i.id === id))
+            .filter((item): item is WardrobeItem => item !== undefined) || [],
+        [detailSuggestion, wardrobeItems]
+    );
 
     return (
         <GestureHandlerRootView style={styles.container}>
@@ -137,7 +132,7 @@ export default function OutfitSwipeScreen() {
 
                                 <View style={styles.rationaleBox}>
                                     <View style={styles.rationaleHeader}>
-                                        <Ionicons name="sparkles" size={18} color="#6366f1" />
+                                        <Ionicons name="sparkles" size={18} color="#87A96B" />
                                         <Text style={styles.rationaleTitle}>Why this outfit?</Text>
                                     </View>
                                     <Text style={styles.rationaleText}>
@@ -269,7 +264,7 @@ const styles = StyleSheet.create({
         textTransform: 'capitalize',
     },
     rationaleBox: {
-        backgroundColor: '#f5f3ff',
+        backgroundColor: '#F8F6F0',
         borderRadius: 12,
         padding: 16,
         marginBottom: 24,
@@ -283,7 +278,7 @@ const styles = StyleSheet.create({
     rationaleTitle: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#87A96B',
     },
     rationaleText: {
         fontSize: 14,

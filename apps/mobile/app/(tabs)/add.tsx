@@ -4,17 +4,7 @@
  */
 
 import { useState, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    ActivityIndicator,
-    Alert,
-    Linking,
-    Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert, Linking, Platform } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions, FlashMode } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +13,7 @@ import { compressImage, formatFileSize } from '../../utils/image';
 import { storageService } from '../../services/storage';
 import { itemsService } from '../../services/items';
 import { useAuthStore } from '../../stores/authStore';
+import { Text } from '../../components/ui/Typography';
 
 type ViewMode = 'options' | 'camera' | 'preview' | 'uploading';
 
@@ -140,57 +131,17 @@ export default function AddScreen() {
                 throw createError || new Error('Failed to create item');
             }
 
-            // Step 3: Attempt background removal (non-blocking)
-            setUploadProgress(60);
-            let processedUrl: string | null = null;
-
-            // Import dynamically to avoid issues if not configured
-            const { removeBackground, isBackgroundRemovalConfigured } = await import('../../services/backgroundRemoval');
-
-            if (isBackgroundRemovalConfigured()) {
-                try {
-                    setUploadProgress(70);
-                    const { processedImageBase64, error: bgError } = await removeBackground(url);
-
-                    if (processedImageBase64 && !bgError) {
-                        setUploadProgress(85);
-                        // Upload processed image (now using base64)
-                        const { url: uploadedProcessedUrl } = await storageService.uploadProcessedImage(
-                            user.id,
-                            processedImageBase64
-                        );
-
-                        if (uploadedProcessedUrl) {
-                            processedUrl = uploadedProcessedUrl;
-                            // Update item with processed URL
-                            await itemsService.updateItem(item.id, {
-                                processed_image_url: processedUrl,
-                            } as any);
-                            console.log('Background removal complete!');
-                        }
-                    } else {
-                        console.log('Background removal skipped:', bgError?.message);
-                    }
-                } catch (bgRemovalError) {
-                    console.log('Background removal failed, using original:', bgRemovalError);
-                    // Continue without processed image - not a critical error
-                }
-            }
-
             setUploadProgress(100);
 
             // Navigate to confirmation screen for category/color selection
             setCapturedImage(null);
             setViewMode('options');
 
-            // Get the display URL (prefer processed image)
-            const displayUrl = processedUrl || url;
-
             router.push({
                 pathname: '/(tabs)/confirm-item',
                 params: {
                     itemId: item.id,
-                    imageUrl: displayUrl,
+                    imageUrl: url,
                 },
             });
         } catch (error) {
@@ -217,7 +168,7 @@ export default function AddScreen() {
             <View style={styles.optionsContainer}>
                 <TouchableOpacity style={styles.optionCard} onPress={handleCameraPress}>
                     <View style={styles.optionIconContainer}>
-                        <Ionicons name="camera-outline" size={48} color="#6366f1" />
+                        <Ionicons name="camera-outline" size={48} color="#87A96B" />
                     </View>
                     <Text style={styles.optionTitle}>Take a Photo</Text>
                     <Text style={styles.optionSubtitle}>Use your camera to capture the item</Text>
@@ -225,7 +176,7 @@ export default function AddScreen() {
 
                 <TouchableOpacity style={styles.optionCard} onPress={handleGalleryPress}>
                     <View style={styles.optionIconContainer}>
-                        <Ionicons name="images-outline" size={48} color="#6366f1" />
+                        <Ionicons name="images-outline" size={48} color="#87A96B" />
                     </View>
                     <Text style={styles.optionTitle}>Choose from Gallery</Text>
                     <Text style={styles.optionSubtitle}>Select from your photo library</Text>
@@ -281,7 +232,7 @@ export default function AddScreen() {
                             disabled={isProcessing}
                         >
                             {isProcessing ? (
-                                <ActivityIndicator color="#6366f1" size="large" />
+                                <ActivityIndicator color="#87A96B" size="large" />
                             ) : (
                                 <View style={styles.captureButtonInner} />
                             )}
@@ -336,7 +287,7 @@ export default function AddScreen() {
                         setViewMode('options');
                     }}
                 >
-                    <Ionicons name="refresh-outline" size={20} color="#6366f1" />
+                    <Ionicons name="refresh-outline" size={20} color="#87A96B" />
                     <Text style={styles.retakeButtonText}>Retake</Text>
                 </TouchableOpacity>
 
@@ -352,7 +303,7 @@ export default function AddScreen() {
     const renderUploading = () => (
         <View style={styles.uploadingContainer}>
             <View style={styles.uploadingContent}>
-                <ActivityIndicator size="large" color="#6366f1" />
+                <ActivityIndicator size="large" color="#87A96B" />
                 <Text style={styles.uploadingTitle}>Uploading...</Text>
                 <Text style={styles.uploadingSubtitle}>
                     {uploadProgress < 100 ? `${uploadProgress}%` : 'Processing...'}
@@ -419,7 +370,7 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
@@ -524,14 +475,15 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     imageContainer: {
-        flex: 1,
         margin: 16,
         borderRadius: 16,
         overflow: 'hidden',
         backgroundColor: '#e5e7eb',
+        maxHeight: '65%',
     },
     previewImage: {
-        flex: 1,
+        width: '100%',
+        aspectRatio: 3 / 4,
         resizeMode: 'contain',
     },
     imageInfo: {
@@ -557,13 +509,13 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         backgroundColor: '#fff',
         borderWidth: 1,
-        borderColor: '#6366f1',
+        borderColor: '#87A96B',
         gap: 8,
     },
     retakeButtonText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#87A96B',
     },
     usePhotoButton: {
         flex: 2,
@@ -572,7 +524,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         padding: 16,
         borderRadius: 12,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         gap: 8,
     },
     usePhotoButtonText: {
@@ -612,7 +564,7 @@ const styles = StyleSheet.create({
     },
     progressFill: {
         height: '100%',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         borderRadius: 4,
     },
 });

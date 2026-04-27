@@ -4,10 +4,11 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ResaleCandidate } from '../../services/resaleService';
+import { Text } from '../ui/Typography';
 
 interface ResaleCandidatesCardProps {
     candidates: ResaleCandidate[];
@@ -16,7 +17,7 @@ interface ResaleCandidatesCardProps {
 function getScoreColor(score: number): string {
     if (score >= 80) return '#22c55e';
     if (score >= 60) return '#f59e0b';
-    return '#6366f1';
+    return '#87A96B';
 }
 
 export default function ResaleCandidatesCard({ candidates }: ResaleCandidatesCardProps) {

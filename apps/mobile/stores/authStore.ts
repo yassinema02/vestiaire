@@ -1,11 +1,15 @@
 /**
  * Auth Store
  * Zustand store for managing authentication state
+ *
+ * SECURITY NOTE (audit 2026-04-05): Added translateAuthError() to prevent
+ * raw Supabase error messages (which may reveal whether an email exists,
+ * or leak DB details) from reaching the UI.
  */
 
 import { create } from 'zustand';
 import { authService } from '../services/auth';
-import type { User, Session } from '@supabase/supabase-js';
+import type { User, Session, AuthError } from '@supabase/supabase-js';
 
 interface AuthState {
     user: User | null;
@@ -27,6 +31,29 @@ interface AuthActions {
 
 type AuthStore = AuthState & AuthActions;
 
+/**
+ * Map raw Supabase auth errors to safe, user-facing messages.
+ * Prevents account-enumeration and internal-detail leakage.
+ */
+function translateAuthError(error: AuthError): string {
+    const msg = error.message?.toLowerCase() ?? '';
+    if (msg.includes('invalid login credentials') || msg.includes('invalid_credentials')) {
+        return 'Invalid email or password';
+    }
+    if (msg.includes('email not confirmed')) {
+        return 'Please verify your email before signing in';
+    }
+    if (msg.includes('user already registered') || msg.includes('already been registered')) {
+        // Do NOT reveal that the email exists — generic message
+        return 'Unable to create account. Please try again or sign in.';
+    }
+    if (msg.includes('rate limit') || msg.includes('too many requests')) {
+        return 'Too many attempts. Please wait a moment and try again.';
+    }
+    // Fallback — never expose the raw message
+    return 'An authentication error occurred. Please try again.';
+}
+
 // Track the auth subscription so we can clean it up
 let authSubscription: { unsubscribe: () => void } | null = null;
 
@@ -45,8 +72,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             const { session, error } = await authService.getSession();
 
             if (error) {
-                console.error('Auth initialization error:', error.message);
-                set({ isLoading: false, isInitialized: true, error: error.message });
+                console.error('Auth initialization error:', error.status);
+                set({ isLoading: false, isInitialized: true, error: translateAuthError(error) });
                 return;
             }
 
@@ -66,7 +93,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
             // Subscribe to auth changes
             const { data } = authService.onAuthStateChange((event, newSession) => {
-                console.log('Auth state changed:', event);
+                // Auth event logged at debug level only (audit 2026-04-05)
                 set({
                     session: newSession,
                     user: newSession?.user ?? null,
@@ -85,7 +112,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             const { user, session, error } = await authService.signUp(email, password);
 
             if (error) {
-                set({ isLoading: false, error: error.message });
+                set({ isLoading: false, error: translateAuthError(error) });
                 return { success: false, needsVerification: false };
             }
 
@@ -112,7 +139,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             const { user, session, error } = await authService.signIn(email, password);
 
             if (error) {
-                set({ isLoading: false, error: error.message });
+                set({ isLoading: false, error: translateAuthError(error) });
                 return false;
             }
 
@@ -133,11 +160,17 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     signOut: async () => {
         set({ isLoading: true, error: null });
         try {
+            // Clean up auth listener before signing out
+            if (authSubscription) {
+                authSubscription.unsubscribe();
+                authSubscription = null;
+            }
             await authService.signOut();
             set({
                 user: null,
                 session: null,
                 isLoading: false,
+                isInitialized: false,
                 error: null,
             });
         } catch (err) {
@@ -151,7 +184,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             const { error } = await authService.resetPassword(email);
 
             if (error) {
-                set({ isLoading: false, error: error.message });
+                set({ isLoading: false, error: translateAuthError(error) });
                 return false;
             }
 

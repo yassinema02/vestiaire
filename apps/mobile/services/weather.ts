@@ -103,6 +103,8 @@ const WEATHER_CODE_MAP: Record<number, { condition: string; icon: string }> = {
     99: { condition: 'Thunderstorm with heavy hail', icon: 'thunderstorm' },
 };
 
+import { fetchWithTimeout } from '../utils/fetchWithTimeout';
+
 const OPEN_METEO_BASE_URL = 'https://api.open-meteo.com/v1/forecast';
 
 /**
@@ -127,7 +129,7 @@ export const weatherService = {
                 current: 'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m',
             });
 
-            const response = await fetch(`${OPEN_METEO_BASE_URL}?${params}`);
+            const response = await fetchWithTimeout(`${OPEN_METEO_BASE_URL}?${params}`, { timeout: 10_000 });
 
             if (!response.ok) {
                 throw new Error(`Weather API error: ${response.status}`);
@@ -190,7 +192,7 @@ export const weatherService = {
                 forecast_days: '5',
             });
 
-            const response = await fetch(`${OPEN_METEO_BASE_URL}?${params}`);
+            const response = await fetchWithTimeout(`${OPEN_METEO_BASE_URL}?${params}`, { timeout: 10_000 });
 
             if (!response.ok) {
                 throw new Error(`Weather API error: ${response.status}`);

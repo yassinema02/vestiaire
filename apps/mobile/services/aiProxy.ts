@@ -1,23 +1,75 @@
 /**
  * AI Proxy Client
- * Routes AI API calls through Supabase Edge Functions to keep API keys server-side.
+ * Calls Gemini API directly using @google/genai SDK.
  */
 
-import { supabase } from './supabase';
+import { GoogleGenAI } from '@google/genai';
+import { runtimeConfig } from './runtimeConfig';
+import type { AIFeature } from './aiUsageLogger';
+import { managedAIRequest } from './aiRequestManager';
 
-/**
- * Call Gemini AI through the server-side proxy.
- * @param prompt - The text prompt
- * @param imageBase64 - Optional base64-encoded image data
- * @returns The AI response text
- */
-export async function callGeminiProxy(prompt: string, imageBase64?: string): Promise<string> {
-    const { data, error } = await supabase.functions.invoke('ai-proxy', {
-        body: { prompt, image: imageBase64 },
-    });
-
-    if (error) throw new Error(error.message || 'AI proxy request failed');
-    if (!data?.text) throw new Error('No response from AI');
-    return data.text;
+export interface AIProxyGenerateContentParams {
+    model: string;
+    contents: unknown;
 }
 
+export interface AIProxyGenerateContentResponse {
+    text: string | null;
+    candidates?: Array<Record<string, unknown>>;
+    usageMetadata?: {
+        promptTokenCount?: number | null;
+        candidatesTokenCount?: number | null;
+    } | null;
+}
+
+let genAIInstance: GoogleGenAI | null = null;
+
+function getGenAI(): GoogleGenAI {
+    if (!genAIInstance) {
+        genAIInstance = new GoogleGenAI({ apiKey: runtimeConfig.geminiApiKey });
+    }
+    return genAIInstance;
+}
+
+/**
+ * Call Gemini API directly with queue/timeout/retry management.
+ */
+export async function callGeminiProxy(
+    params: AIProxyGenerateContentParams,
+    feature: AIFeature
+): Promise<AIProxyGenerateContentResponse> {
+    return managedAIRequest(
+        () => callGeminiDirect(params),
+        feature
+    );
+}
+
+/**
+ * Direct Gemini API call via @google/genai SDK.
+ */
+async function callGeminiDirect(
+    params: AIProxyGenerateContentParams
+): Promise<AIProxyGenerateContentResponse> {
+    const genAI = getGenAI();
+
+    const isImageModel = params.model.includes('image');
+
+    const response = await genAI.models.generateContent({
+        model: params.model,
+        contents: params.contents as any,
+        ...(isImageModel && {
+            config: { responseModalities: ['IMAGE', 'TEXT'] },
+        }),
+    });
+
+    const text = response.text ?? null;
+    const candidates = response.candidates as Array<Record<string, unknown>> | undefined;
+    const usageMetadata = response.usageMetadata
+        ? {
+              promptTokenCount: response.usageMetadata.promptTokenCount ?? null,
+              candidatesTokenCount: response.usageMetadata.candidatesTokenCount ?? null,
+          }
+        : null;
+
+    return { text, candidates, usageMetadata };
+}

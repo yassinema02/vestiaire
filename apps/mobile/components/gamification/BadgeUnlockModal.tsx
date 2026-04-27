@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Modal, View, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { BadgeDefinition, BADGE_CATEGORY_LABELS } from '@vestiaire/shared';
+import { Text } from '../ui/Typography';
 
 interface BadgeUnlockModalProps {
     visible: boolean;
@@ -71,7 +72,7 @@ export default function BadgeUnlockModal({ visible, badge, onDismiss }: BadgeUnl
                         <Ionicons
                             name={badge.iconName as any}
                             size={48}
-                            color="#6366f1"
+                            color="#87A96B"
                         />
                     </Animated.View>
 
@@ -107,7 +108,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '100%',
         maxWidth: 320,
-        shadowColor: '#6366f1',
+        shadowColor: '#87A96B',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.2,
         shadowRadius: 24,
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
         width: 88,
         height: 88,
         borderRadius: 44,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
     badgeName: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#6366f1',
+        color: '#87A96B',
         marginBottom: 6,
     },
     description: {
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
     },
     button: {
         marginTop: 24,
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 48,

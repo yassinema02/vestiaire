@@ -4,21 +4,12 @@
  */
 
 import { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    TextInput,
-    Alert,
-    Platform,
-    ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../stores/authStore';
 import { authService } from '../../services/auth';
+import { Text } from '../../components/ui/Typography';
 
 export default function EditProfileScreen() {
     const router = useRouter();
@@ -162,7 +153,7 @@ export default function EditProfileScreen() {
 
                 {/* Change Password */}
                 <TouchableOpacity style={styles.actionButton} onPress={handleChangePassword}>
-                    <Ionicons name="key-outline" size={20} color="#6366f1" />
+                    <Ionicons name="key-outline" size={20} color="#87A96B" />
                     <Text style={styles.actionButtonText}>Change Password</Text>
                     <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
                 </TouchableOpacity>
@@ -205,7 +196,7 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     saveButton: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 8,

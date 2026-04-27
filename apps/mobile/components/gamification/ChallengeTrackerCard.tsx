@@ -6,9 +6,10 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { UserChallenge } from '../../services/challengeService';
+import { Text } from '../ui/Typography';
 
 interface ChallengeTrackerCardProps {
     challenge: UserChallenge;
@@ -39,12 +40,12 @@ export default function ChallengeTrackerCard({ challenge, onPress }: ChallengeTr
             <View style={styles.header}>
                 <View style={styles.titleRow}>
                     <View style={styles.iconWrap}>
-                        <Ionicons name="compass" size={20} color="#6366f1" />
+                        <Ionicons name="compass" size={20} color="#87A96B" />
                     </View>
                     <Text style={styles.title}>Closet Safari</Text>
                 </View>
                 <View style={styles.countdownBadge}>
-                    <Ionicons name="time-outline" size={14} color={daysLeft <= 2 ? '#ef4444' : '#6366f1'} />
+                    <Ionicons name="time-outline" size={14} color={daysLeft <= 2 ? '#ef4444' : '#87A96B'} />
                     <Text style={[styles.countdownText, daysLeft <= 2 && styles.countdownUrgent]}>
                         {daysLeft === 0 ? 'Last day!' : `${daysLeft}d left`}
                     </Text>
@@ -79,8 +80,8 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 16,
         borderWidth: 1,
-        borderColor: '#c7d2fe',
-        shadowColor: '#6366f1',
+        borderColor: '#D9C7B4',
+        shadowColor: '#87A96B',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
         shadowRadius: 8,
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 10,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -122,7 +123,7 @@ const styles = StyleSheet.create({
     countdownText: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6366f1',
+        color: '#87A96B',
     },
     countdownUrgent: {
         color: '#ef4444',
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
     },
     progressFill: {
         height: '100%',
-        backgroundColor: '#6366f1',
+        backgroundColor: '#87A96B',
         borderRadius: 4,
     },
     progressText: {

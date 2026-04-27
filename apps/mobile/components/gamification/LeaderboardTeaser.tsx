@@ -4,15 +4,16 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Text } from '../ui/Typography';
 
 export default function LeaderboardTeaser() {
     return (
         <View style={styles.card}>
             <View style={styles.iconRow}>
                 <View style={styles.iconWrap}>
-                    <Ionicons name="podium-outline" size={24} color="#6366f1" />
+                    <Ionicons name="podium-outline" size={24} color="#87A96B" />
                 </View>
                 <View style={styles.textWrap}>
                     <Text style={styles.title}>Leaderboard</Text>
@@ -32,7 +33,7 @@ export default function LeaderboardTeaser() {
                 <View style={styles.podiumItem}>
                     <View style={[styles.podiumBar, styles.podiumFirst]} />
                     <View style={[styles.podiumAvatar, styles.podiumAvatarFirst]}>
-                        <Ionicons name="person" size={14} color="#c7d2fe" />
+                        <Ionicons name="person" size={14} color="#D9C7B4" />
                     </View>
                     <Text style={[styles.podiumRank, styles.podiumRankFirst]}>1st</Text>
                 </View>
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 10,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
     },
     subtitle: {
         fontSize: 12,
-        color: '#6366f1',
+        color: '#87A96B',
         fontWeight: '500',
     },
     podium: {
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
     },
     podiumFirst: {
         height: 48,
-        backgroundColor: '#eef2ff',
+        backgroundColor: '#F4E2D6',
     },
     podiumSecond: {
         height: 36,
@@ -129,8 +130,8 @@ const styles = StyleSheet.create({
         borderColor: '#fff',
     },
     podiumAvatarFirst: {
-        backgroundColor: '#eef2ff',
-        borderColor: '#c7d2fe',
+        backgroundColor: '#F4E2D6',
+        borderColor: '#D9C7B4',
     },
     podiumRank: {
         fontSize: 11,
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     podiumRankFirst: {
-        color: '#6366f1',
+        color: '#87A96B',
     },
     description: {
         fontSize: 13,
